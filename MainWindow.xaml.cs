@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -14,6 +15,7 @@ public partial class MainWindow : Window
 {
     private bool _isInitializing = true;
     private readonly CustomerService _customerService = new();
+    private readonly PawnTicketService _pawnTicketService = new();
     private int? _selectedCustomerId;
 
     public MainWindow()
@@ -21,6 +23,7 @@ public partial class MainWindow : Window
         InitializeComponent();
 
         InitializeDatabase();
+        LoadSmartLookupValues();
 
         PawnDatePicker.SelectedDate = DateTime.Today;
 
@@ -256,6 +259,36 @@ public partial class MainWindow : Window
         UpdateAssetPreview();
     }
 
+    private void FormComboBox_PreviewMouseLeftButtonDown(
+        object sender,
+        MouseButtonEventArgs e)
+    {
+        if (sender is not ComboBox comboBox ||
+            !comboBox.IsEnabled ||
+            comboBox.IsDropDownOpen)
+        {
+            return;
+        }
+
+        // WPF ComboBox แบบ editable จะให้ TextBox ด้านในรับ click ก่อน
+        // จึงจับ click ที่ระดับ ComboBox แล้วเปิดรายการทันที
+        // พร้อมหยุดการ toggle ซ้ำจาก control ภายใน
+        e.Handled = true;
+
+        comboBox.Focus();
+        comboBox.IsDropDownOpen = true;
+
+        if (comboBox.IsEditable &&
+            comboBox.Template.FindName(
+                "PART_EditableTextBox",
+                comboBox) is TextBox editableTextBox)
+        {
+            editableTextBox.Focus();
+            editableTextBox.CaretIndex =
+                editableTextBox.Text?.Length ?? 0;
+        }
+    }
+
     private void SmartField_SelectionChanged(
         object sender,
         SelectionChangedEventArgs e)
@@ -334,60 +367,12 @@ public partial class MainWindow : Window
             return;
         }
 
-        List<string> parts = new();
+        string productSummary = BuildProductSummary();
 
-        switch (AssetCategoryComboBox.SelectedIndex)
-        {
-            case 0:
-                AddIfValue(parts, GetComboText(MobileBrandComboBox));
-                AddIfValue(parts, GetComboText(MobileModelComboBox));
-                AddIfValue(parts, GetComboText(MobileCapacityComboBox));
-
-                string mobileColor = GetComboText(MobileColorComboBox);
-                if (!string.IsNullOrWhiteSpace(mobileColor))
-                {
-                    parts.Add($"สี {mobileColor}");
-                }
-
-                AddLabeledValue(parts, "IMEI", MobileImeiTextBox.Text);
-                AddLabeledValue(parts, "อุปกรณ์", MobileAccessoriesTextBox.Text);
-                AddLabeledValue(parts, "สภาพ/ตำหนิ", MobileConditionTextBox.Text);
-                break;
-
-            case 1:
-                AddIfValue(parts, GetComboText(ItTypeComboBox));
-                AddIfValue(parts, GetComboText(ItBrandComboBox));
-                AddIfValue(parts, GetComboText(ItModelComboBox));
-                AddIfValue(parts, ItSpecificationTextBox.Text);
-                AddLabeledValue(parts, "Serial", ItSerialTextBox.Text);
-                AddLabeledValue(parts, "อุปกรณ์", ItAccessoriesTextBox.Text);
-                AddLabeledValue(parts, "สภาพ/ตำหนิ", ItConditionTextBox.Text);
-                break;
-
-            case 2:
-                AddIfValue(parts, GetComboText(ElectricalTypeComboBox));
-                AddIfValue(parts, GetComboText(ElectricalBrandComboBox));
-                AddIfValue(parts, GetComboText(ElectricalModelComboBox));
-                AddIfValue(parts, ElectricalSizeTextBox.Text);
-                AddLabeledValue(parts, "Serial", ElectricalSerialTextBox.Text);
-                AddLabeledValue(parts, "อุปกรณ์", ElectricalAccessoriesTextBox.Text);
-                AddLabeledValue(parts, "สภาพ/ตำหนิ", ElectricalConditionTextBox.Text);
-                break;
-
-            default:
-                AddIfValue(parts, OtherTypeTextBox.Text);
-                AddIfValue(parts, OtherBrandTextBox.Text);
-                AddIfValue(parts, OtherModelTextBox.Text);
-                AddIfValue(parts, OtherDetailsTextBox.Text);
-                AddLabeledValue(parts, "Serial", OtherSerialTextBox.Text);
-                AddLabeledValue(parts, "อุปกรณ์", OtherAccessoriesTextBox.Text);
-                AddLabeledValue(parts, "สภาพ/ตำหนิ", OtherConditionTextBox.Text);
-                break;
-        }
-
-        AssetPreviewText.Text = parts.Count == 0
-            ? "กรอกข้อมูลสินค้า แล้วระบบจะสร้างรายละเอียดสรุปให้อัตโนมัติ"
-            : string.Join(" / ", parts);
+        AssetPreviewText.Text =
+            string.IsNullOrWhiteSpace(productSummary)
+                ? "กรอกข้อมูลสินค้า แล้วระบบจะสร้างรายละเอียดสรุปให้อัตโนมัติ"
+                : productSummary;
     }
 
     private static string GetComboText(ComboBox comboBox)
@@ -427,7 +412,627 @@ public partial class MainWindow : Window
         }
     }
 
-    private void ClearNewPawnForm_Click(object sender, RoutedEventArgs e)
+    private void SavePawnTicket_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        if (sender is Button saveButton)
+        {
+            saveButton.IsEnabled = false;
+        }
+
+        try
+        {
+            if (!TryBuildCustomerInput(out Customer customer))
+            {
+                return;
+            }
+
+            string ticketNumber = TicketNumberTextBox.Text.Trim();
+
+            if (string.IsNullOrWhiteSpace(ticketNumber))
+            {
+                MessageBox.Show(
+                    "กรุณากรอกหมายเลขตั๋ว",
+                    "มานะชัย ลิสซิ่ง",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                TicketNumberTextBox.Focus();
+                return;
+            }
+
+            if (!PawnDatePicker.SelectedDate.HasValue)
+            {
+                MessageBox.Show(
+                    "กรุณาเลือกวันที่รับจำนำ",
+                    "มานะชัย ลิสซิ่ง",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                PawnDatePicker.Focus();
+                return;
+            }
+
+            if (!TryParsePawnAmount(
+                    PawnAmountTextBox.Text,
+                    out decimal principalAmount) ||
+                principalAmount <= 0)
+            {
+                MessageBox.Show(
+                    "กรุณากรอกยอดเงินจำนำให้ถูกต้อง และต้องมากกว่า 0 บาท",
+                    "มานะชัย ลิสซิ่ง",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                PawnAmountTextBox.Focus();
+                return;
+            }
+
+            string productSummary = BuildProductSummary();
+
+            if (string.IsNullOrWhiteSpace(productSummary))
+            {
+                MessageBox.Show(
+                    "กรุณากรอกรายละเอียดสินค้าอย่างน้อย 1 ช่อง",
+                    "มานะชัย ลิสซิ่ง",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                return;
+            }
+
+            PawnTicket ticket = BuildPawnTicket(
+                ticketNumber,
+                PawnDatePicker.SelectedDate.Value.Date,
+                principalAmount,
+                productSummary);
+
+            PawnTicket savedTicket =
+                _pawnTicketService.SavePawnTicket(
+                    new PawnTicketSaveRequest
+                    {
+                        SelectedCustomerId = _selectedCustomerId,
+                        Customer = customer,
+                        Ticket = ticket,
+                        SmartLookupValues =
+                            BuildSmartLookupEntries()
+                    });
+
+            _selectedCustomerId = savedTicket.CustomerId;
+
+            LoadSmartLookupValues();
+
+            PawnSaveSuccessWindow successWindow = new(
+                savedTicket.TicketNumber,
+                savedTicket.PrincipalAmount)
+            {
+                Owner = this
+            };
+
+            successWindow.ShowDialog();
+
+            ClearNewPawnForm();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"ไม่สามารถบันทึกตั๋วจำนำได้\n\n{ex.Message}",
+                "มานะชัย ลิสซิ่ง",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+        finally
+        {
+            if (sender is Button saveButtonToEnable)
+            {
+                saveButtonToEnable.IsEnabled = true;
+            }
+        }
+    }
+
+    private bool TryBuildCustomerInput(out Customer customer)
+    {
+        customer = new Customer();
+
+        string firstName = FirstNameTextBox.Text.Trim();
+        string lastName = LastNameTextBox.Text.Trim();
+        string citizenId = CitizenIdTextBox.Text.Trim();
+        string ageText = AgeTextBox.Text.Trim();
+
+        if (string.IsNullOrWhiteSpace(firstName) ||
+            string.IsNullOrWhiteSpace(lastName))
+        {
+            MessageBox.Show(
+                "กรุณากรอกชื่อและนามสกุลลูกค้า",
+                "มานะชัย ลิสซิ่ง",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(citizenId) &&
+            (citizenId.Length != 13 ||
+             !citizenId.All(char.IsDigit)))
+        {
+            MessageBox.Show(
+                "เลขบัตรประชาชนต้องเป็นตัวเลข 13 หลัก หรือเว้นว่างไว้",
+                "มานะชัย ลิสซิ่ง",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+
+            CitizenIdTextBox.Focus();
+            return false;
+        }
+
+        int? age = null;
+
+        if (!string.IsNullOrWhiteSpace(ageText))
+        {
+            if (!int.TryParse(ageText, out int parsedAge) ||
+                parsedAge < 1 ||
+                parsedAge > 120)
+            {
+                MessageBox.Show(
+                    "อายุต้องเป็นตัวเลขระหว่าง 1 - 120 ปี หรือเว้นว่างไว้",
+                    "มานะชัย ลิสซิ่ง",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                AgeTextBox.Focus();
+                return false;
+            }
+
+            age = parsedAge;
+        }
+
+        customer = new Customer
+        {
+            FirstName = firstName,
+            LastName = lastName,
+            CitizenId = citizenId,
+            Age = age,
+            Phone = PhoneTextBox.Text,
+            Address = AddressTextBox.Text
+        };
+
+        return true;
+    }
+
+    private PawnTicket BuildPawnTicket(
+        string ticketNumber,
+        DateTime pawnDate,
+        decimal principalAmount,
+        string productSummary)
+    {
+        PawnTicket ticket = new()
+        {
+            TicketNumber = ticketNumber,
+            PawnDate = pawnDate,
+            PrincipalAmount = principalAmount,
+            AssetCategory = GetAssetCategoryName(),
+            ProductSummary = productSummary,
+            Note = CleanOptional(PawnNoteTextBox.Text)
+        };
+
+        switch (AssetCategoryComboBox.SelectedIndex)
+        {
+            case 0:
+                ticket.Brand = CleanOptional(
+                    GetComboText(MobileBrandComboBox));
+                ticket.Model = CleanOptional(
+                    GetComboText(MobileModelComboBox));
+                ticket.CapacityOrSize = CleanOptional(
+                    GetComboText(MobileCapacityComboBox));
+                ticket.Color = CleanOptional(
+                    GetComboText(MobileColorComboBox));
+                ticket.ImeiOrSerial = CleanOptional(
+                    MobileImeiTextBox.Text);
+                ticket.Accessories = CleanOptional(
+                    MobileAccessoriesTextBox.Text);
+                ticket.Condition = CleanOptional(
+                    MobileConditionTextBox.Text);
+                break;
+
+            case 1:
+                ticket.ProductType = CleanOptional(
+                    GetComboText(ItTypeComboBox));
+                ticket.Brand = CleanOptional(
+                    GetComboText(ItBrandComboBox));
+                ticket.Model = CleanOptional(
+                    GetComboText(ItModelComboBox));
+                ticket.Specification = CleanOptional(
+                    ItSpecificationTextBox.Text);
+                ticket.ImeiOrSerial = CleanOptional(
+                    ItSerialTextBox.Text);
+                ticket.Accessories = CleanOptional(
+                    ItAccessoriesTextBox.Text);
+                ticket.Condition = CleanOptional(
+                    ItConditionTextBox.Text);
+                break;
+
+            case 2:
+                ticket.ProductType = CleanOptional(
+                    GetComboText(ElectricalTypeComboBox));
+                ticket.Brand = CleanOptional(
+                    GetComboText(ElectricalBrandComboBox));
+                ticket.Model = CleanOptional(
+                    GetComboText(ElectricalModelComboBox));
+                ticket.CapacityOrSize = CleanOptional(
+                    ElectricalSizeTextBox.Text);
+                ticket.ImeiOrSerial = CleanOptional(
+                    ElectricalSerialTextBox.Text);
+                ticket.Accessories = CleanOptional(
+                    ElectricalAccessoriesTextBox.Text);
+                ticket.Condition = CleanOptional(
+                    ElectricalConditionTextBox.Text);
+                break;
+
+            default:
+                ticket.ProductType = CleanOptional(
+                    OtherTypeTextBox.Text);
+                ticket.Brand = CleanOptional(
+                    OtherBrandTextBox.Text);
+                ticket.Model = CleanOptional(
+                    OtherModelTextBox.Text);
+                ticket.OtherDetails = CleanOptional(
+                    OtherDetailsTextBox.Text);
+                ticket.ImeiOrSerial = CleanOptional(
+                    OtherSerialTextBox.Text);
+                ticket.Accessories = CleanOptional(
+                    OtherAccessoriesTextBox.Text);
+                ticket.Condition = CleanOptional(
+                    OtherConditionTextBox.Text);
+                break;
+        }
+
+        return ticket;
+    }
+
+    private List<SmartLookupEntry> BuildSmartLookupEntries()
+    {
+        List<SmartLookupEntry> entries = new();
+
+        switch (AssetCategoryComboBox.SelectedIndex)
+        {
+            case 0:
+                AddSmartLookupEntry(
+                    entries,
+                    "MobileTablet",
+                    "Brand",
+                    GetComboText(MobileBrandComboBox));
+                AddSmartLookupEntry(
+                    entries,
+                    "MobileTablet",
+                    "Model",
+                    GetComboText(MobileModelComboBox));
+                AddSmartLookupEntry(
+                    entries,
+                    "MobileTablet",
+                    "Capacity",
+                    GetComboText(MobileCapacityComboBox));
+                AddSmartLookupEntry(
+                    entries,
+                    "MobileTablet",
+                    "Color",
+                    GetComboText(MobileColorComboBox));
+                break;
+
+            case 1:
+                AddSmartLookupEntry(
+                    entries,
+                    "IT",
+                    "ProductType",
+                    GetComboText(ItTypeComboBox));
+                AddSmartLookupEntry(
+                    entries,
+                    "IT",
+                    "Brand",
+                    GetComboText(ItBrandComboBox));
+                AddSmartLookupEntry(
+                    entries,
+                    "IT",
+                    "Model",
+                    GetComboText(ItModelComboBox));
+                break;
+
+            case 2:
+                AddSmartLookupEntry(
+                    entries,
+                    "Electrical",
+                    "ProductType",
+                    GetComboText(ElectricalTypeComboBox));
+                AddSmartLookupEntry(
+                    entries,
+                    "Electrical",
+                    "Brand",
+                    GetComboText(ElectricalBrandComboBox));
+                AddSmartLookupEntry(
+                    entries,
+                    "Electrical",
+                    "Model",
+                    GetComboText(ElectricalModelComboBox));
+                break;
+        }
+
+        return entries;
+    }
+
+    private void LoadSmartLookupValues()
+    {
+        try
+        {
+            AddLearnedValues(
+                MobileBrandComboBox,
+                _pawnTicketService.GetSmartLookupValues(
+                    "MobileTablet",
+                    "Brand"));
+            AddLearnedValues(
+                MobileModelComboBox,
+                _pawnTicketService.GetSmartLookupValues(
+                    "MobileTablet",
+                    "Model"));
+            AddLearnedValues(
+                MobileCapacityComboBox,
+                _pawnTicketService.GetSmartLookupValues(
+                    "MobileTablet",
+                    "Capacity"));
+            AddLearnedValues(
+                MobileColorComboBox,
+                _pawnTicketService.GetSmartLookupValues(
+                    "MobileTablet",
+                    "Color"));
+
+            AddLearnedValues(
+                ItTypeComboBox,
+                _pawnTicketService.GetSmartLookupValues(
+                    "IT",
+                    "ProductType"));
+            AddLearnedValues(
+                ItBrandComboBox,
+                _pawnTicketService.GetSmartLookupValues(
+                    "IT",
+                    "Brand"));
+            AddLearnedValues(
+                ItModelComboBox,
+                _pawnTicketService.GetSmartLookupValues(
+                    "IT",
+                    "Model"));
+
+            AddLearnedValues(
+                ElectricalTypeComboBox,
+                _pawnTicketService.GetSmartLookupValues(
+                    "Electrical",
+                    "ProductType"));
+            AddLearnedValues(
+                ElectricalBrandComboBox,
+                _pawnTicketService.GetSmartLookupValues(
+                    "Electrical",
+                    "Brand"));
+            AddLearnedValues(
+                ElectricalModelComboBox,
+                _pawnTicketService.GetSmartLookupValues(
+                    "Electrical",
+                    "Model"));
+        }
+        catch
+        {
+            // Database initialization already reports connection errors.
+            // The pawn form can still open without learned dropdown values.
+        }
+    }
+
+    private static void AddLearnedValues(
+        ComboBox comboBox,
+        IEnumerable<string> learnedValues)
+    {
+        HashSet<string> existingValues = comboBox.Items
+            .Cast<object>()
+            .Select(GetComboItemText)
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Select(NormalizeLookupText)
+            .ToHashSet();
+
+        foreach (string value in learnedValues)
+        {
+            string normalized = NormalizeLookupText(value);
+
+            if (string.IsNullOrWhiteSpace(normalized) ||
+                existingValues.Contains(normalized))
+            {
+                continue;
+            }
+
+            comboBox.Items.Add(value);
+            existingValues.Add(normalized);
+        }
+    }
+
+    private static string GetComboItemText(object item)
+    {
+        if (item is ComboBoxItem comboBoxItem)
+        {
+            return comboBoxItem.Content?.ToString()?.Trim()
+                ?? string.Empty;
+        }
+
+        return item?.ToString()?.Trim()
+            ?? string.Empty;
+    }
+
+    private static string NormalizeLookupText(string value)
+    {
+        return string.Join(
+                " ",
+                value.Trim()
+                    .Split(
+                        ' ',
+                        StringSplitOptions.RemoveEmptyEntries))
+            .ToUpperInvariant();
+    }
+
+    private static void AddSmartLookupEntry(
+        ICollection<SmartLookupEntry> entries,
+        string category,
+        string fieldType,
+        string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return;
+        }
+
+        entries.Add(
+            new SmartLookupEntry(
+                category,
+                fieldType,
+                value.Trim()));
+    }
+
+    private string BuildProductSummary()
+    {
+        List<string> parts = new();
+
+        switch (AssetCategoryComboBox.SelectedIndex)
+        {
+            case 0:
+                AddIfValue(parts, GetComboText(MobileBrandComboBox));
+                AddIfValue(parts, GetComboText(MobileModelComboBox));
+                AddIfValue(parts, GetComboText(MobileCapacityComboBox));
+
+                string mobileColor =
+                    GetComboText(MobileColorComboBox);
+
+                if (!string.IsNullOrWhiteSpace(mobileColor))
+                {
+                    parts.Add($"สี {mobileColor}");
+                }
+
+                AddLabeledValue(
+                    parts,
+                    "IMEI",
+                    MobileImeiTextBox.Text);
+                AddLabeledValue(
+                    parts,
+                    "อุปกรณ์",
+                    MobileAccessoriesTextBox.Text);
+                AddLabeledValue(
+                    parts,
+                    "สภาพ/ตำหนิ",
+                    MobileConditionTextBox.Text);
+                break;
+
+            case 1:
+                AddIfValue(parts, GetComboText(ItTypeComboBox));
+                AddIfValue(parts, GetComboText(ItBrandComboBox));
+                AddIfValue(parts, GetComboText(ItModelComboBox));
+                AddIfValue(parts, ItSpecificationTextBox.Text);
+                AddLabeledValue(
+                    parts,
+                    "Serial",
+                    ItSerialTextBox.Text);
+                AddLabeledValue(
+                    parts,
+                    "อุปกรณ์",
+                    ItAccessoriesTextBox.Text);
+                AddLabeledValue(
+                    parts,
+                    "สภาพ/ตำหนิ",
+                    ItConditionTextBox.Text);
+                break;
+
+            case 2:
+                AddIfValue(
+                    parts,
+                    GetComboText(ElectricalTypeComboBox));
+                AddIfValue(
+                    parts,
+                    GetComboText(ElectricalBrandComboBox));
+                AddIfValue(
+                    parts,
+                    GetComboText(ElectricalModelComboBox));
+                AddIfValue(parts, ElectricalSizeTextBox.Text);
+                AddLabeledValue(
+                    parts,
+                    "Serial",
+                    ElectricalSerialTextBox.Text);
+                AddLabeledValue(
+                    parts,
+                    "อุปกรณ์",
+                    ElectricalAccessoriesTextBox.Text);
+                AddLabeledValue(
+                    parts,
+                    "สภาพ/ตำหนิ",
+                    ElectricalConditionTextBox.Text);
+                break;
+
+            default:
+                AddIfValue(parts, OtherTypeTextBox.Text);
+                AddIfValue(parts, OtherBrandTextBox.Text);
+                AddIfValue(parts, OtherModelTextBox.Text);
+                AddIfValue(parts, OtherDetailsTextBox.Text);
+                AddLabeledValue(
+                    parts,
+                    "Serial",
+                    OtherSerialTextBox.Text);
+                AddLabeledValue(
+                    parts,
+                    "อุปกรณ์",
+                    OtherAccessoriesTextBox.Text);
+                AddLabeledValue(
+                    parts,
+                    "สภาพ/ตำหนิ",
+                    OtherConditionTextBox.Text);
+                break;
+        }
+
+        return string.Join(" / ", parts);
+    }
+
+    private string GetAssetCategoryName()
+    {
+        if (AssetCategoryComboBox.SelectedItem is ComboBoxItem item)
+        {
+            return item.Content?.ToString()?.Trim()
+                ?? "อื่น ๆ";
+        }
+
+        return "อื่น ๆ";
+    }
+
+    private static bool TryParsePawnAmount(
+        string value,
+        out decimal amount)
+    {
+        string normalized = value
+            .Trim()
+            .Replace(",", string.Empty);
+
+        return decimal.TryParse(
+            normalized,
+            NumberStyles.Number,
+            CultureInfo.InvariantCulture,
+            out amount);
+    }
+
+    private static string? CleanOptional(string? value)
+    {
+        string cleaned = value?.Trim() ?? string.Empty;
+
+        return string.IsNullOrWhiteSpace(cleaned)
+            ? null
+            : cleaned;
+    }
+
+    private void ClearNewPawnForm_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        ClearNewPawnForm();
+    }
+
+    private void ClearNewPawnForm()
     {
         _isInitializing = true;
 

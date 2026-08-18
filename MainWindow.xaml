@@ -109,6 +109,10 @@
             <Setter Property="Background" Value="White" />
             <Setter Property="BorderBrush" Value="#D1D5DB" />
             <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="StaysOpenOnEdit" Value="True" />
+            <Setter Property="MaxDropDownHeight" Value="320" />
+            <EventSetter Event="PreviewMouseLeftButtonDown"
+                         Handler="FormComboBox_PreviewMouseLeftButtonDown" />
         </Style>
 
         <Style x:Key="SecondaryButtonStyle" TargetType="Button">
@@ -598,6 +602,7 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="300" />
                                         <ColumnDefinition Width="24" />
+                                        <ColumnDefinition Width="320" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
 
@@ -620,8 +625,9 @@
                                                    Style="{StaticResource FormLabelStyle}" />
                                         <Grid>
                                             <TextBox x:Name="PawnAmountTextBox"
-                                                     Padding="10,7,55,7"
-                                                     FontSize="16"
+                                                     Height="44"
+                                                     Padding="12,7,55,7"
+                                                     FontSize="18"
                                                      FontWeight="SemiBold"
                                                      TextAlignment="Right"
                                                      VerticalContentAlignment="Center"
@@ -1155,9 +1161,9 @@
                             <Button Grid.Column="3"
                                     Width="180"
                                     Content="บันทึกข้อมูล"
-                                    IsEnabled="False"
                                     Style="{StaticResource PrimaryButtonStyle}"
-                                    ToolTip="จะเปิดใช้งานเมื่อเชื่อมฐานข้อมูลใน Phase ถัดไป" />
+                                    Click="SavePawnTicket_Click"
+                                    ToolTip="บันทึกตั๋วจำนำและรายการเงินจ่ายลงฐานข้อมูล" />
                         </Grid>
 
                         <Border Margin="0,8,0,0"
@@ -1166,7 +1172,7 @@
                                 BorderBrush="#E5E7EB"
                                 BorderThickness="1"
                                 CornerRadius="10">
-                            <TextBlock Text="Phase 2B : Customer Save &amp; Reuse — บันทึกลูกค้า ค้นหาแบบ Realtime และดึงข้อมูลลูกค้าเดิมกลับมาใช้ได้"
+                            <TextBlock Text="Phase 2C : Save Pawn Ticket — บันทึกลูกค้า ตั๋วจำนำ รายการเงินจ่าย และ Smart Dropdown ลง SQLite พร้อมกัน"
                                        FontSize="12"
                                        Foreground="#6B7280"
                                        TextWrapping="Wrap" />
