@@ -15,52 +15,34 @@
 
     <Window.Resources>
 
-        <!-- เมนูด้านซ้าย -->
-        <Style x:Key="SidebarButtonStyle"
-               TargetType="Button">
-            <Setter Property="Height"
-                    Value="48" />
-            <Setter Property="Margin"
-                    Value="12,4" />
-            <Setter Property="Padding"
-                    Value="18,0" />
-            <Setter Property="HorizontalContentAlignment"
-                    Value="Left" />
-            <Setter Property="FontSize"
-                    Value="15" />
-            <Setter Property="FontWeight"
-                    Value="SemiBold" />
-            <Setter Property="Foreground"
-                    Value="#374151" />
-            <Setter Property="Background"
-                    Value="Transparent" />
-            <Setter Property="BorderThickness"
-                    Value="0" />
-            <Setter Property="Cursor"
-                    Value="Hand" />
-
+        <Style x:Key="SidebarButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="48" />
+            <Setter Property="Margin" Value="12,4" />
+            <Setter Property="Padding" Value="18,0" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#374151" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="ButtonBorder"
                                 Background="{TemplateBinding Background}"
                                 CornerRadius="8">
-                            <ContentPresenter
-                                Margin="{TemplateBinding Padding}"
-                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                VerticalAlignment="Center" />
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="Center" />
                         </Border>
-
                         <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver"
-                                     Value="True">
+                            <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="ButtonBorder"
                                         Property="Background"
                                         Value="#EEF2F7" />
                             </Trigger>
-
-                            <Trigger Property="IsPressed"
-                                     Value="True">
+                            <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="ButtonBorder"
                                         Property="Background"
                                         Value="#E2E8F0" />
@@ -71,21 +53,28 @@
             </Setter>
         </Style>
 
-        <!-- Card -->
-        <Style x:Key="DashboardCardStyle"
-               TargetType="Border">
-            <Setter Property="Background"
-                    Value="White" />
-            <Setter Property="CornerRadius"
-                    Value="12" />
-            <Setter Property="Padding"
-                    Value="22" />
-            <Setter Property="Margin"
-                    Value="0,0,16,0" />
-            <Setter Property="BorderBrush"
-                    Value="#E5E7EB" />
-            <Setter Property="BorderThickness"
-                    Value="1" />
+        <Style x:Key="SidebarActiveButtonStyle"
+               TargetType="Button"
+               BasedOn="{StaticResource SidebarButtonStyle}">
+            <Setter Property="Foreground" Value="#1D4ED8" />
+            <Setter Property="Background" Value="#EFF6FF" />
+        </Style>
+
+        <Style x:Key="DashboardCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="22" />
+            <Setter Property="Margin" Value="0,0,16,0" />
+            <Setter Property="BorderBrush" Value="#E5E7EB" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+
+        <Style x:Key="PlaceholderCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="28" />
+            <Setter Property="BorderBrush" Value="#E5E7EB" />
+            <Setter Property="BorderThickness" Value="1" />
         </Style>
 
     </Window.Resources>
@@ -97,47 +86,34 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <!-- ====================================================== -->
-        <!-- SIDEBAR -->
-        <!-- ====================================================== -->
-
+        <!-- Sidebar -->
         <Border Grid.Column="0"
                 Background="White"
                 BorderBrush="#E5E7EB"
                 BorderThickness="0,0,1,0">
 
             <Grid>
-
                 <Grid.RowDefinitions>
                     <RowDefinition Height="105" />
                     <RowDefinition Height="*" />
                     <RowDefinition Height="75" />
                 </Grid.RowDefinitions>
 
-                <!-- Logo / Program Name -->
-
                 <Border Grid.Row="0"
                         BorderBrush="#E5E7EB"
                         BorderThickness="0,0,0,1">
-
                     <StackPanel VerticalAlignment="Center"
                                 Margin="24,0">
-
                         <TextBlock Text="มานะชัย"
                                    FontSize="24"
                                    FontWeight="Bold"
                                    Foreground="#111827" />
-
                         <TextBlock Text="ลิสซิ่ง"
                                    Margin="0,2,0,0"
                                    FontSize="15"
                                    Foreground="#6B7280" />
-
                     </StackPanel>
-
                 </Border>
-
-                <!-- Navigation -->
 
                 <StackPanel Grid.Row="1"
                             Margin="0,18,0,0">
@@ -148,81 +124,55 @@
                                FontWeight="SemiBold"
                                Foreground="#9CA3AF" />
 
-                    <!-- Active menu -->
-                    <Button Height="48"
-                            Margin="12,4"
-                            Padding="18,0"
-                            HorizontalContentAlignment="Left"
-                            FontSize="15"
-                            FontWeight="SemiBold"
-                            Foreground="#1D4ED8"
-                            Background="#EFF6FF"
-                            BorderThickness="0"
-                            Cursor="Hand">
+                    <Button x:Name="HomeButton"
+                            Content="หน้าหลัก"
+                            Style="{StaticResource SidebarActiveButtonStyle}"
+                            Click="HomeButton_Click" />
 
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border Background="{TemplateBinding Background}"
-                                        CornerRadius="8">
-                                    <ContentPresenter
-                                        Margin="{TemplateBinding Padding}"
-                                        HorizontalAlignment="Left"
-                                        VerticalAlignment="Center" />
-                                </Border>
-                            </ControlTemplate>
-                        </Button.Template>
+                    <Button x:Name="NewPawnButton"
+                            Content="รับจำนำใหม่"
+                            Style="{StaticResource SidebarButtonStyle}"
+                            Click="NewPawnButton_Click" />
 
-                        <TextBlock Text="หน้าหลัก" />
+                    <Button x:Name="SearchButton"
+                            Content="ค้นหารายการ"
+                            Style="{StaticResource SidebarButtonStyle}"
+                            Click="SearchButton_Click" />
 
-                    </Button>
-
-                    <Button Content="รับจำนำใหม่"
-                            Style="{StaticResource SidebarButtonStyle}" />
-
-                    <Button Content="ค้นหารายการ"
-                            Style="{StaticResource SidebarButtonStyle}" />
-
-                    <Button Content="รายการวันนี้"
-                            Style="{StaticResource SidebarButtonStyle}" />
+                    <Button x:Name="TodayButton"
+                            Content="รายการวันนี้"
+                            Style="{StaticResource SidebarButtonStyle}"
+                            Click="TodayButton_Click" />
 
                     <Separator Margin="24,14"
                                Background="#E5E7EB" />
 
-                    <Button Content="ตั้งค่า"
-                            Style="{StaticResource SidebarButtonStyle}" />
+                    <Button x:Name="SettingsButton"
+                            Content="ตั้งค่า"
+                            Style="{StaticResource SidebarButtonStyle}"
+                            Click="SettingsButton_Click" />
 
                 </StackPanel>
-
-                <!-- Bottom -->
 
                 <Border Grid.Row="2"
                         BorderBrush="#E5E7EB"
                         BorderThickness="0,1,0,0">
-
                     <StackPanel VerticalAlignment="Center"
                                 Margin="24,0">
-
                         <TextBlock Text="มานะชัย ลิสซิ่ง"
                                    FontSize="12"
                                    Foreground="#6B7280" />
-
                         <TextBlock Text="Offline System"
                                    Margin="0,3,0,0"
                                    FontSize="11"
                                    Foreground="#9CA3AF" />
-
                     </StackPanel>
-
                 </Border>
 
             </Grid>
-
         </Border>
 
-        <!-- ====================================================== -->
-        <!-- MAIN CONTENT -->
-        <!-- ====================================================== -->
-
+        <!-- Main area -->
         <Grid Grid.Column="1">
 
             <Grid.RowDefinitions>
@@ -231,31 +181,29 @@
             </Grid.RowDefinitions>
 
             <!-- Header -->
-
             <Border Grid.Row="0"
                     Background="White"
                     BorderBrush="#E5E7EB"
                     BorderThickness="0,0,0,1">
 
                 <Grid Margin="32,0">
-
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
                     <StackPanel VerticalAlignment="Center">
-
-                        <TextBlock Text="หน้าหลัก"
+                        <TextBlock x:Name="PageTitleText"
+                                   Text="หน้าหลัก"
                                    FontSize="24"
                                    FontWeight="SemiBold"
                                    Foreground="#111827" />
 
-                        <TextBlock Text="ระบบบันทึกข้อมูลลูกค้าและรายการรับจำนำ"
+                        <TextBlock x:Name="PageSubtitleText"
+                                   Text="ระบบบันทึกข้อมูลลูกค้าและรายการรับจำนำ"
                                    Margin="0,4,0,0"
                                    FontSize="13"
                                    Foreground="#6B7280" />
-
                     </StackPanel>
 
                     <Border Grid.Column="1"
@@ -263,157 +211,229 @@
                             Background="#F3F4F6"
                             CornerRadius="8"
                             Padding="14,8">
-
                         <TextBlock Text="Offline"
                                    FontSize="12"
                                    FontWeight="SemiBold"
                                    Foreground="#4B5563" />
-
                     </Border>
-
                 </Grid>
 
             </Border>
 
-            <!-- Page Content -->
+            <!-- Page content -->
+            <Grid Grid.Row="1">
 
-            <ScrollViewer Grid.Row="1"
-                          VerticalScrollBarVisibility="Auto">
+                <!-- Home -->
+                <ScrollViewer x:Name="HomeContent"
+                              VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="32">
 
-                <StackPanel Margin="32">
+                        <Border Background="White"
+                                CornerRadius="12"
+                                BorderBrush="#E5E7EB"
+                                BorderThickness="1"
+                                Padding="26">
+                            <StackPanel>
+                                <TextBlock Text="มานะชัย ลิสซิ่ง"
+                                           FontSize="28"
+                                           FontWeight="Bold"
+                                           Foreground="#111827" />
+                                <TextBlock Margin="0,8,0,0"
+                                           Text="ระบบสำหรับบันทึกข้อมูลลูกค้า รับจำนำ ต่อดอก ไถ่ถอน และค้นหาประวัติย้อนหลัง"
+                                           FontSize="14"
+                                           Foreground="#6B7280"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
 
-                    <!-- Welcome -->
+                        <TextBlock Margin="0,28,0,14"
+                                   Text="เมนูใช้งาน"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="#111827" />
 
-                    <Border Background="White"
-                            CornerRadius="12"
-                            BorderBrush="#E5E7EB"
-                            BorderThickness="1"
-                            Padding="26">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
 
-                        <StackPanel>
+                            <Border Grid.Column="0"
+                                    Style="{StaticResource DashboardCardStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="รับจำนำใหม่"
+                                               FontSize="18"
+                                               FontWeight="SemiBold"
+                                               Foreground="#111827" />
+                                    <TextBlock Margin="0,8,0,0"
+                                               Text="บันทึกลูกค้า สินค้า หมายเลขตั๋ว และยอดเงิน"
+                                               FontSize="13"
+                                               Foreground="#6B7280"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
 
-                            <TextBlock Text="มานะชัย ลิสซิ่ง"
-                                       FontSize="28"
-                                       FontWeight="Bold"
-                                       Foreground="#111827" />
+                            <Border Grid.Column="1"
+                                    Style="{StaticResource DashboardCardStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="ค้นหารายการ"
+                                               FontSize="18"
+                                               FontWeight="SemiBold"
+                                               Foreground="#111827" />
+                                    <TextBlock Margin="0,8,0,0"
+                                               Text="ค้นหาจากชื่อ เลขตั๋ว หรือรายละเอียดสินค้า"
+                                               FontSize="13"
+                                               Foreground="#6B7280"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
 
-                            <TextBlock Margin="0,8,0,0"
-                                       Text="ระบบสำหรับบันทึกข้อมูลลูกค้า รับจำนำ ต่อดอก ไถ่ถอน และค้นหาประวัติย้อนหลัง"
-                                       FontSize="14"
+                            <Border Grid.Column="2"
+                                    Margin="0"
+                                    Style="{StaticResource DashboardCardStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="รายการวันนี้"
+                                               FontSize="18"
+                                               FontWeight="SemiBold"
+                                               Foreground="#111827" />
+                                    <TextBlock Margin="0,8,0,0"
+                                               Text="ดูรายการรับจำนำ ต่อดอก ไถ่ถอน และยอดประจำวัน"
+                                               FontSize="13"
+                                               Foreground="#6B7280"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <Border Margin="0,26,0,0"
+                                Padding="20"
+                                Background="#FAFAFA"
+                                BorderBrush="#E5E7EB"
+                                BorderThickness="1"
+                                CornerRadius="10">
+                            <TextBlock Text="Phase 1B : เมนูด้านซ้ายสามารถสลับหน้าได้แล้ว — ระบบข้อมูลจริงจะเริ่มใน Phase ถัดไป"
+                                       FontSize="12"
                                        Foreground="#6B7280"
                                        TextWrapping="Wrap" />
+                        </Border>
 
-                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
 
-                    </Border>
-
-                    <!-- Quick menu title -->
-
-                    <TextBlock Margin="0,28,0,14"
-                               Text="เมนูใช้งาน"
-                               FontSize="18"
-                               FontWeight="SemiBold"
-                               Foreground="#111827" />
-
-                    <!-- Cards -->
-
-                    <Grid>
-
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-
-                        <!-- Pawn -->
-
-                        <Border Grid.Column="0"
-                                Style="{StaticResource DashboardCardStyle}">
-
+                <!-- New pawn -->
+                <ScrollViewer x:Name="NewPawnContent"
+                              Visibility="Collapsed"
+                              VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="32">
+                        <Border Style="{StaticResource PlaceholderCardStyle}">
                             <StackPanel>
-
                                 <TextBlock Text="รับจำนำใหม่"
-                                           FontSize="18"
-                                           FontWeight="SemiBold"
+                                           FontSize="26"
+                                           FontWeight="Bold"
                                            Foreground="#111827" />
-
-                                <TextBlock Margin="0,8,0,0"
-                                           Text="บันทึกลูกค้า สินค้า หมายเลขตั๋ว และยอดเงิน"
-                                           FontSize="13"
+                                <TextBlock Margin="0,10,0,0"
+                                           Text="หน้าสำหรับบันทึกข้อมูลลูกค้า หมายเลขตั๋ว รายละเอียดสินค้า และยอดเงินจำนำ"
+                                           FontSize="14"
                                            Foreground="#6B7280"
                                            TextWrapping="Wrap" />
-
+                                <Border Margin="0,24,0,0"
+                                        Padding="16"
+                                        Background="#F9FAFB"
+                                        CornerRadius="8">
+                                    <TextBlock Text="โครงหน้าพร้อมแล้ว — แบบฟอร์มรับจำนำจะพัฒนาใน Phase ถัดไป"
+                                               Foreground="#6B7280" />
+                                </Border>
                             </StackPanel>
-
                         </Border>
+                    </StackPanel>
+                </ScrollViewer>
 
-                        <!-- Search -->
-
-                        <Border Grid.Column="1"
-                                Style="{StaticResource DashboardCardStyle}">
-
+                <!-- Search -->
+                <ScrollViewer x:Name="SearchContent"
+                              Visibility="Collapsed"
+                              VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="32">
+                        <Border Style="{StaticResource PlaceholderCardStyle}">
                             <StackPanel>
-
                                 <TextBlock Text="ค้นหารายการ"
-                                           FontSize="18"
-                                           FontWeight="SemiBold"
+                                           FontSize="26"
+                                           FontWeight="Bold"
                                            Foreground="#111827" />
-
-                                <TextBlock Margin="0,8,0,0"
-                                           Text="ค้นหาจากชื่อ เลขตั๋ว หรือรายละเอียดสินค้า"
-                                           FontSize="13"
+                                <TextBlock Margin="0,10,0,0"
+                                           Text="ค้นหาประวัติย้อนหลังจากชื่อ นามสกุล เลขบัตรประชาชน หมายเลขตั๋ว หรือรายละเอียดสินค้า"
+                                           FontSize="14"
                                            Foreground="#6B7280"
                                            TextWrapping="Wrap" />
-
+                                <Border Margin="0,24,0,0"
+                                        Padding="16"
+                                        Background="#F9FAFB"
+                                        CornerRadius="8">
+                                    <TextBlock Text="ระบบค้นหาแบบ Realtime จะพัฒนาใน Phase ถัดไป"
+                                               Foreground="#6B7280" />
+                                </Border>
                             </StackPanel>
-
                         </Border>
+                    </StackPanel>
+                </ScrollViewer>
 
-                        <!-- Today -->
-
-                        <Border Grid.Column="2"
-                                Margin="0"
-                                Style="{StaticResource DashboardCardStyle}">
-
+                <!-- Today -->
+                <ScrollViewer x:Name="TodayContent"
+                              Visibility="Collapsed"
+                              VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="32">
+                        <Border Style="{StaticResource PlaceholderCardStyle}">
                             <StackPanel>
-
                                 <TextBlock Text="รายการวันนี้"
-                                           FontSize="18"
-                                           FontWeight="SemiBold"
+                                           FontSize="26"
+                                           FontWeight="Bold"
                                            Foreground="#111827" />
-
-                                <TextBlock Margin="0,8,0,0"
-                                           Text="ดูรายการรับจำนำ ต่อดอก ไถ่ถอน และยอดประจำวัน"
-                                           FontSize="13"
+                                <TextBlock Margin="0,10,0,0"
+                                           Text="สรุปรายการรับจำนำ ต่อดอก ไถ่ถอน และเงินเข้าออกประจำวัน"
+                                           FontSize="14"
                                            Foreground="#6B7280"
                                            TextWrapping="Wrap" />
-
+                                <Border Margin="0,24,0,0"
+                                        Padding="16"
+                                        Background="#F9FAFB"
+                                        CornerRadius="8">
+                                    <TextBlock Text="ข้อมูลรายวันจะเริ่มทำงานเมื่อเราเชื่อมฐานข้อมูลแล้ว"
+                                               Foreground="#6B7280" />
+                                </Border>
                             </StackPanel>
-
                         </Border>
+                    </StackPanel>
+                </ScrollViewer>
 
-                    </Grid>
+                <!-- Settings -->
+                <ScrollViewer x:Name="SettingsContent"
+                              Visibility="Collapsed"
+                              VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="32">
+                        <Border Style="{StaticResource PlaceholderCardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="ตั้งค่า"
+                                           FontSize="26"
+                                           FontWeight="Bold"
+                                           Foreground="#111827" />
+                                <TextBlock Margin="0,10,0,0"
+                                           Text="กำหนดข้อมูลร้าน อัตราดอกเบี้ย ระยะเวลาต่อดอก และการตั้งค่าระบบ"
+                                           FontSize="14"
+                                           Foreground="#6B7280"
+                                           TextWrapping="Wrap" />
+                                <Border Margin="0,24,0,0"
+                                        Padding="16"
+                                        Background="#F9FAFB"
+                                        CornerRadius="8">
+                                    <TextBlock Text="หน้าตั้งค่าจะพัฒนาเพิ่มเติมใน Phase หลังจากระบบข้อมูลหลักพร้อม"
+                                               Foreground="#6B7280" />
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
 
-                    <!-- Phase note -->
-
-                    <Border Margin="0,26,0,0"
-                            Padding="20"
-                            Background="#FAFAFA"
-                            BorderBrush="#E5E7EB"
-                            BorderThickness="1"
-                            CornerRadius="10">
-
-                        <TextBlock
-                            Text="Phase 1A : โครงหน้าหลักของโปรแกรม — เมนูต่าง ๆ จะเริ่มทำงานใน Phase ถัดไป"
-                            FontSize="12"
-                            Foreground="#6B7280"
-                            TextWrapping="Wrap" />
-
-                    </Border>
-
-                </StackPanel>
-
-            </ScrollViewer>
+            </Grid>
 
         </Grid>
 
