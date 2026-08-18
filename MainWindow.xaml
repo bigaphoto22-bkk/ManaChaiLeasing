@@ -3,10 +3,420 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:ManaChaiLeasing"
         mc:Ignorable="d"
-        Title="มานะชัย ลิสซิ่ง" Height="450" Width="800">
+        Title="มานะชัย ลิสซิ่ง"
+        Width="1280"
+        Height="760"
+        MinWidth="1050"
+        MinHeight="650"
+        WindowStartupLocation="CenterScreen"
+        Background="#F5F6F8"
+        FontFamily="Segoe UI">
+
+    <Window.Resources>
+
+        <!-- เมนูด้านซ้าย -->
+        <Style x:Key="SidebarButtonStyle"
+               TargetType="Button">
+            <Setter Property="Height"
+                    Value="48" />
+            <Setter Property="Margin"
+                    Value="12,4" />
+            <Setter Property="Padding"
+                    Value="18,0" />
+            <Setter Property="HorizontalContentAlignment"
+                    Value="Left" />
+            <Setter Property="FontSize"
+                    Value="15" />
+            <Setter Property="FontWeight"
+                    Value="SemiBold" />
+            <Setter Property="Foreground"
+                    Value="#374151" />
+            <Setter Property="Background"
+                    Value="Transparent" />
+            <Setter Property="BorderThickness"
+                    Value="0" />
+            <Setter Property="Cursor"
+                    Value="Hand" />
+
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ButtonBorder"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="8">
+                            <ContentPresenter
+                                Margin="{TemplateBinding Padding}"
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="Center" />
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver"
+                                     Value="True">
+                                <Setter TargetName="ButtonBorder"
+                                        Property="Background"
+                                        Value="#EEF2F7" />
+                            </Trigger>
+
+                            <Trigger Property="IsPressed"
+                                     Value="True">
+                                <Setter TargetName="ButtonBorder"
+                                        Property="Background"
+                                        Value="#E2E8F0" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Card -->
+        <Style x:Key="DashboardCardStyle"
+               TargetType="Border">
+            <Setter Property="Background"
+                    Value="White" />
+            <Setter Property="CornerRadius"
+                    Value="12" />
+            <Setter Property="Padding"
+                    Value="22" />
+            <Setter Property="Margin"
+                    Value="0,0,16,0" />
+            <Setter Property="BorderBrush"
+                    Value="#E5E7EB" />
+            <Setter Property="BorderThickness"
+                    Value="1" />
+        </Style>
+
+    </Window.Resources>
+
     <Grid>
 
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- ====================================================== -->
+        <!-- SIDEBAR -->
+        <!-- ====================================================== -->
+
+        <Border Grid.Column="0"
+                Background="White"
+                BorderBrush="#E5E7EB"
+                BorderThickness="0,0,1,0">
+
+            <Grid>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="105" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="75" />
+                </Grid.RowDefinitions>
+
+                <!-- Logo / Program Name -->
+
+                <Border Grid.Row="0"
+                        BorderBrush="#E5E7EB"
+                        BorderThickness="0,0,0,1">
+
+                    <StackPanel VerticalAlignment="Center"
+                                Margin="24,0">
+
+                        <TextBlock Text="มานะชัย"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Foreground="#111827" />
+
+                        <TextBlock Text="ลิสซิ่ง"
+                                   Margin="0,2,0,0"
+                                   FontSize="15"
+                                   Foreground="#6B7280" />
+
+                    </StackPanel>
+
+                </Border>
+
+                <!-- Navigation -->
+
+                <StackPanel Grid.Row="1"
+                            Margin="0,18,0,0">
+
+                    <TextBlock Text="เมนูหลัก"
+                               Margin="30,0,0,10"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Foreground="#9CA3AF" />
+
+                    <!-- Active menu -->
+                    <Button Height="48"
+                            Margin="12,4"
+                            Padding="18,0"
+                            HorizontalContentAlignment="Left"
+                            FontSize="15"
+                            FontWeight="SemiBold"
+                            Foreground="#1D4ED8"
+                            Background="#EFF6FF"
+                            BorderThickness="0"
+                            Cursor="Hand">
+
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}"
+                                        CornerRadius="8">
+                                    <ContentPresenter
+                                        Margin="{TemplateBinding Padding}"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Center" />
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+
+                        <TextBlock Text="หน้าหลัก" />
+
+                    </Button>
+
+                    <Button Content="รับจำนำใหม่"
+                            Style="{StaticResource SidebarButtonStyle}" />
+
+                    <Button Content="ค้นหารายการ"
+                            Style="{StaticResource SidebarButtonStyle}" />
+
+                    <Button Content="รายการวันนี้"
+                            Style="{StaticResource SidebarButtonStyle}" />
+
+                    <Separator Margin="24,14"
+                               Background="#E5E7EB" />
+
+                    <Button Content="ตั้งค่า"
+                            Style="{StaticResource SidebarButtonStyle}" />
+
+                </StackPanel>
+
+                <!-- Bottom -->
+
+                <Border Grid.Row="2"
+                        BorderBrush="#E5E7EB"
+                        BorderThickness="0,1,0,0">
+
+                    <StackPanel VerticalAlignment="Center"
+                                Margin="24,0">
+
+                        <TextBlock Text="มานะชัย ลิสซิ่ง"
+                                   FontSize="12"
+                                   Foreground="#6B7280" />
+
+                        <TextBlock Text="Offline System"
+                                   Margin="0,3,0,0"
+                                   FontSize="11"
+                                   Foreground="#9CA3AF" />
+
+                    </StackPanel>
+
+                </Border>
+
+            </Grid>
+
+        </Border>
+
+        <!-- ====================================================== -->
+        <!-- MAIN CONTENT -->
+        <!-- ====================================================== -->
+
+        <Grid Grid.Column="1">
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="86" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+
+            <Border Grid.Row="0"
+                    Background="White"
+                    BorderBrush="#E5E7EB"
+                    BorderThickness="0,0,0,1">
+
+                <Grid Margin="32,0">
+
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel VerticalAlignment="Center">
+
+                        <TextBlock Text="หน้าหลัก"
+                                   FontSize="24"
+                                   FontWeight="SemiBold"
+                                   Foreground="#111827" />
+
+                        <TextBlock Text="ระบบบันทึกข้อมูลลูกค้าและรายการรับจำนำ"
+                                   Margin="0,4,0,0"
+                                   FontSize="13"
+                                   Foreground="#6B7280" />
+
+                    </StackPanel>
+
+                    <Border Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Background="#F3F4F6"
+                            CornerRadius="8"
+                            Padding="14,8">
+
+                        <TextBlock Text="Offline"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   Foreground="#4B5563" />
+
+                    </Border>
+
+                </Grid>
+
+            </Border>
+
+            <!-- Page Content -->
+
+            <ScrollViewer Grid.Row="1"
+                          VerticalScrollBarVisibility="Auto">
+
+                <StackPanel Margin="32">
+
+                    <!-- Welcome -->
+
+                    <Border Background="White"
+                            CornerRadius="12"
+                            BorderBrush="#E5E7EB"
+                            BorderThickness="1"
+                            Padding="26">
+
+                        <StackPanel>
+
+                            <TextBlock Text="มานะชัย ลิสซิ่ง"
+                                       FontSize="28"
+                                       FontWeight="Bold"
+                                       Foreground="#111827" />
+
+                            <TextBlock Margin="0,8,0,0"
+                                       Text="ระบบสำหรับบันทึกข้อมูลลูกค้า รับจำนำ ต่อดอก ไถ่ถอน และค้นหาประวัติย้อนหลัง"
+                                       FontSize="14"
+                                       Foreground="#6B7280"
+                                       TextWrapping="Wrap" />
+
+                        </StackPanel>
+
+                    </Border>
+
+                    <!-- Quick menu title -->
+
+                    <TextBlock Margin="0,28,0,14"
+                               Text="เมนูใช้งาน"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Foreground="#111827" />
+
+                    <!-- Cards -->
+
+                    <Grid>
+
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Pawn -->
+
+                        <Border Grid.Column="0"
+                                Style="{StaticResource DashboardCardStyle}">
+
+                            <StackPanel>
+
+                                <TextBlock Text="รับจำนำใหม่"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           Foreground="#111827" />
+
+                                <TextBlock Margin="0,8,0,0"
+                                           Text="บันทึกลูกค้า สินค้า หมายเลขตั๋ว และยอดเงิน"
+                                           FontSize="13"
+                                           Foreground="#6B7280"
+                                           TextWrapping="Wrap" />
+
+                            </StackPanel>
+
+                        </Border>
+
+                        <!-- Search -->
+
+                        <Border Grid.Column="1"
+                                Style="{StaticResource DashboardCardStyle}">
+
+                            <StackPanel>
+
+                                <TextBlock Text="ค้นหารายการ"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           Foreground="#111827" />
+
+                                <TextBlock Margin="0,8,0,0"
+                                           Text="ค้นหาจากชื่อ เลขตั๋ว หรือรายละเอียดสินค้า"
+                                           FontSize="13"
+                                           Foreground="#6B7280"
+                                           TextWrapping="Wrap" />
+
+                            </StackPanel>
+
+                        </Border>
+
+                        <!-- Today -->
+
+                        <Border Grid.Column="2"
+                                Margin="0"
+                                Style="{StaticResource DashboardCardStyle}">
+
+                            <StackPanel>
+
+                                <TextBlock Text="รายการวันนี้"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           Foreground="#111827" />
+
+                                <TextBlock Margin="0,8,0,0"
+                                           Text="ดูรายการรับจำนำ ต่อดอก ไถ่ถอน และยอดประจำวัน"
+                                           FontSize="13"
+                                           Foreground="#6B7280"
+                                           TextWrapping="Wrap" />
+
+                            </StackPanel>
+
+                        </Border>
+
+                    </Grid>
+
+                    <!-- Phase note -->
+
+                    <Border Margin="0,26,0,0"
+                            Padding="20"
+                            Background="#FAFAFA"
+                            BorderBrush="#E5E7EB"
+                            BorderThickness="1"
+                            CornerRadius="10">
+
+                        <TextBlock
+                            Text="Phase 1A : โครงหน้าหลักของโปรแกรม — เมนูต่าง ๆ จะเริ่มทำงานใน Phase ถัดไป"
+                            FontSize="12"
+                            Foreground="#6B7280"
+                            TextWrapping="Wrap" />
+
+                    </Border>
+
+                </StackPanel>
+
+            </ScrollViewer>
+
+        </Grid>
+
     </Grid>
+
 </Window>
