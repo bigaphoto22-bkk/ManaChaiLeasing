@@ -370,7 +370,7 @@
                                 BorderBrush="#E5E7EB"
                                 BorderThickness="1"
                                 CornerRadius="10">
-                            <TextBlock Text="Phase 1C.1 : Smart Product Details — เลือก/พิมพ์ข้อมูลสินค้าเป็นช่อง ๆ และระบบประกอบรายละเอียดสรุปให้อัตโนมัติ"
+                            <TextBlock Text="Phase 2B : บันทึกและค้นหาลูกค้าจริงจาก SQLite ได้แล้ว — การบันทึกตั๋วจำนำจะทำใน Phase ถัดไป"
                                        FontSize="12"
                                        Foreground="#6B7280"
                                        TextWrapping="Wrap" />
@@ -405,7 +405,7 @@
                                                FontWeight="SemiBold"
                                                Foreground="#1E3A8A" />
                                     <TextBlock Margin="0,4,0,0"
-                                               Text="ใน Phase ต่อไปจะสามารถค้นหาลูกค้าเก่าจากชื่อ นามสกุล หรือเลขบัตรประชาชน แล้วดึงข้อมูลเดิมมาใช้ได้"
+                                               Text="ค้นหาลูกค้าเก่าจากชื่อ นามสกุล เลขบัตรประชาชน เบอร์โทรศัพท์ หรือที่อยู่ แล้วดึงข้อมูลเดิมมาใช้ได้ทันที"
                                                FontSize="13"
                                                Foreground="#4B5563"
                                                TextWrapping="Wrap" />
@@ -415,8 +415,8 @@
                                         Margin="20,0,0,0"
                                         Width="150"
                                         Content="ค้นหาลูกค้าเก่า"
-                                        IsEnabled="False"
-                                        Style="{StaticResource SecondaryButtonStyle}" />
+                                        Style="{StaticResource SecondaryButtonStyle}"
+                                        Click="SearchExistingCustomer_Click" />
                             </Grid>
 
                         </Border>
@@ -473,8 +473,31 @@
 
                             <StackPanel>
 
-                                <TextBlock Text="ข้อมูลลูกค้า"
-                                           Style="{StaticResource FormSectionTitleStyle}" />
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel>
+                                        <TextBlock Text="ข้อมูลลูกค้า"
+                                                   FontSize="18"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#111827" />
+
+                                        <TextBlock x:Name="CustomerRecordStatusText"
+                                                   Margin="0,4,0,0"
+                                                   Text="ลูกค้าใหม่ • ยังไม่ได้บันทึก"
+                                                   FontSize="12"
+                                                   Foreground="#6B7280" />
+                                    </StackPanel>
+
+                                    <Button Grid.Column="1"
+                                            Width="150"
+                                            Content="บันทึกลูกค้า"
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            Click="SaveCustomerButton_Click" />
+                                </Grid>
 
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -1143,7 +1166,7 @@
                                 BorderBrush="#E5E7EB"
                                 BorderThickness="1"
                                 CornerRadius="10">
-                            <TextBlock Text="Phase 1C.1 : Smart Product Details — IMEI / Serial, อุปกรณ์ และสภาพ/ตำหนิ เป็นข้อมูลเสริม ไม่บังคับกรอก"
+                            <TextBlock Text="Phase 2B : Customer Save &amp; Reuse — บันทึกลูกค้า ค้นหาแบบ Realtime และดึงข้อมูลลูกค้าเดิมกลับมาใช้ได้"
                                        FontSize="12"
                                        Foreground="#6B7280"
                                        TextWrapping="Wrap" />

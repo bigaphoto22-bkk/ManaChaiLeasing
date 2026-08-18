@@ -5,12 +5,16 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using ManaChaiLeasing.Data;
+using ManaChaiLeasing.Models;
+using ManaChaiLeasing.Services;
 
 namespace ManaChaiLeasing;
 
 public partial class MainWindow : Window
 {
     private bool _isInitializing = true;
+    private readonly CustomerService _customerService = new();
+    private int? _selectedCustomerId;
 
     public MainWindow()
     {
@@ -91,6 +95,152 @@ public partial class MainWindow : Window
             SettingsButton,
             "ตั้งค่า",
             "ตั้งค่าข้อมูลร้านและเงื่อนไขการใช้งานระบบ");
+    }
+
+    private void SearchExistingCustomer_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        CustomerLookupWindow lookupWindow = new()
+        {
+            Owner = this
+        };
+
+        bool? result = lookupWindow.ShowDialog();
+
+        if (result == true &&
+            lookupWindow.SelectedCustomer is not null)
+        {
+            FillCustomerForm(lookupWindow.SelectedCustomer);
+        }
+    }
+
+    private void SaveCustomerButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        string firstName = FirstNameTextBox.Text.Trim();
+        string lastName = LastNameTextBox.Text.Trim();
+        string citizenId = CitizenIdTextBox.Text.Trim();
+        string ageText = AgeTextBox.Text.Trim();
+
+        if (string.IsNullOrWhiteSpace(firstName) ||
+            string.IsNullOrWhiteSpace(lastName))
+        {
+            MessageBox.Show(
+                "กรุณากรอกชื่อและนามสกุลลูกค้า",
+                "มานะชัย ลิสซิ่ง",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(citizenId) &&
+            (citizenId.Length != 13 ||
+             !citizenId.All(char.IsDigit)))
+        {
+            MessageBox.Show(
+                "เลขบัตรประชาชนต้องเป็นตัวเลข 13 หลัก หรือเว้นว่างไว้",
+                "มานะชัย ลิสซิ่ง",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+
+            CitizenIdTextBox.Focus();
+            return;
+        }
+
+        int? age = null;
+
+        if (!string.IsNullOrWhiteSpace(ageText))
+        {
+            if (!int.TryParse(ageText, out int parsedAge) ||
+                parsedAge < 1 ||
+                parsedAge > 120)
+            {
+                MessageBox.Show(
+                    "อายุต้องเป็นตัวเลขระหว่าง 1 - 120 ปี หรือเว้นว่างไว้",
+                    "มานะชัย ลิสซิ่ง",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                AgeTextBox.Focus();
+                return;
+            }
+
+            age = parsedAge;
+        }
+
+        try
+        {
+            Customer input = new()
+            {
+                FirstName = firstName,
+                LastName = lastName,
+                CitizenId = citizenId,
+                Age = age,
+                Phone = PhoneTextBox.Text,
+                Address = AddressTextBox.Text
+            };
+
+            Customer savedCustomer =
+                _customerService.SaveCustomer(
+                    input,
+                    _selectedCustomerId);
+
+            _selectedCustomerId = savedCustomer.Id;
+
+            CustomerRecordStatusText.Text =
+                $"บันทึกแล้ว • ลูกค้า #{savedCustomer.Id}";
+
+            CustomerRecordStatusText.Foreground =
+                Brushes.ForestGreen;
+
+            MessageBox.Show(
+                $"บันทึกข้อมูลลูกค้าเรียบร้อย\n\n{savedCustomer.FirstName} {savedCustomer.LastName}",
+                "มานะชัย ลิสซิ่ง",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"ไม่สามารถบันทึกข้อมูลลูกค้าได้\n\n{ex.Message}",
+                "มานะชัย ลิสซิ่ง",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
+    private void FillCustomerForm(Customer customer)
+    {
+        _selectedCustomerId = customer.Id;
+
+        FirstNameTextBox.Text = customer.FirstName;
+        LastNameTextBox.Text = customer.LastName;
+        CitizenIdTextBox.Text = customer.CitizenId ?? string.Empty;
+        AgeTextBox.Text = customer.Age?.ToString() ?? string.Empty;
+        PhoneTextBox.Text = customer.Phone ?? string.Empty;
+        AddressTextBox.Text = customer.Address ?? string.Empty;
+
+        CustomerRecordStatusText.Text =
+            $"ลูกค้าเดิม • #{customer.Id}";
+
+        CustomerRecordStatusText.Foreground =
+            Brushes.ForestGreen;
+
+        FirstNameTextBox.Focus();
+    }
+
+    private void ResetCustomerState()
+    {
+        _selectedCustomerId = null;
+
+        CustomerRecordStatusText.Text =
+            "ลูกค้าใหม่ • ยังไม่ได้บันทึก";
+
+        CustomerRecordStatusText.Foreground =
+            Brushes.DimGray;
     }
 
     private void AssetCategoryComboBox_SelectionChanged(
@@ -290,6 +440,8 @@ public partial class MainWindow : Window
         AgeTextBox.Clear();
         PhoneTextBox.Clear();
         AddressTextBox.Clear();
+
+        ResetCustomerState();
 
         AssetCategoryComboBox.SelectedIndex = 0;
         PawnAmountTextBox.Clear();
