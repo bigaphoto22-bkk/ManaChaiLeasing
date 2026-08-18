@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using ManaChaiLeasing.Data;
 
 namespace ManaChaiLeasing;
 
@@ -14,11 +16,36 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
+        InitializeDatabase();
+
         PawnDatePicker.SelectedDate = DateTime.Today;
 
         _isInitializing = false;
         UpdateProductForm();
         UpdateAssetPreview();
+    }
+
+    private void InitializeDatabase()
+    {
+        try
+        {
+            DatabaseInitializer.Initialize();
+
+            DatabaseStatusText.Text = "Offline • SQLite Ready";
+            DatabaseStatusText.Foreground = Brushes.ForestGreen;
+            DatabaseStatusText.ToolTip = DatabasePaths.DatabaseFile;
+        }
+        catch (Exception ex)
+        {
+            DatabaseStatusText.Text = "Database Error";
+            DatabaseStatusText.Foreground = Brushes.Firebrick;
+
+            MessageBox.Show(
+                $"ไม่สามารถเตรียมฐานข้อมูล SQLite ได้\n\n{ex.Message}",
+                "มานะชัย ลิสซิ่ง",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
     }
 
     private void HomeButton_Click(object sender, RoutedEventArgs e)

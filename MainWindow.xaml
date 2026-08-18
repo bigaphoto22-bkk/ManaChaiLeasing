@@ -219,7 +219,8 @@
                         <TextBlock Text="มานะชัย ลิสซิ่ง"
                                    FontSize="12"
                                    Foreground="#6B7280" />
-                        <TextBlock Text="Offline System"
+                        <TextBlock x:Name="DatabaseStatusText"
+                                   Text="กำลังเตรียมฐานข้อมูล..."
                                    Margin="0,3,0,0"
                                    FontSize="11"
                                    Foreground="#9CA3AF" />
