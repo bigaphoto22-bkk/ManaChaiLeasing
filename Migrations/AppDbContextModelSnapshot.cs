@@ -17,6 +17,18 @@ partial class AppDbContextModelSnapshot : ModelSnapshot
 #pragma warning disable 612, 618
         modelBuilder.HasAnnotation("ProductVersion", "10.0.10");
 
+        modelBuilder.Entity("ManaChaiLeasing.Models.AppSetting", b =>
+        {
+            b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("INTEGER");
+            b.Property<int>("InterestPeriodDays").HasColumnType("INTEGER");
+            b.Property<decimal>("InterestRatePercent").HasPrecision(8, 2).HasColumnType("TEXT");
+            b.Property<string>("StoreName").IsRequired().HasMaxLength(200).HasColumnType("TEXT");
+            b.Property<DateTime>("UpdatedAt").HasColumnType("TEXT");
+
+            b.HasKey("Id");
+            b.ToTable("AppSettings");
+        });
+
         modelBuilder.Entity("ManaChaiLeasing.Models.Customer", b =>
         {
             b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("INTEGER");

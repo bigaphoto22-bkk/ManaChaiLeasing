@@ -5,6 +5,7 @@ namespace ManaChaiLeasing.Data;
 
 public class AppDbContext : DbContext
 {
+    public DbSet<AppSetting> AppSettings => Set<AppSetting>();
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<PawnTicket> PawnTickets => Set<PawnTicket>();
     public DbSet<PawnTransaction> PawnTransactions => Set<PawnTransaction>();
@@ -17,6 +18,15 @@ public class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<AppSetting>(entity =>
+        {
+            entity.Property(x => x.StoreName)
+                .IsRequired();
+
+            entity.Property(x => x.InterestRatePercent)
+                .HasPrecision(8, 2);
+        });
+
         modelBuilder.Entity<Customer>(entity =>
         {
             entity.HasIndex(x => x.CitizenId)

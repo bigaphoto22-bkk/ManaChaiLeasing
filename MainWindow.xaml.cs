@@ -17,6 +17,7 @@ public partial class MainWindow : Window
     private readonly CustomerService _customerService = new();
     private readonly PawnTicketService _pawnTicketService = new();
     private readonly PawnTicketSearchService _pawnTicketSearchService = new();
+    private readonly AppSettingService _appSettingService = new();
     private int? _selectedCustomerId;
 
     public MainWindow()
@@ -102,6 +103,163 @@ public partial class MainWindow : Window
             SettingsButton,
             "ตั้งค่า",
             "ตั้งค่าข้อมูลร้านและเงื่อนไขการใช้งานระบบ");
+
+        LoadBusinessSettings();
+    }
+
+    private void LoadBusinessSettings()
+    {
+        try
+        {
+            AppSetting setting =
+                _appSettingService.GetSettings();
+
+            StoreNameSettingTextBox.Text =
+                setting.StoreName;
+
+            InterestRateSettingTextBox.Text =
+                setting.InterestRatePercent.ToString(
+                    "0.##",
+                    CultureInfo.CurrentCulture);
+
+            InterestPeriodDaysSettingTextBox.Text =
+                setting.InterestPeriodDays.ToString(
+                    CultureInfo.CurrentCulture);
+
+            BusinessSettingSavedStatusText.Text =
+                $"บันทึกล่าสุด: {setting.UpdatedAt:dd/MM/yyyy HH:mm}";
+
+            UpdateInterestPreview();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"ไม่สามารถอ่านการตั้งค่าได้\n\n{ex.Message}",
+                "มานะชัย ลิสซิ่ง",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
+    private void SaveBusinessSettings_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        if (!TryParseSettingDecimal(
+                InterestRateSettingTextBox.Text,
+                out decimal interestRate))
+        {
+            MessageBox.Show(
+                "กรุณาระบุอัตราดอกเบี้ยเป็นตัวเลข เช่น 5 หรือ 5.5",
+                "มานะชัย ลิสซิ่ง",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+
+            InterestRateSettingTextBox.Focus();
+            return;
+        }
+
+        if (!int.TryParse(
+                InterestPeriodDaysSettingTextBox.Text.Trim(),
+                out int periodDays))
+        {
+            MessageBox.Show(
+                "กรุณาระบุจำนวนวันต่อรอบเป็นตัวเลขจำนวนเต็ม เช่น 15",
+                "มานะชัย ลิสซิ่ง",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+
+            InterestPeriodDaysSettingTextBox.Focus();
+            return;
+        }
+
+        try
+        {
+            AppSetting saved =
+                _appSettingService.SaveSettings(
+                    StoreNameSettingTextBox.Text,
+                    interestRate,
+                    periodDays);
+
+            BusinessSettingSavedStatusText.Text =
+                $"บันทึกล่าสุด: {saved.UpdatedAt:dd/MM/yyyy HH:mm}";
+
+            UpdateInterestPreview();
+
+            MessageBox.Show(
+                "บันทึกการตั้งค่าเรียบร้อย\n\n" +
+                $"ชื่อร้าน: {saved.StoreName}\n" +
+                $"ดอกเบี้ย: {saved.InterestRatePercent:0.##}% ต่อรอบ\n" +
+                $"ระยะเวลา: {saved.InterestPeriodDays:N0} วันต่อรอบ",
+                "มานะชัย ลิสซิ่ง",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"ไม่สามารถบันทึกการตั้งค่าได้\n\n{ex.Message}",
+                "มานะชัย ลิสซิ่ง",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
+    private void BusinessSettingInput_TextChanged(
+        object sender,
+        TextChangedEventArgs e)
+    {
+        if (_isInitializing)
+        {
+            return;
+        }
+
+        UpdateInterestPreview();
+    }
+
+    private void UpdateInterestPreview()
+    {
+        const decimal examplePrincipal = 10000m;
+
+        if (!TryParseSettingDecimal(
+                InterestRateSettingTextBox.Text,
+                out decimal interestRate) ||
+            !int.TryParse(
+                InterestPeriodDaysSettingTextBox.Text.Trim(),
+                out int periodDays) ||
+            interestRate <= 0m ||
+            periodDays <= 0)
+        {
+            InterestPreviewText.Text =
+                "ดอกเบี้ยต่อรอบ: กรุณาระบุค่าที่ถูกต้อง";
+            return;
+        }
+
+        decimal interest =
+            _appSettingService.CalculateInterestForOnePeriod(
+                examplePrincipal,
+                interestRate);
+
+        InterestPreviewText.Text =
+            $"ดอกเบี้ยต่อรอบ: {interest:N2} บาท • ทุก {periodDays:N0} วัน";
+    }
+
+    private static bool TryParseSettingDecimal(
+        string text,
+        out decimal value)
+    {
+        string cleaned = text.Trim();
+
+        return decimal.TryParse(
+                   cleaned,
+                   NumberStyles.Number,
+                   CultureInfo.CurrentCulture,
+                   out value) ||
+               decimal.TryParse(
+                   cleaned,
+                   NumberStyles.Number,
+                   CultureInfo.InvariantCulture,
+                   out value);
     }
 
     private void SearchExistingCustomer_Click(

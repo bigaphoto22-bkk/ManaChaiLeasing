@@ -374,7 +374,7 @@
                                 BorderBrush="#E5E7EB"
                                 BorderThickness="1"
                                 CornerRadius="10">
-                            <TextBlock Text="Phase 2B : บันทึกและค้นหาลูกค้าจริงจาก SQLite ได้แล้ว — การบันทึกตั๋วจำนำจะทำใน Phase ถัดไป"
+                            <TextBlock Text="Phase 2E : ระบบบันทึกตั๋ว ค้นหารายการ และตั้งค่ากติกาธุรกิจผ่าน SQLite ได้แล้ว"
                                        FontSize="12"
                                        Foreground="#6B7280"
                                        TextWrapping="Wrap" />
@@ -1172,7 +1172,7 @@
                                 BorderBrush="#E5E7EB"
                                 BorderThickness="1"
                                 CornerRadius="10">
-                            <TextBlock Text="Phase 2D : Search Pawn Tickets — บันทึกตั๋วจำนำและค้นหาประวัติย้อนหลังจาก SQLite ได้แล้ว"
+                            <TextBlock Text="Phase 2E : Business Settings — อัตราดอกเบี้ยและจำนวนวันต่อรอบไม่ถูกฝังตายตัวในระบบ"
                                        FontSize="12"
                                        Foreground="#6B7280"
                                        TextWrapping="Wrap" />
@@ -1330,26 +1330,183 @@
                               Visibility="Collapsed"
                               VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="32">
-                        <Border Style="{StaticResource PlaceholderCardStyle}">
+
+                        <Border Padding="24"
+                                Background="White"
+                                BorderBrush="#E5E7EB"
+                                BorderThickness="1"
+                                CornerRadius="12">
                             <StackPanel>
-                                <TextBlock Text="ตั้งค่า"
+                                <TextBlock Text="ตั้งค่าธุรกิจ"
                                            FontSize="26"
                                            FontWeight="Bold"
                                            Foreground="#111827" />
-                                <TextBlock Margin="0,10,0,0"
-                                           Text="กำหนดข้อมูลร้าน อัตราดอกเบี้ย ระยะเวลาต่อดอก และการตั้งค่าระบบ"
-                                           FontSize="14"
+
+                                <TextBlock Margin="0,8,0,0"
+                                           Text="ค่าที่บันทึกในหน้านี้จะเป็นกติกากลางของระบบ และจะถูกนำไปใช้กับการต่อดอกใน Phase ถัดไป"
+                                           FontSize="15"
                                            Foreground="#6B7280"
                                            TextWrapping="Wrap" />
-                                <Border Margin="0,24,0,0"
-                                        Padding="16"
-                                        Background="#F9FAFB"
-                                        CornerRadius="8">
-                                    <TextBlock Text="หน้าตั้งค่าจะพัฒนาเพิ่มเติมใน Phase หลังจากระบบข้อมูลหลักพร้อม"
-                                               Foreground="#6B7280" />
-                                </Border>
                             </StackPanel>
                         </Border>
+
+                        <Border Margin="0,18,0,0"
+                                Padding="24"
+                                Background="White"
+                                BorderBrush="#E5E7EB"
+                                BorderThickness="1"
+                                CornerRadius="12">
+                            <StackPanel>
+
+                                <TextBlock Text="ข้อมูลร้าน"
+                                           FontSize="20"
+                                           FontWeight="SemiBold"
+                                           Foreground="#111827" />
+
+                                <StackPanel Margin="0,18,0,0"
+                                            Width="460"
+                                            HorizontalAlignment="Left">
+                                    <TextBlock Text="ชื่อร้าน"
+                                               FontSize="15"
+                                               FontWeight="SemiBold"
+                                               Foreground="#374151"
+                                               Margin="0,0,0,7" />
+
+                                    <TextBox x:Name="StoreNameSettingTextBox"
+                                             Height="46"
+                                             Padding="12,7"
+                                             FontSize="17"
+                                             VerticalContentAlignment="Center"
+                                             BorderBrush="#D1D5DB"
+                                             BorderThickness="1" />
+                                </StackPanel>
+
+                                <Separator Margin="0,24,0,22" />
+
+                                <TextBlock Text="เงื่อนไขการต่อดอก"
+                                           FontSize="20"
+                                           FontWeight="SemiBold"
+                                           Foreground="#111827" />
+
+                                <Grid Margin="0,18,0,0"
+                                      HorizontalAlignment="Left">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="260" />
+                                        <ColumnDefinition Width="28" />
+                                        <ColumnDefinition Width="260" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="อัตราดอกเบี้ยต่อรอบ (%)"
+                                                   FontSize="15"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#374151"
+                                                   Margin="0,0,0,7" />
+
+                                        <TextBox x:Name="InterestRateSettingTextBox"
+                                                 Height="46"
+                                                 Padding="12,7"
+                                                 FontSize="18"
+                                                 FontWeight="SemiBold"
+                                                 TextAlignment="Right"
+                                                 VerticalContentAlignment="Center"
+                                                 BorderBrush="#D1D5DB"
+                                                 BorderThickness="1"
+                                                 TextChanged="BusinessSettingInput_TextChanged" />
+
+                                        <TextBlock Margin="0,6,0,0"
+                                                   Text="ตัวอย่างค่าเริ่มต้น: 5%"
+                                                   FontSize="12"
+                                                   Foreground="#6B7280" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="จำนวนวันต่อรอบ"
+                                                   FontSize="15"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#374151"
+                                                   Margin="0,0,0,7" />
+
+                                        <TextBox x:Name="InterestPeriodDaysSettingTextBox"
+                                                 Height="46"
+                                                 Padding="12,7"
+                                                 FontSize="18"
+                                                 FontWeight="SemiBold"
+                                                 TextAlignment="Right"
+                                                 VerticalContentAlignment="Center"
+                                                 BorderBrush="#D1D5DB"
+                                                 BorderThickness="1"
+                                                 TextChanged="BusinessSettingInput_TextChanged" />
+
+                                        <TextBlock Margin="0,6,0,0"
+                                                   Text="ตัวอย่างค่าเริ่มต้น: 15 วัน"
+                                                   FontSize="12"
+                                                   Foreground="#6B7280" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <Border Margin="0,24,0,0"
+                                        Width="620"
+                                        HorizontalAlignment="Left"
+                                        Padding="20"
+                                        Background="#EFF6FF"
+                                        BorderBrush="#BFDBFE"
+                                        BorderThickness="1"
+                                        CornerRadius="10">
+                                    <StackPanel>
+                                        <TextBlock Text="ตัวอย่างการคำนวณ"
+                                                   FontSize="17"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#1E3A8A" />
+
+                                        <TextBlock Margin="0,8,0,0"
+                                                   Text="สมมุติเงินต้น 10,000.00 บาท"
+                                                   FontSize="15"
+                                                   Foreground="#374151" />
+
+                                        <TextBlock x:Name="InterestPreviewText"
+                                                   Margin="0,7,0,0"
+                                                   Text="ดอกเบี้ยต่อรอบ: -"
+                                                   FontSize="20"
+                                                   FontWeight="Bold"
+                                                   Foreground="#1D4ED8"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Grid Margin="0,26,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock x:Name="BusinessSettingSavedStatusText"
+                                               VerticalAlignment="Center"
+                                               FontSize="13"
+                                               Foreground="#6B7280" />
+
+                                    <Button Grid.Column="1"
+                                            Width="190"
+                                            Height="50"
+                                            Content="บันทึกการตั้งค่า"
+                                            Style="{StaticResource PrimaryButtonStyle}"
+                                            Click="SaveBusinessSettings_Click" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Margin="0,18,0,0"
+                                Padding="18"
+                                Background="#FFFBEB"
+                                BorderBrush="#FDE68A"
+                                BorderThickness="1"
+                                CornerRadius="10">
+                            <TextBlock FontSize="13"
+                                       Foreground="#92400E"
+                                       TextWrapping="Wrap"
+                                       Text="Phase 2E จะเก็บค่ากติกาไว้ใน SQLite ก่อน ส่วนการทำรายการต่อดอกและไถ่ถอนจริงจะเปิดใน Phase ถัดไป" />
+                        </Border>
+
                     </StackPanel>
                 </ScrollViewer>
 
