@@ -295,75 +295,200 @@
                                 BorderBrush="#E5E7EB"
                                 BorderThickness="1"
                                 Padding="26">
-                            <StackPanel>
-                                <TextBlock Text="มานะชัย ลิสซิ่ง"
-                                           FontSize="28"
-                                           FontWeight="Bold"
-                                           Foreground="#111827" />
-                                <TextBlock Margin="0,8,0,0"
-                                           Text="ระบบสำหรับบันทึกข้อมูลลูกค้า รับจำนำ ต่อดอก ไถ่ถอน และค้นหาประวัติย้อนหลัง"
-                                           FontSize="14"
-                                           Foreground="#6B7280"
-                                           TextWrapping="Wrap" />
-                            </StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel>
+                                    <TextBlock Text="มานะชัย ลิสซิ่ง"
+                                               FontSize="28"
+                                               FontWeight="Bold"
+                                               Foreground="#111827" />
+
+                                    <TextBlock Margin="0,8,0,0"
+                                               Text="ภาพรวมกิจการ ณ วันนี้"
+                                               FontSize="16"
+                                               FontWeight="SemiBold"
+                                               Foreground="#374151" />
+
+                                    <TextBlock x:Name="HomeDashboardDateText"
+                                               Margin="0,5,0,0"
+                                               FontSize="13"
+                                               Foreground="#6B7280" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1"
+                                            HorizontalAlignment="Right">
+                                    <Button Width="140"
+                                            Height="44"
+                                            Content="รีเฟรช"
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            Click="RefreshHomeDashboardButton_Click" />
+
+                                    <TextBlock x:Name="HomeDashboardUpdatedText"
+                                               Margin="0,7,0,0"
+                                               HorizontalAlignment="Right"
+                                               FontSize="12"
+                                               Foreground="#9CA3AF" />
+                                </StackPanel>
+                            </Grid>
                         </Border>
 
                         <TextBlock Margin="0,28,0,14"
-                                   Text="เมนูใช้งาน"
-                                   FontSize="18"
+                                   Text="ภาพรวมวันนี้"
+                                   FontSize="19"
                                    FontWeight="SemiBold"
                                    Foreground="#111827" />
 
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="16" />
                                 <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="16" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
 
                             <Border Grid.Column="0"
-                                    Style="{StaticResource DashboardCardStyle}">
+                                    Padding="22"
+                                    Background="White"
+                                    BorderBrush="#E5E7EB"
+                                    BorderThickness="1"
+                                    CornerRadius="12">
                                 <StackPanel>
-                                    <TextBlock Text="รับจำนำใหม่"
-                                               FontSize="18"
-                                               FontWeight="SemiBold"
-                                               Foreground="#111827" />
-                                    <TextBlock Margin="0,8,0,0"
-                                               Text="บันทึกลูกค้า สินค้า หมายเลขตั๋ว และยอดเงิน"
-                                               FontSize="13"
-                                               Foreground="#6B7280"
-                                               TextWrapping="Wrap" />
-                                </StackPanel>
-                            </Border>
-
-                            <Border Grid.Column="1"
-                                    Style="{StaticResource DashboardCardStyle}">
-                                <StackPanel>
-                                    <TextBlock Text="ค้นหารายการ"
-                                               FontSize="18"
-                                               FontWeight="SemiBold"
-                                               Foreground="#111827" />
-                                    <TextBlock Margin="0,8,0,0"
-                                               Text="ค้นหาจากชื่อ เลขตั๋ว หรือรายละเอียดสินค้า"
-                                               FontSize="13"
-                                               Foreground="#6B7280"
-                                               TextWrapping="Wrap" />
+                                    <TextBlock Text="กำลังจำนำ"
+                                               FontSize="15"
+                                               Foreground="#6B7280" />
+                                    <TextBlock x:Name="HomeActiveTicketCountText"
+                                               Margin="0,8,0,0"
+                                               FontSize="30"
+                                               FontWeight="Bold"
+                                               Foreground="#15803D" />
+                                    <TextBlock Margin="0,5,0,0"
+                                               Text="ตั๋วที่ยัง Active ทั้งหมด"
+                                               FontSize="12"
+                                               Foreground="#9CA3AF" />
                                 </StackPanel>
                             </Border>
 
                             <Border Grid.Column="2"
-                                    Margin="0"
-                                    Style="{StaticResource DashboardCardStyle}">
+                                    Padding="22"
+                                    Background="White"
+                                    BorderBrush="#E5E7EB"
+                                    BorderThickness="1"
+                                    CornerRadius="12">
                                 <StackPanel>
-                                    <TextBlock Text="รายการวันนี้"
-                                               FontSize="18"
-                                               FontWeight="SemiBold"
-                                               Foreground="#111827" />
-                                    <TextBlock Margin="0,8,0,0"
-                                               Text="ดูรายการรับจำนำ ต่อดอก ไถ่ถอน และยอดประจำวัน"
-                                               FontSize="13"
-                                               Foreground="#6B7280"
-                                               TextWrapping="Wrap" />
+                                    <TextBlock Text="ครบกำหนดวันนี้"
+                                               FontSize="15"
+                                               Foreground="#6B7280" />
+                                    <TextBlock x:Name="HomeDueTodayCountText"
+                                               Margin="0,8,0,0"
+                                               FontSize="30"
+                                               FontWeight="Bold"
+                                               Foreground="#B45309" />
+                                    <TextBlock Margin="0,5,0,0"
+                                               Text="ตั๋ว Active ที่ถึงกำหนดวันนี้"
+                                               FontSize="12"
+                                               Foreground="#9CA3AF" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="4"
+                                    Padding="22"
+                                    Background="White"
+                                    BorderBrush="#E5E7EB"
+                                    BorderThickness="1"
+                                    CornerRadius="12">
+                                <StackPanel>
+                                    <TextBlock Text="ต่อดอกวันนี้"
+                                               FontSize="15"
+                                               Foreground="#6B7280" />
+                                    <TextBlock x:Name="HomeInterestTodayCountText"
+                                               Margin="0,8,0,0"
+                                               FontSize="30"
+                                               FontWeight="Bold"
+                                               Foreground="#1D4ED8" />
+                                    <TextBlock Margin="0,5,0,0"
+                                               Text="จำนวนครั้งที่รับชำระดอกวันนี้"
+                                               FontSize="12"
+                                               Foreground="#9CA3AF" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <Grid Margin="0,16,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Column="0"
+                                    Padding="22"
+                                    Background="White"
+                                    BorderBrush="#E5E7EB"
+                                    BorderThickness="1"
+                                    CornerRadius="12">
+                                <StackPanel>
+                                    <TextBlock Text="จ่ายออกวันนี้"
+                                               FontSize="15"
+                                               Foreground="#6B7280" />
+                                    <TextBlock x:Name="HomePawnExpenseTodayText"
+                                               Margin="0,8,0,0"
+                                               FontSize="28"
+                                               FontWeight="Bold"
+                                               Foreground="#B45309" />
+                                    <TextBlock Margin="0,5,0,0"
+                                               Text="เงินต้นที่จ่ายจากการรับจำนำ"
+                                               FontSize="12"
+                                               Foreground="#9CA3AF" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="2"
+                                    Padding="22"
+                                    Background="White"
+                                    BorderBrush="#E5E7EB"
+                                    BorderThickness="1"
+                                    CornerRadius="12">
+                                <StackPanel>
+                                    <TextBlock Text="รับเข้าวันนี้"
+                                               FontSize="15"
+                                               Foreground="#6B7280" />
+                                    <TextBlock x:Name="HomeIncomeTodayText"
+                                               Margin="0,8,0,0"
+                                               FontSize="28"
+                                               FontWeight="Bold"
+                                               Foreground="#047857" />
+                                    <TextBlock Margin="0,5,0,0"
+                                               Text="ต่อดอก + ไถ่ถอน"
+                                               FontSize="12"
+                                               Foreground="#9CA3AF" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="4"
+                                    Padding="22"
+                                    Background="#F8FAFC"
+                                    BorderBrush="#CBD5E1"
+                                    BorderThickness="1"
+                                    CornerRadius="12">
+                                <StackPanel>
+                                    <TextBlock Text="เงินสุทธิวันนี้"
+                                               FontSize="15"
+                                               Foreground="#475569" />
+                                    <TextBlock x:Name="HomeNetCashTodayText"
+                                               Margin="0,8,0,0"
+                                               FontSize="28"
+                                               FontWeight="Bold" />
+                                    <TextBlock Margin="0,5,0,0"
+                                               Text="รับเข้า - จ่ายออก"
+                                               FontSize="12"
+                                               Foreground="#9CA3AF" />
                                 </StackPanel>
                             </Border>
                         </Grid>
@@ -374,7 +499,7 @@
                                 BorderBrush="#E5E7EB"
                                 BorderThickness="1"
                                 CornerRadius="10">
-                            <TextBlock Text="Phase 2E : ระบบบันทึกตั๋ว ค้นหารายการ และตั้งค่ากติกาธุรกิจผ่าน SQLite ได้แล้ว"
+                            <TextBlock Text="Phase 2H.1 : Home Dashboard Summary — แสดงภาพรวมตั๋วและเงินเข้าออกประจำวันจาก SQLite"
                                        FontSize="12"
                                        Foreground="#6B7280"
                                        TextWrapping="Wrap" />
@@ -1172,7 +1297,7 @@
                                 BorderBrush="#E5E7EB"
                                 BorderThickness="1"
                                 CornerRadius="10">
-                            <TextBlock Text="Phase 2G.2 : Active Status Detail — แยกตั๋วจำนำใหม่ออกจากตั๋วที่มีประวัติต่อดอกในหน้า Search"
+                            <TextBlock Text="Phase 2H : Today Summary — สรุปจำนำ ต่อดอก ไถ่ถอน เงินเข้าออก และรายการเคลื่อนไหวประจำวัน"
                                        FontSize="12"
                                        Foreground="#6B7280"
                                        TextWrapping="Wrap" />
@@ -1362,32 +1487,266 @@
                 </Grid>
 
                 <!-- Today -->
-                <ScrollViewer x:Name="TodayContent"
-                              Visibility="Collapsed"
-                              VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="32">
-                        <Border Style="{StaticResource PlaceholderCardStyle}">
+                <Grid x:Name="TodayContent"
+                      Visibility="Collapsed"
+                      Margin="32">
+
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="18" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="18" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0"
+                            Padding="22"
+                            Background="White"
+                            BorderBrush="#E5E7EB"
+                            BorderThickness="1"
+                            CornerRadius="12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
                             <StackPanel>
                                 <TextBlock Text="รายการวันนี้"
-                                           FontSize="26"
+                                           FontSize="24"
                                            FontWeight="Bold"
                                            Foreground="#111827" />
-                                <TextBlock Margin="0,10,0,0"
-                                           Text="สรุปรายการรับจำนำ ต่อดอก ไถ่ถอน และเงินเข้าออกประจำวัน"
+                                <TextBlock x:Name="TodayDateText"
+                                           Margin="0,6,0,0"
+                                           FontSize="15"
+                                           Foreground="#6B7280" />
+                            </StackPanel>
+
+                            <Button Grid.Column="1"
+                                    Width="140"
+                                    Height="44"
+                                    Content="รีเฟรช"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Click="RefreshTodayButton_Click" />
+                        </Grid>
+                    </Border>
+
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0"
+                                Padding="18"
+                                Background="White"
+                                BorderBrush="#E5E7EB"
+                                BorderThickness="1"
+                                CornerRadius="10">
+                            <StackPanel>
+                                <TextBlock Text="จ่ายออก • จำนำ"
                                            FontSize="14"
-                                           Foreground="#6B7280"
-                                           TextWrapping="Wrap" />
-                                <Border Margin="0,24,0,0"
-                                        Padding="16"
-                                        Background="#F9FAFB"
-                                        CornerRadius="8">
-                                    <TextBlock Text="ข้อมูลรายวันจะเริ่มทำงานเมื่อเราเชื่อมฐานข้อมูลแล้ว"
-                                               Foreground="#6B7280" />
-                                </Border>
+                                           Foreground="#6B7280" />
+                                <TextBlock x:Name="TodayPawnExpenseText"
+                                           Margin="0,6,0,0"
+                                           FontSize="22"
+                                           FontWeight="Bold"
+                                           Foreground="#B45309" />
+                                <TextBlock x:Name="TodayPawnCountText"
+                                           Margin="0,5,0,0"
+                                           FontSize="12"
+                                           Foreground="#6B7280" />
                             </StackPanel>
                         </Border>
-                    </StackPanel>
-                </ScrollViewer>
+
+                        <Border Grid.Column="2"
+                                Padding="18"
+                                Background="White"
+                                BorderBrush="#E5E7EB"
+                                BorderThickness="1"
+                                CornerRadius="10">
+                            <StackPanel>
+                                <TextBlock Text="รับเข้า • ต่อดอก"
+                                           FontSize="14"
+                                           Foreground="#6B7280" />
+                                <TextBlock x:Name="TodayInterestIncomeText"
+                                           Margin="0,6,0,0"
+                                           FontSize="22"
+                                           FontWeight="Bold"
+                                           Foreground="#1D4ED8" />
+                                <TextBlock x:Name="TodayInterestCountText"
+                                           Margin="0,5,0,0"
+                                           FontSize="12"
+                                           Foreground="#6B7280" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="4"
+                                Padding="18"
+                                Background="White"
+                                BorderBrush="#E5E7EB"
+                                BorderThickness="1"
+                                CornerRadius="10">
+                            <StackPanel>
+                                <TextBlock Text="รับเข้า • ไถ่ถอน"
+                                           FontSize="14"
+                                           Foreground="#6B7280" />
+                                <TextBlock x:Name="TodayRedemptionIncomeText"
+                                           Margin="0,6,0,0"
+                                           FontSize="22"
+                                           FontWeight="Bold"
+                                           Foreground="#047857" />
+                                <TextBlock x:Name="TodayRedemptionCountText"
+                                           Margin="0,5,0,0"
+                                           FontSize="12"
+                                           Foreground="#6B7280" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="6"
+                                Padding="18"
+                                Background="#F8FAFC"
+                                BorderBrush="#CBD5E1"
+                                BorderThickness="1"
+                                CornerRadius="10">
+                            <StackPanel>
+                                <TextBlock Text="เงินสุทธิวันนี้"
+                                           FontSize="14"
+                                           Foreground="#475569" />
+                                <TextBlock x:Name="TodayNetCashText"
+                                           Margin="0,6,0,0"
+                                           FontSize="22"
+                                           FontWeight="Bold" />
+                                <TextBlock x:Name="TodayTotalIncomeText"
+                                           Margin="0,5,0,0"
+                                           FontSize="12"
+                                           Foreground="#6B7280" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <Border Grid.Row="4"
+                            Background="White"
+                            BorderBrush="#E5E7EB"
+                            BorderThickness="1"
+                            CornerRadius="12">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <Grid Margin="20,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Text="รายการเคลื่อนไหววันนี้"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           Foreground="#111827" />
+                                <TextBlock x:Name="TodayTransactionCountText"
+                                           Grid.Column="1"
+                                           VerticalAlignment="Center"
+                                           FontSize="13"
+                                           Foreground="#6B7280" />
+                            </Grid>
+
+                            <DataGrid x:Name="TodayTransactionsDataGrid"
+                                      Grid.Row="1"
+                                      AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      HeadersVisibility="Column"
+                                      GridLinesVisibility="Horizontal"
+                                      BorderThickness="0"
+                                      Background="White"
+                                      RowHeight="48"
+                                      FontSize="14">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="เวลา"
+                                                        Binding="{Binding TransactionTimeText}"
+                                                        Width="75" />
+                                    <DataGridTextColumn Header="เลขตั๋ว"
+                                                        Binding="{Binding TicketNumber}"
+                                                        Width="125" />
+                                    <DataGridTextColumn Header="ลูกค้า"
+                                                        Binding="{Binding CustomerName}"
+                                                        Width="180" />
+
+                                    <DataGridTemplateColumn Header="รายการ"
+                                                            Width="110">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding TransactionTypeText}"
+                                                           VerticalAlignment="Center"
+                                                           FontWeight="SemiBold">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="#374151" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding TransactionTypeText}" Value="จำนำ">
+                                                                    <Setter Property="Foreground" Value="#B45309" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding TransactionTypeText}" Value="ต่อดอก">
+                                                                    <Setter Property="Foreground" Value="#1D4ED8" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding TransactionTypeText}" Value="ไถ่ถอน">
+                                                                    <Setter Property="Foreground" Value="#047857" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <DataGridTextColumn Header="รายละเอียด"
+                                                        Binding="{Binding DetailText}"
+                                                        Width="135" />
+
+                                    <DataGridTemplateColumn Header="เงินเข้า/ออก"
+                                                            Width="105">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding CashFlowText}"
+                                                           VerticalAlignment="Center"
+                                                           FontWeight="SemiBold">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="#374151" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding CashFlowText}" Value="จ่ายออก">
+                                                                    <Setter Property="Foreground" Value="#B45309" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding CashFlowText}" Value="รับเข้า">
+                                                                    <Setter Property="Foreground" Value="#047857" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <DataGridTextColumn Header="จำนวนเงิน"
+                                                        Binding="{Binding AmountText}"
+                                                        Width="120" />
+                                    <DataGridTextColumn Header="ช่องทาง"
+                                                        Binding="{Binding PaymentMethod}"
+                                                        Width="*" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </Border>
+                </Grid>
 
                 <!-- Settings -->
                 <ScrollViewer x:Name="SettingsContent"

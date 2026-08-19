@@ -18,6 +18,8 @@ public partial class MainWindow : Window
     private readonly PawnTicketService _pawnTicketService = new();
     private readonly PawnTicketSearchService _pawnTicketSearchService = new();
     private readonly AppSettingService _appSettingService = new();
+    private readonly TodaySummaryService _todaySummaryService = new();
+    private readonly HomeDashboardService _homeDashboardService = new();
     private int? _selectedCustomerId;
 
     public MainWindow()
@@ -25,6 +27,7 @@ public partial class MainWindow : Window
         InitializeComponent();
 
         InitializeDatabase();
+        LoadHomeDashboard();
         LoadSmartLookupValues();
 
         PawnDatePicker.SelectedDate = DateTime.Today;
@@ -63,7 +66,65 @@ public partial class MainWindow : Window
             HomeContent,
             HomeButton,
             "หน้าหลัก",
-            "ระบบบันทึกข้อมูลลูกค้าและรายการรับจำนำ");
+            "ภาพรวมตั๋วและเงินเข้าออกของร้าน");
+
+        LoadHomeDashboard();
+    }
+
+    private void RefreshHomeDashboardButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        LoadHomeDashboard();
+    }
+
+    private void LoadHomeDashboard()
+    {
+        try
+        {
+            HomeDashboardSummary summary =
+                _homeDashboardService.GetSummary();
+
+            HomeDashboardDateText.Text =
+                $"วันที่ {summary.SummaryDate:dd/MM/yyyy}";
+
+            HomeDashboardUpdatedText.Text =
+                $"อัปเดตล่าสุด {summary.UpdatedAt:HH:mm}";
+
+            HomeActiveTicketCountText.Text =
+                $"{summary.ActiveTicketCount:N0} ตั๋ว";
+
+            HomeDueTodayCountText.Text =
+                $"{summary.DueTodayCount:N0} ตั๋ว";
+
+            HomeInterestTodayCountText.Text =
+                $"{summary.InterestTodayCount:N0} ครั้ง";
+
+            HomePawnExpenseTodayText.Text =
+                $"{summary.PawnExpenseToday:N2} บาท";
+
+            HomeIncomeTodayText.Text =
+                $"{summary.IncomeToday:N2} บาท";
+
+            HomeNetCashTodayText.Text =
+                $"{summary.NetCashToday:N2} บาท";
+
+            HomeNetCashTodayText.Foreground =
+                summary.NetCashToday < 0m
+                    ? Brushes.Firebrick
+                    : Brushes.ForestGreen;
+        }
+        catch (Exception ex)
+        {
+            HomeDashboardUpdatedText.Text =
+                "ไม่สามารถโหลด Dashboard ได้";
+
+            MessageBox.Show(
+                $"ไม่สามารถโหลดข้อมูลหน้าหลักได้\n\n{ex.Message}",
+                "มานะชัย ลิสซิ่ง",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
     }
 
     private void NewPawnButton_Click(object sender, RoutedEventArgs e)
@@ -93,7 +154,73 @@ public partial class MainWindow : Window
             TodayContent,
             TodayButton,
             "รายการวันนี้",
-            "สรุปรายการรับจำนำ ต่อดอก ไถ่ถอน และยอดประจำวัน");
+            "สรุปรายการรับจำนำ ต่อดอก ไถ่ถอน และเงินเข้าออกประจำวัน");
+
+        LoadTodaySummary();
+    }
+
+    private void RefreshTodayButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        LoadTodaySummary();
+    }
+
+    private void LoadTodaySummary()
+    {
+        try
+        {
+            TodaySummary summary =
+                _todaySummaryService.GetTodaySummary();
+
+            TodayDateText.Text =
+                $"วันที่ {summary.Date:dd/MM/yyyy}";
+
+            TodayPawnExpenseText.Text =
+                $"{summary.PawnExpense:N2} บาท";
+            TodayPawnCountText.Text =
+                $"จำนำ {summary.PawnCount:N0} รายการ";
+
+            TodayInterestIncomeText.Text =
+                $"{summary.InterestIncome:N2} บาท";
+            TodayInterestCountText.Text =
+                $"ต่อดอก {summary.InterestCount:N0} รายการ";
+
+            TodayRedemptionIncomeText.Text =
+                $"{summary.RedemptionIncome:N2} บาท";
+            TodayRedemptionCountText.Text =
+                $"ไถ่ถอน {summary.RedemptionCount:N0} รายการ";
+
+            TodayNetCashText.Text =
+                $"{summary.NetCash:N2} บาท";
+            TodayNetCashText.Foreground =
+                summary.NetCash < 0m
+                    ? Brushes.Firebrick
+                    : Brushes.ForestGreen;
+
+            TodayTotalIncomeText.Text =
+                $"รับเข้ารวม {summary.TotalIncome:N2} บาท";
+
+            TodayTransactionCountText.Text =
+                summary.TransactionCount == 0
+                    ? "ยังไม่มีรายการวันนี้"
+                    : $"ทั้งหมด {summary.TransactionCount:N0} รายการ";
+
+            TodayTransactionsDataGrid.ItemsSource =
+                summary.Transactions;
+        }
+        catch (Exception ex)
+        {
+            TodayTransactionsDataGrid.ItemsSource = null;
+            TodayTransactionCountText.Text =
+                "ไม่สามารถโหลดข้อมูลได้";
+
+            MessageBox.Show(
+                $"ไม่สามารถโหลดรายการวันนี้ได้\n\n{ex.Message}",
+                "มานะชัย ลิสซิ่ง",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
     }
 
     private void SettingsButton_Click(object sender, RoutedEventArgs e)
