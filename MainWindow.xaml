@@ -1172,7 +1172,7 @@
                                 BorderBrush="#E5E7EB"
                                 BorderThickness="1"
                                 CornerRadius="10">
-                            <TextBlock Text="Phase 2C : Save Pawn Ticket — บันทึกลูกค้า ตั๋วจำนำ รายการเงินจ่าย และ Smart Dropdown ลง SQLite พร้อมกัน"
+                            <TextBlock Text="Phase 2D : Search Pawn Tickets — บันทึกตั๋วจำนำและค้นหาประวัติย้อนหลังจาก SQLite ได้แล้ว"
                                        FontSize="12"
                                        Foreground="#6B7280"
                                        TextWrapping="Wrap" />
@@ -1183,32 +1183,119 @@
                 </ScrollViewer>
 
                 <!-- Search -->
-                <ScrollViewer x:Name="SearchContent"
-                              Visibility="Collapsed"
-                              VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="32">
-                        <Border Style="{StaticResource PlaceholderCardStyle}">
-                            <StackPanel>
-                                <TextBlock Text="ค้นหารายการ"
-                                           FontSize="26"
-                                           FontWeight="Bold"
-                                           Foreground="#111827" />
-                                <TextBlock Margin="0,10,0,0"
-                                           Text="ค้นหาประวัติย้อนหลังจากชื่อ นามสกุล เลขบัตรประชาชน หมายเลขตั๋ว หรือรายละเอียดสินค้า"
-                                           FontSize="14"
-                                           Foreground="#6B7280"
-                                           TextWrapping="Wrap" />
-                                <Border Margin="0,24,0,0"
-                                        Padding="16"
-                                        Background="#F9FAFB"
-                                        CornerRadius="8">
-                                    <TextBlock Text="ระบบค้นหาแบบ Realtime จะพัฒนาใน Phase ถัดไป"
-                                               Foreground="#6B7280" />
-                                </Border>
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
+                <Grid x:Name="SearchContent"
+                      Visibility="Collapsed"
+                      Margin="32">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="18" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="16" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0"
+                            Padding="22"
+                            Background="White"
+                            BorderBrush="#E5E7EB"
+                            BorderThickness="1"
+                            CornerRadius="12">
+                        <StackPanel>
+                            <TextBlock Text="ค้นหารายการ"
+                                       FontSize="24"
+                                       FontWeight="Bold"
+                                       Foreground="#111827" />
+
+                            <TextBlock Margin="0,6,0,0"
+                                       Text="ค้นหาแบบ Realtime จากเลขตั๋ว ชื่อ นามสกุล เลขบัตร เบอร์โทร ที่อยู่ รายละเอียดสินค้า IMEI / Serial ยอดเงิน หรือวันที่"
+                                       FontSize="14"
+                                       Foreground="#6B7280"
+                                       TextWrapping="Wrap" />
+
+                            <Border Margin="0,18,0,0"
+                                    Background="White"
+                                    BorderBrush="#9CA3AF"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Padding="14,8">
+                                <TextBox x:Name="PawnTicketSearchTextBox"
+                                         Height="34"
+                                         BorderThickness="0"
+                                         Background="Transparent"
+                                         FontSize="17"
+                                         VerticalContentAlignment="Center"
+                                         ToolTip="พิมพ์คำค้นหา เช่น TEST-2C-001, ชื่อลูกค้า, iPhone, IMEI"
+                                         TextChanged="PawnTicketSearchTextBox_TextChanged" />
+                            </Border>
+
+                            <TextBlock x:Name="PawnTicketSearchResultCountText"
+                                       Margin="0,10,0,0"
+                                       FontSize="13"
+                                       Foreground="#6B7280" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="2"
+                            Background="White"
+                            BorderBrush="#E5E7EB"
+                            BorderThickness="1"
+                            CornerRadius="12">
+
+                        <DataGrid x:Name="PawnTicketSearchDataGrid"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  SelectionMode="Single"
+                                  SelectionUnit="FullRow"
+                                  HeadersVisibility="Column"
+                                  GridLinesVisibility="Horizontal"
+                                  BorderThickness="0"
+                                  Background="White"
+                                  RowHeight="50"
+                                  FontSize="14"
+                                  MouseDoubleClick="PawnTicketSearchDataGrid_MouseDoubleClick">
+
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="เลขตั๋ว"
+                                                    Binding="{Binding TicketNumber}"
+                                                    Width="125" />
+                                <DataGridTextColumn Header="วันที่"
+                                                    Binding="{Binding PawnDateText}"
+                                                    Width="105" />
+                                <DataGridTextColumn Header="ลูกค้า"
+                                                    Binding="{Binding CustomerName}"
+                                                    Width="180" />
+                                <DataGridTextColumn Header="สินค้า"
+                                                    Binding="{Binding ProductSummary}"
+                                                    Width="*" />
+                                <DataGridTextColumn Header="ยอดเงิน"
+                                                    Binding="{Binding PrincipalAmountText}"
+                                                    Width="115" />
+                                <DataGridTextColumn Header="สถานะ"
+                                                    Binding="{Binding StatusText}"
+                                                    Width="115" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+
+                    <Grid Grid.Row="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock VerticalAlignment="Center"
+                                   Text="ดับเบิลคลิกรายการเพื่อเปิดรายละเอียดได้"
+                                   FontSize="13"
+                                   Foreground="#6B7280" />
+
+                        <Button Grid.Column="1"
+                                Width="180"
+                                Height="46"
+                                Content="เปิดรายละเอียด"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Click="ViewSelectedPawnTicket_Click" />
+                    </Grid>
+                </Grid>
 
                 <!-- Today -->
                 <ScrollViewer x:Name="TodayContent"

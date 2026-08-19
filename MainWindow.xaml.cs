@@ -16,6 +16,7 @@ public partial class MainWindow : Window
     private bool _isInitializing = true;
     private readonly CustomerService _customerService = new();
     private readonly PawnTicketService _pawnTicketService = new();
+    private readonly PawnTicketSearchService _pawnTicketSearchService = new();
     private int? _selectedCustomerId;
 
     public MainWindow()
@@ -79,7 +80,10 @@ public partial class MainWindow : Window
             SearchContent,
             SearchButton,
             "ค้นหารายการ",
-            "ค้นหาข้อมูลและประวัติรายการย้อนหลัง");
+            "ค้นหาและเปิดดูข้อมูลตั๋วจำนำย้อนหลัง");
+
+        LoadPawnTicketSearchResults();
+        PawnTicketSearchTextBox.Focus();
     }
 
     private void TodayButton_Click(object sender, RoutedEventArgs e)
@@ -1105,6 +1109,99 @@ public partial class MainWindow : Window
         UpdateAssetPreview();
 
         TicketNumberTextBox.Focus();
+    }
+
+    private void PawnTicketSearchTextBox_TextChanged(
+        object sender,
+        TextChangedEventArgs e)
+    {
+        if (_isInitializing)
+        {
+            return;
+        }
+
+        LoadPawnTicketSearchResults();
+    }
+
+    private void LoadPawnTicketSearchResults()
+    {
+        try
+        {
+            List<PawnTicketSearchResult> results =
+                _pawnTicketSearchService.Search(
+                    PawnTicketSearchTextBox.Text);
+
+            PawnTicketSearchDataGrid.ItemsSource = results;
+
+            PawnTicketSearchResultCountText.Text =
+                results.Count == 0
+                    ? "ไม่พบรายการ"
+                    : $"พบ {results.Count:N0} รายการ";
+        }
+        catch (Exception ex)
+        {
+            PawnTicketSearchDataGrid.ItemsSource = null;
+            PawnTicketSearchResultCountText.Text =
+                "ค้นหาไม่สำเร็จ";
+
+            MessageBox.Show(
+                $"ไม่สามารถค้นหารายการได้\n\n{ex.Message}",
+                "มานะชัย ลิสซิ่ง",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
+    private void ViewSelectedPawnTicket_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        OpenSelectedPawnTicket();
+    }
+
+    private void PawnTicketSearchDataGrid_MouseDoubleClick(
+        object sender,
+        MouseButtonEventArgs e)
+    {
+        OpenSelectedPawnTicket();
+    }
+
+    private void OpenSelectedPawnTicket()
+    {
+        if (PawnTicketSearchDataGrid.SelectedItem
+            is not PawnTicketSearchResult selected)
+        {
+            MessageBox.Show(
+                "กรุณาเลือกรายการที่ต้องการเปิดดู",
+                "มานะชัย ลิสซิ่ง",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+
+            return;
+        }
+
+        try
+        {
+            PawnTicketDetail detail =
+                _pawnTicketSearchService.GetDetail(
+                    selected.Id);
+
+            PawnTicketDetailWindow detailWindow =
+                new(detail)
+                {
+                    Owner = this
+                };
+
+            detailWindow.ShowDialog();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"ไม่สามารถเปิดรายละเอียดตั๋วได้\n\n{ex.Message}",
+                "มานะชัย ลิสซิ่ง",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
     }
 
     private void ShowPage(
