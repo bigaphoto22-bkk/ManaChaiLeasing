@@ -50,6 +50,9 @@ public class AppDbContext : DbContext
             entity.Property(x => x.PrincipalAmount)
                 .HasPrecision(18, 2);
 
+            entity.Property(x => x.InterestRatePercent)
+                .HasPrecision(8, 2);
+
             entity.Property(x => x.Status)
                 .HasConversion<string>();
 

@@ -1172,7 +1172,7 @@
                                 BorderBrush="#E5E7EB"
                                 BorderThickness="1"
                                 CornerRadius="10">
-                            <TextBlock Text="Phase 2E : Business Settings — อัตราดอกเบี้ยและจำนวนวันต่อรอบไม่ถูกฝังตายตัวในระบบ"
+                            <TextBlock Text="Phase 2F : Interest Renewal — ต่อดอกได้ไม่จำกัดครั้ง ลำดับเพิ่มอัตโนมัติ และเก็บรายรับลง SQLite"
                                        FontSize="12"
                                        Foreground="#6B7280"
                                        TextWrapping="Wrap" />
@@ -1343,7 +1343,7 @@
                                            Foreground="#111827" />
 
                                 <TextBlock Margin="0,8,0,0"
-                                           Text="ค่าที่บันทึกในหน้านี้จะเป็นกติกากลางของระบบ และจะถูกนำไปใช้กับการต่อดอกใน Phase ถัดไป"
+                                           Text="ค่าที่บันทึกในหน้านี้จะใช้เป็นเงื่อนไขเริ่มต้นของตั๋วใหม่ ตั๋วเดิมจะคงอัตราดอกเบี้ยและจำนวนวันตามวันที่สร้างตั๋ว"
                                            FontSize="15"
                                            Foreground="#6B7280"
                                            TextWrapping="Wrap" />
@@ -1504,7 +1504,7 @@
                             <TextBlock FontSize="13"
                                        Foreground="#92400E"
                                        TextWrapping="Wrap"
-                                       Text="Phase 2E จะเก็บค่ากติกาไว้ใน SQLite ก่อน ส่วนการทำรายการต่อดอกและไถ่ถอนจริงจะเปิดใน Phase ถัดไป" />
+                                       Text="Phase 2F : ต่อดอกจริงได้แล้ว โดยใช้เงื่อนไขที่ Snapshot ไว้กับตั๋วแต่ละใบ และบันทึกเป็นรายรับในประวัติรายการ" />
                         </Border>
 
                     </StackPanel>

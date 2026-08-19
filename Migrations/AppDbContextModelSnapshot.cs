@@ -58,6 +58,8 @@ partial class AppDbContextModelSnapshot : ModelSnapshot
             b.Property<DateTime>("CreatedAt").HasColumnType("TEXT");
             b.Property<int>("CustomerId").HasColumnType("INTEGER");
             b.Property<string>("ImeiOrSerial").HasMaxLength(150).HasColumnType("TEXT");
+            b.Property<int>("InterestPeriodDays").HasColumnType("INTEGER");
+            b.Property<decimal>("InterestRatePercent").HasPrecision(8, 2).HasColumnType("TEXT");
             b.Property<string>("Model").HasMaxLength(200).HasColumnType("TEXT");
             b.Property<string>("Note").HasMaxLength(1500).HasColumnType("TEXT");
             b.Property<string>("OtherDetails").HasMaxLength(1500).HasColumnType("TEXT");

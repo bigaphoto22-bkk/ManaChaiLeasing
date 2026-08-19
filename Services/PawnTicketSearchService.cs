@@ -62,6 +62,31 @@ public sealed class PawnTicketDetail
         _ => Status.ToString()
     };
 
+    public decimal InterestRatePercent { get; init; }
+
+    public int InterestPeriodDays { get; init; }
+
+    public int InterestRenewalCount { get; init; }
+
+    public string InterestRateText =>
+        $"{InterestRatePercent:0.##}%";
+
+    public string InterestPeriodText =>
+        $"{InterestPeriodDays:N0} วัน";
+
+    public string InterestRenewalCountText =>
+        $"{InterestRenewalCount:N0} ครั้ง";
+
+    public string CurrentDueDateText =>
+        PawnDate.Date
+            .AddDays(
+                InterestPeriodDays *
+                (InterestRenewalCount + 1))
+            .ToString("dd/MM/yyyy");
+
+    public bool CanRenew =>
+        Status == PawnTicketStatus.Active;
+
     public string CustomerName { get; init; } = string.Empty;
 
     public string CitizenId { get; init; } = "-";
@@ -258,6 +283,11 @@ public sealed class PawnTicketSearchService
             PawnDate = ticket.PawnDate,
             PrincipalAmount = ticket.PrincipalAmount,
             Status = ticket.Status,
+            InterestRatePercent = ticket.InterestRatePercent,
+            InterestPeriodDays = ticket.InterestPeriodDays,
+            InterestRenewalCount = ticket.Transactions.Count(transaction =>
+                !transaction.IsVoided &&
+                transaction.TransactionType == PawnTransactionType.Interest),
             CustomerName =
                 $"{ticket.Customer.FirstName} {ticket.Customer.LastName}".Trim(),
             CitizenId = Display(ticket.Customer.CitizenId),

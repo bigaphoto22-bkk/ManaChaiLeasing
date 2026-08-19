@@ -47,10 +47,19 @@ public sealed class PawnTicketService
             request.SelectedCustomerId,
             now);
 
+        AppSetting settings = db.AppSettings
+            .AsNoTracking()
+            .OrderBy(item => item.Id)
+            .FirstOrDefault()
+            ?? throw new InvalidOperationException(
+                "ไม่พบการตั้งค่าดอกเบี้ย กรุณาเข้าเมนูตั้งค่าแล้วบันทึกข้อมูลก่อน");
+
         PawnTicket ticket = request.Ticket;
 
         ticket.TicketNumber = ticketNumber;
         ticket.Customer = customer;
+        ticket.InterestRatePercent = settings.InterestRatePercent;
+        ticket.InterestPeriodDays = settings.InterestPeriodDays;
         ticket.Status = PawnTicketStatus.Active;
         ticket.CreatedAt = now;
         ticket.UpdatedAt = now;

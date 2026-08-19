@@ -13,6 +13,12 @@ public class PawnTicket
 
     public decimal PrincipalAmount { get; set; }
 
+    // Snapshot เงื่อนไข ณ วันที่สร้างตั๋ว
+    // เพื่อให้การเปลี่ยน Settings ในอนาคตไม่แก้สัญญาเก่าย้อนหลัง
+    public decimal InterestRatePercent { get; set; } = 5m;
+
+    public int InterestPeriodDays { get; set; } = 15;
+
     public PawnTicketStatus Status { get; set; } = PawnTicketStatus.Active;
 
     public int CustomerId { get; set; }
