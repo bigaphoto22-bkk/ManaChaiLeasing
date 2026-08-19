@@ -111,8 +111,8 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="StaysOpenOnEdit" Value="True" />
             <Setter Property="MaxDropDownHeight" Value="320" />
-            <EventSetter Event="PreviewMouseLeftButtonDown"
-                         Handler="FormComboBox_PreviewMouseLeftButtonDown" />
+            <EventSetter Event="PreviewMouseLeftButtonUp"
+                         Handler="FormComboBox_PreviewMouseLeftButtonUp" />
         </Style>
 
         <Style x:Key="SecondaryButtonStyle" TargetType="Button">

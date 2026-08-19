@@ -259,24 +259,24 @@ public partial class MainWindow : Window
         UpdateAssetPreview();
     }
 
-    private void FormComboBox_PreviewMouseLeftButtonDown(
+    private void FormComboBox_PreviewMouseLeftButtonUp(
         object sender,
         MouseButtonEventArgs e)
     {
         if (sender is not ComboBox comboBox ||
-            !comboBox.IsEnabled ||
-            comboBox.IsDropDownOpen)
+            !comboBox.IsEnabled)
         {
             return;
         }
 
-        // WPF ComboBox แบบ editable จะให้ TextBox ด้านในรับ click ก่อน
-        // จึงจับ click ที่ระดับ ComboBox แล้วเปิดรายการทันที
-        // พร้อมหยุดการ toggle ซ้ำจาก control ภายใน
-        e.Handled = true;
-
-        comboBox.Focus();
-        comboBox.IsDropDownOpen = true;
+        // สำหรับ Editable ComboBox ให้ mouse-down ทำหน้าที่ focus/caret ตามปกติ
+        // แล้วเปิดรายการทันทีตอน mouse-up ของ click แรก
+        // เพื่อไม่ให้เกิดอาการต้องคลิกครั้งแรกเพื่อ Focus ก่อน
+        if (!comboBox.IsDropDownOpen)
+        {
+            e.Handled = true;
+            comboBox.IsDropDownOpen = true;
+        }
 
         if (comboBox.IsEditable &&
             comboBox.Template.FindName(
@@ -284,8 +284,12 @@ public partial class MainWindow : Window
                 comboBox) is TextBox editableTextBox)
         {
             editableTextBox.Focus();
-            editableTextBox.CaretIndex =
-                editableTextBox.Text?.Length ?? 0;
+
+            if (editableTextBox.SelectionLength == 0)
+            {
+                editableTextBox.CaretIndex =
+                    editableTextBox.Text?.Length ?? 0;
+            }
         }
     }
 
