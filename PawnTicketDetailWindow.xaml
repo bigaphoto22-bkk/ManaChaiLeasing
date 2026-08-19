@@ -358,9 +358,43 @@
                                 <DataGridTextColumn Header="วันที่"
                                                     Binding="{Binding TransactionDateText}"
                                                     Width="145" />
-                                <DataGridTextColumn Header="รายการ"
-                                                    Binding="{Binding TransactionTypeText}"
-                                                    Width="110" />
+                                <DataGridTemplateColumn Header="รายการ"
+                                                        Width="110">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding TransactionTypeText}"
+                                                       VerticalAlignment="Center"
+                                                       FontWeight="SemiBold">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Foreground"
+                                                                Value="#374151" />
+
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding TransactionTypeText}"
+                                                                         Value="จำนำ">
+                                                                <Setter Property="Foreground"
+                                                                        Value="#B45309" />
+                                                            </DataTrigger>
+
+                                                            <DataTrigger Binding="{Binding TransactionTypeText}"
+                                                                         Value="ต่อดอก">
+                                                                <Setter Property="Foreground"
+                                                                        Value="#1D4ED8" />
+                                                            </DataTrigger>
+
+                                                            <DataTrigger Binding="{Binding TransactionTypeText}"
+                                                                         Value="ไถ่ถอน">
+                                                                <Setter Property="Foreground"
+                                                                        Value="#047857" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                                 <DataGridTextColumn Header="เงินเข้า/ออก"
                                                     Binding="{Binding CashFlowText}"
                                                     Width="110" />
@@ -391,7 +425,9 @@
             <Grid Margin="28,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="170" />
+                    <ColumnDefinition Width="160" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="160" />
                     <ColumnDefinition Width="12" />
                     <ColumnDefinition Width="130" />
                 </Grid.ColumnDefinitions>
@@ -408,6 +444,17 @@
                         Click="RenewInterestButton_Click" />
 
                 <Button Grid.Column="3"
+                        Height="48"
+                        Content="ไถ่ถอน"
+                        FontSize="17"
+                        FontWeight="SemiBold"
+                        Background="#047857"
+                        Foreground="White"
+                        BorderBrush="#047857"
+                        IsEnabled="{Binding CanRedeem}"
+                        Click="RedeemButton_Click" />
+
+                <Button Grid.Column="5"
                         Height="48"
                         Content="ปิด"
                         FontSize="16"

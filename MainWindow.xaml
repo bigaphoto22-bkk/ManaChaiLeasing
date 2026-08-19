@@ -1172,7 +1172,7 @@
                                 BorderBrush="#E5E7EB"
                                 BorderThickness="1"
                                 CornerRadius="10">
-                            <TextBlock Text="Phase 2F : Interest Renewal — ต่อดอกได้ไม่จำกัดครั้ง ลำดับเพิ่มอัตโนมัติ และเก็บรายรับลง SQLite"
+                            <TextBlock Text="Phase 2G.2 : Active Status Detail — แยกตั๋วจำนำใหม่ออกจากตั๋วที่มีประวัติต่อดอกในหน้า Search"
                                        FontSize="12"
                                        Foreground="#6B7280"
                                        TextWrapping="Wrap" />
@@ -1250,7 +1250,7 @@
                                   GridLinesVisibility="Horizontal"
                                   BorderThickness="0"
                                   Background="White"
-                                  RowHeight="50"
+                                  RowHeight="58"
                                   FontSize="14"
                                   MouseDoubleClick="PawnTicketSearchDataGrid_MouseDoubleClick">
 
@@ -1270,9 +1270,73 @@
                                 <DataGridTextColumn Header="ยอดเงิน"
                                                     Binding="{Binding PrincipalAmountText}"
                                                     Width="115" />
-                                <DataGridTextColumn Header="สถานะ"
-                                                    Binding="{Binding StatusText}"
-                                                    Width="115" />
+                                <DataGridTemplateColumn Header="สถานะ"
+                                                        Width="150">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel VerticalAlignment="Center">
+
+                                                <TextBlock Text="{Binding StatusText}"
+                                                           FontSize="14"
+                                                           FontWeight="SemiBold">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground"
+                                                                    Value="#4B5563" />
+
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding StatusText}"
+                                                                             Value="กำลังจำนำ">
+                                                                    <Setter Property="Foreground"
+                                                                            Value="#15803D" />
+                                                                </DataTrigger>
+
+                                                                <DataTrigger Binding="{Binding StatusText}"
+                                                                             Value="ไถ่ถอนแล้ว">
+                                                                    <Setter Property="Foreground"
+                                                                            Value="#1F2937" />
+                                                                </DataTrigger>
+
+                                                                <DataTrigger Binding="{Binding StatusText}"
+                                                                             Value="ปิดรายการ">
+                                                                    <Setter Property="Foreground"
+                                                                            Value="#6B7280" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+
+                                                <TextBlock Margin="0,2,0,0"
+                                                           Text="{Binding StatusDetailText}"
+                                                           FontSize="12"
+                                                           FontWeight="SemiBold">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground"
+                                                                    Value="#6B7280" />
+
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding HasStatusDetail}"
+                                                                             Value="False">
+                                                                    <Setter Property="Visibility"
+                                                                            Value="Collapsed" />
+                                                                </DataTrigger>
+
+                                                                <DataTrigger Binding="{Binding HasRenewalHistory}"
+                                                                             Value="True">
+                                                                    <Setter Property="Foreground"
+                                                                            Value="#1D4ED8" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Border>

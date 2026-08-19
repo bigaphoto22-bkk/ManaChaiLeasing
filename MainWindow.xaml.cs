@@ -1351,6 +1351,10 @@ public partial class MainWindow : Window
                 };
 
             detailWindow.ShowDialog();
+
+            // เมื่อมีการต่อดอก / ไถ่ถอนในหน้ารายละเอียด
+            // กลับมาหน้า Search ให้ดึงสถานะล่าสุดจาก SQLite ทันที
+            LoadPawnTicketSearchResults();
         }
         catch (Exception ex)
         {

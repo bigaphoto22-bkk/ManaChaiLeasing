@@ -7,6 +7,7 @@ public partial class PawnTicketDetailWindow : Window
 {
     private readonly PawnTicketSearchService _searchService = new();
     private readonly InterestRenewalService _renewalService = new();
+    private readonly RedemptionService _redemptionService = new();
     private readonly int _pawnTicketId;
 
     public PawnTicketDetailWindow(PawnTicketDetail detail)
@@ -47,6 +48,42 @@ public partial class PawnTicketDetailWindow : Window
         {
             MessageBox.Show(
                 $"ไม่สามารถเปิดหน้าต่อดอกได้\n\n{ex.Message}",
+                "มานะชัย ลิสซิ่ง",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
+    private void RedeemButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        try
+        {
+            RedemptionPreview preview =
+                _redemptionService.GetPreview(
+                    _pawnTicketId);
+
+            RedemptionWindow redemptionWindow =
+                new(preview)
+                {
+                    Owner = this
+                };
+
+            bool? result =
+                redemptionWindow.ShowDialog();
+
+            if (result == true)
+            {
+                DataContext =
+                    _searchService.GetDetail(
+                        _pawnTicketId);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"ไม่สามารถเปิดหน้าไถ่ถอนได้\n\n{ex.Message}",
                 "มานะชัย ลิสซิ่ง",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);

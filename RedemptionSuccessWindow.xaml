@@ -1,0 +1,125 @@
+﻿<Window x:Class="ManaChaiLeasing.RedemptionSuccessWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ไถ่ถอนสำเร็จ - มานะชัย ลิสซิ่ง"
+        Width="600"
+        Height="520"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Background="#F5F6F8"
+        FontFamily="Segoe UI">
+
+    <Grid Margin="28">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="18" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="20" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0"
+                    HorizontalAlignment="Center">
+            <TextBlock Text="✓ ไถ่ถอนสำเร็จ"
+                       HorizontalAlignment="Center"
+                       FontSize="28"
+                       FontWeight="Bold"
+                       Foreground="#047857" />
+
+            <TextBlock Margin="0,7,0,0"
+                       Text="ปิดรายการตั๋วจำนำเรียบร้อยแล้ว"
+                       HorizontalAlignment="Center"
+                       FontSize="17"
+                       Foreground="#374151" />
+        </StackPanel>
+
+        <Border Grid.Row="2"
+                Padding="24"
+                Background="White"
+                BorderBrush="#D1D5DB"
+                BorderThickness="1"
+                CornerRadius="12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="18" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="18" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="18" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="18" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0"
+                           Text="เลขตั๋ว"
+                           FontSize="17"
+                           Foreground="#4B5563" />
+                <TextBlock x:Name="TicketNumberText"
+                           Grid.Row="0"
+                           Grid.Column="1"
+                           FontSize="20"
+                           FontWeight="SemiBold"
+                           Foreground="#111827" />
+
+                <TextBlock Grid.Row="2"
+                           Text="เงินต้น"
+                           FontSize="17"
+                           Foreground="#4B5563" />
+                <TextBlock x:Name="PrincipalText"
+                           Grid.Row="2"
+                           Grid.Column="1"
+                           FontSize="19"
+                           Foreground="#111827" />
+
+                <TextBlock Grid.Row="4"
+                           Text="ดอกเบี้ยรอบสุดท้าย"
+                           FontSize="17"
+                           Foreground="#4B5563" />
+                <TextBlock x:Name="InterestText"
+                           Grid.Row="4"
+                           Grid.Column="1"
+                           FontSize="19"
+                           Foreground="#B45309" />
+
+                <TextBlock Grid.Row="6"
+                           Text="รับชำระทั้งหมด"
+                           FontSize="17"
+                           Foreground="#4B5563" />
+                <TextBlock x:Name="TotalText"
+                           Grid.Row="6"
+                           Grid.Column="1"
+                           FontSize="24"
+                           FontWeight="Bold"
+                           Foreground="#047857" />
+
+                <TextBlock Grid.Row="8"
+                           Text="ช่องทาง"
+                           FontSize="17"
+                           Foreground="#4B5563" />
+                <TextBlock x:Name="PaymentMethodText"
+                           Grid.Row="8"
+                           Grid.Column="1"
+                           FontSize="19"
+                           Foreground="#111827" />
+            </Grid>
+        </Border>
+
+        <Button Grid.Row="4"
+                Width="160"
+                Height="52"
+                HorizontalAlignment="Center"
+                Content="ตกลง"
+                FontSize="18"
+                FontWeight="SemiBold"
+                IsDefault="True"
+                Click="OkButton_Click" />
+    </Grid>
+</Window>

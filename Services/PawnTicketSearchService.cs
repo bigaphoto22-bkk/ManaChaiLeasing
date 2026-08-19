@@ -29,6 +29,8 @@ public sealed class PawnTicketSearchResult
 
     public PawnTicketStatus Status { get; init; }
 
+    public int InterestRenewalCount { get; init; }
+
     public string StatusText => Status switch
     {
         PawnTicketStatus.Active => "กำลังจำนำ",
@@ -36,6 +38,24 @@ public sealed class PawnTicketSearchResult
         PawnTicketStatus.Closed => "ปิดรายการ",
         _ => Status.ToString()
     };
+
+    public string StatusDetailText => Status switch
+    {
+        PawnTicketStatus.Active when InterestRenewalCount > 0 =>
+            $"ต่อดอกแล้ว {InterestRenewalCount:N0} ครั้ง",
+
+        PawnTicketStatus.Active =>
+            "จำนำใหม่",
+
+        _ => string.Empty
+    };
+
+    public bool HasStatusDetail =>
+        !string.IsNullOrWhiteSpace(StatusDetailText);
+
+    public bool HasRenewalHistory =>
+        Status == PawnTicketStatus.Active &&
+        InterestRenewalCount > 0;
 }
 
 public sealed class PawnTicketDetail
@@ -85,6 +105,9 @@ public sealed class PawnTicketDetail
             .ToString("dd/MM/yyyy");
 
     public bool CanRenew =>
+        Status == PawnTicketStatus.Active;
+
+    public bool CanRedeem =>
         Status == PawnTicketStatus.Active;
 
     public string CustomerName { get; init; } = string.Empty;
@@ -255,7 +278,11 @@ public sealed class PawnTicketSearchService
                 Phone = ticket.Customer.Phone,
                 ProductSummary = ticket.ProductSummary,
                 PrincipalAmount = ticket.PrincipalAmount,
-                Status = ticket.Status
+                Status = ticket.Status,
+                InterestRenewalCount = ticket.Transactions.Count(transaction =>
+                    !transaction.IsVoided &&
+                    transaction.TransactionType ==
+                        PawnTransactionType.Interest)
             })
             .ToList();
     }
