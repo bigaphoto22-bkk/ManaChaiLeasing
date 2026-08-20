@@ -1,0 +1,859 @@
+﻿using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Windows.Forms;
+
+namespace ManaChaiLicenseGenerator;
+
+internal static class Program
+{
+    [STAThread]
+    private static void Main()
+    {
+        ApplicationConfiguration.Initialize();
+        Application.Run(new MainForm());
+    }
+}
+
+internal sealed class KeyInfo
+{
+    public string KeyId { get; set; } = string.Empty;
+    public string Algorithm { get; set; } = string.Empty;
+    public string PublicKeySha256 { get; set; } = string.Empty;
+    public DateTime CreatedAtUtc { get; set; }
+}
+
+internal sealed class LicensePayload
+{
+    public string SchemaVersion { get; set; } = "MCL-LIC-1";
+    public string KeyId { get; set; } = string.Empty;
+    public string LicenseId { get; set; } = string.Empty;
+    public string CustomerName { get; set; } = string.Empty;
+    public string MachineId { get; set; } = string.Empty;
+    public string LicenseType { get; set; } = string.Empty;
+    public DateTime IssuedAtUtc { get; set; }
+    public DateTime? ExpiresAtUtc { get; set; }
+}
+
+internal sealed class SignedLicenseFile
+{
+    public LicensePayload Payload { get; set; } = new();
+    public string SignatureAlgorithm { get; set; } = "RSA-PSS-SHA256";
+    public string SignatureBase64 { get; set; } = string.Empty;
+}
+
+internal sealed class MainForm : Form
+{
+    private static readonly string VendorRoot =
+        Path.Combine(
+            Environment.GetFolderPath(
+                Environment.SpecialFolder.LocalApplicationData),
+            "ManaChaiLicenseVendor");
+
+    private static readonly string KeyDirectory =
+        Path.Combine(VendorRoot, "Keys");
+
+    private static readonly string PrivateKeyPath =
+        Path.Combine(KeyDirectory, "vendor-private-key.pem");
+
+    private static readonly string PublicKeyPath =
+        Path.Combine(KeyDirectory, "vendor-public-key.pem");
+
+    private static readonly string KeyInfoPath =
+        Path.Combine(KeyDirectory, "key-info.json");
+
+    private static readonly string DefaultLicenseOutputDirectory =
+        Path.Combine(
+            Environment.GetFolderPath(
+                Environment.SpecialFolder.MyDocuments),
+            "ManaChai Licenses");
+
+    private static readonly Regex MachineIdRegex =
+        new(
+            @"^MC-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}$",
+            RegexOptions.Compiled |
+            RegexOptions.CultureInvariant);
+
+    private readonly Label _keyStatusValue = new();
+    private readonly Label _keyIdValue = new();
+    private readonly TextBox _customerNameBox = new();
+    private readonly TextBox _machineIdBox = new();
+    private readonly RadioButton _trialRadio = new();
+    private readonly RadioButton _permanentRadio = new();
+    private readonly Label _licensePreviewValue = new();
+    private readonly Button _generateButton = new();
+
+    public MainForm()
+    {
+        Text = "ManaChai License Generator";
+        StartPosition = FormStartPosition.CenterScreen;
+        Width = 790;
+        Height = 700;
+        MinimumSize = new System.Drawing.Size(760, 660);
+        Font = new System.Drawing.Font("Segoe UI", 10F);
+
+        BuildUi();
+        RefreshKeyState();
+        RefreshPreview();
+    }
+
+    private void BuildUi()
+    {
+        var title = new Label
+        {
+            Text = "ManaChai License Generator",
+            AutoSize = true,
+            Font = new System.Drawing.Font(
+                "Segoe UI",
+                19F,
+                System.Drawing.FontStyle.Bold),
+            Location = new System.Drawing.Point(28, 24)
+        };
+
+        var subtitle = new Label
+        {
+            Text = "สร้าง License ที่ผูกกับ Machine ID ของลูกค้า และเซ็นด้วย Vendor Private Key",
+            AutoSize = true,
+            ForeColor = System.Drawing.Color.DimGray,
+            Location = new System.Drawing.Point(31, 68)
+        };
+
+        var keyBox = new GroupBox
+        {
+            Text = "Vendor Signing Key",
+            Location = new System.Drawing.Point(28, 105),
+            Size = new System.Drawing.Size(710, 105)
+        };
+
+        var keyStatusLabel = new Label
+        {
+            Text = "สถานะ:",
+            AutoSize = true,
+            ForeColor = System.Drawing.Color.DimGray,
+            Location = new System.Drawing.Point(18, 32)
+        };
+
+        _keyStatusValue.AutoSize = true;
+        _keyStatusValue.Font = new System.Drawing.Font(
+            "Segoe UI",
+            10F,
+            System.Drawing.FontStyle.Bold);
+        _keyStatusValue.Location =
+            new System.Drawing.Point(100, 32);
+
+        var keyIdLabel = new Label
+        {
+            Text = "Key ID:",
+            AutoSize = true,
+            ForeColor = System.Drawing.Color.DimGray,
+            Location = new System.Drawing.Point(18, 66)
+        };
+
+        _keyIdValue.AutoSize = true;
+        _keyIdValue.Font = new System.Drawing.Font(
+            "Segoe UI",
+            10F,
+            System.Drawing.FontStyle.Bold);
+        _keyIdValue.Location =
+            new System.Drawing.Point(100, 66);
+
+        keyBox.Controls.AddRange(
+        [
+            keyStatusLabel,
+            _keyStatusValue,
+            keyIdLabel,
+            _keyIdValue
+        ]);
+
+        var formBox = new GroupBox
+        {
+            Text = "ข้อมูล License",
+            Location = new System.Drawing.Point(28, 228),
+            Size = new System.Drawing.Size(710, 280)
+        };
+
+        var customerLabel = new Label
+        {
+            Text = "ชื่อลูกค้า / ร้าน",
+            AutoSize = true,
+            Location = new System.Drawing.Point(20, 32)
+        };
+
+        _customerNameBox.Location =
+            new System.Drawing.Point(20, 60);
+        _customerNameBox.Width = 650;
+        _customerNameBox.Height = 34;
+
+        var machineLabel = new Label
+        {
+            Text = "Machine ID",
+            AutoSize = true,
+            Location = new System.Drawing.Point(20, 103)
+        };
+
+        _machineIdBox.Location =
+            new System.Drawing.Point(20, 131);
+        _machineIdBox.Width = 650;
+        _machineIdBox.Height = 34;
+        _machineIdBox.CharacterCasing =
+            CharacterCasing.Upper;
+        _machineIdBox.PlaceholderText =
+            "เช่น MC-7F3A-91D2-88C1";
+
+        var typeLabel = new Label
+        {
+            Text = "ประเภท License",
+            AutoSize = true,
+            Location = new System.Drawing.Point(20, 178)
+        };
+
+        _trialRadio.Text = "Trial 7 วัน";
+        _trialRadio.AutoSize = true;
+        _trialRadio.Checked = true;
+        _trialRadio.Location =
+            new System.Drawing.Point(20, 210);
+
+        _permanentRadio.Text = "Permanent";
+        _permanentRadio.AutoSize = true;
+        _permanentRadio.Location =
+            new System.Drawing.Point(160, 210);
+
+        var note = new Label
+        {
+            Text =
+                "Trial 7 วันจะหมดอายุ 7 × 24 ชั่วโมงหลังเวลาที่ออก License",
+            AutoSize = true,
+            ForeColor = System.Drawing.Color.DimGray,
+            Location = new System.Drawing.Point(20, 242)
+        };
+
+        formBox.Controls.AddRange(
+        [
+            customerLabel,
+            _customerNameBox,
+            machineLabel,
+            _machineIdBox,
+            typeLabel,
+            _trialRadio,
+            _permanentRadio,
+            note
+        ]);
+
+        var previewBox = new GroupBox
+        {
+            Text = "ตัวอย่าง License ที่จะออก",
+            Location = new System.Drawing.Point(28, 526),
+            Size = new System.Drawing.Size(470, 92)
+        };
+
+        _licensePreviewValue.AutoSize = false;
+        _licensePreviewValue.Size =
+            new System.Drawing.Size(435, 55);
+        _licensePreviewValue.Location =
+            new System.Drawing.Point(18, 26);
+        _licensePreviewValue.ForeColor =
+            System.Drawing.Color.DimGray;
+
+        previewBox.Controls.Add(
+            _licensePreviewValue);
+
+        _generateButton.Text =
+            "Generate License...";
+        _generateButton.Size =
+            new System.Drawing.Size(220, 58);
+        _generateButton.Location =
+            new System.Drawing.Point(518, 548);
+        _generateButton.Font =
+            new System.Drawing.Font(
+                "Segoe UI",
+                11F,
+                System.Drawing.FontStyle.Bold);
+        _generateButton.Click +=
+            GenerateLicense_Click;
+
+        var footer = new Label
+        {
+            Text =
+                "Phase 2L.3 • Generator ฝั่งผู้ขายเท่านั้น • โปรแกรมลูกค้ายังไม่บังคับ License จนถึง Phase 2L.4",
+            AutoSize = true,
+            ForeColor = System.Drawing.Color.DimGray,
+            Location = new System.Drawing.Point(31, 635)
+        };
+
+        _customerNameBox.TextChanged +=
+            (_, _) => RefreshPreview();
+
+        _machineIdBox.TextChanged +=
+            (_, _) => RefreshPreview();
+
+        _trialRadio.CheckedChanged +=
+            (_, _) => RefreshPreview();
+
+        Controls.AddRange(
+        [
+            title,
+            subtitle,
+            keyBox,
+            formBox,
+            previewBox,
+            _generateButton,
+            footer
+        ]);
+    }
+
+    private void RefreshKeyState()
+    {
+        bool exists =
+            File.Exists(PrivateKeyPath) &&
+            File.Exists(PublicKeyPath) &&
+            File.Exists(KeyInfoPath);
+
+        _generateButton.Enabled = exists;
+
+        if (!exists)
+        {
+            _keyStatusValue.Text =
+                "ไม่พบ Vendor Signing Key";
+            _keyStatusValue.ForeColor =
+                System.Drawing.Color.DarkRed;
+            _keyIdValue.Text = "-";
+            return;
+        }
+
+        try
+        {
+            KeyInfo info =
+                LoadAndValidateKeyMetadata();
+
+            _keyStatusValue.Text =
+                "พร้อมออก License";
+            _keyStatusValue.ForeColor =
+                System.Drawing.Color.DarkGreen;
+            _keyIdValue.Text =
+                info.KeyId;
+        }
+        catch (Exception ex)
+        {
+            _keyStatusValue.Text =
+                "Key ไม่พร้อมใช้งาน";
+            _keyStatusValue.ForeColor =
+                System.Drawing.Color.DarkRed;
+            _keyIdValue.Text =
+                ex.Message;
+            _generateButton.Enabled = false;
+        }
+    }
+
+    private void RefreshPreview()
+    {
+        string customer =
+            string.IsNullOrWhiteSpace(
+                _customerNameBox.Text)
+                ? "(ยังไม่ระบุลูกค้า)"
+                : _customerNameBox.Text.Trim();
+
+        string machine =
+            string.IsNullOrWhiteSpace(
+                _machineIdBox.Text)
+                ? "(ยังไม่ระบุ Machine ID)"
+                : NormalizeMachineId(
+                    _machineIdBox.Text);
+
+        string type =
+            _trialRadio.Checked
+                ? "Trial 7 วัน"
+                : "Permanent";
+
+        _licensePreviewValue.Text =
+            $"ลูกค้า: {customer}\r\n" +
+            $"Machine: {machine}   |   ประเภท: {type}";
+    }
+
+    private void GenerateLicense_Click(
+        object? sender,
+        EventArgs e)
+    {
+        string customerName =
+            _customerNameBox.Text.Trim();
+
+        string machineId =
+            NormalizeMachineId(
+                _machineIdBox.Text);
+
+        if (string.IsNullOrWhiteSpace(
+                customerName))
+        {
+            MessageBox.Show(
+                "กรุณาระบุชื่อลูกค้า / ร้าน",
+                "ManaChai License Generator",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+
+            _customerNameBox.Focus();
+            return;
+        }
+
+        if (!MachineIdRegex.IsMatch(
+                machineId))
+        {
+            MessageBox.Show(
+                "Machine ID ไม่ถูกต้อง\n\n" +
+                "รูปแบบต้องเป็น MC-XXXX-XXXX-XXXX",
+                "ManaChai License Generator",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+
+            _machineIdBox.Focus();
+            return;
+        }
+
+        KeyInfo keyInfo;
+
+        try
+        {
+            keyInfo =
+                LoadAndValidateKeyMetadata();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"Vendor Signing Key ไม่พร้อมใช้งาน\n\n{ex.Message}",
+                "ManaChai License Generator",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+            return;
+        }
+
+        string? password =
+            PasswordDialog.Ask(
+                this,
+                "ใส่ Password ของ Vendor Private Key");
+
+        if (password is null)
+        {
+            return;
+        }
+
+        try
+        {
+            DateTime issuedAtUtc =
+                DateTime.UtcNow;
+
+            bool isTrial =
+                _trialRadio.Checked;
+
+            var payload =
+                new LicensePayload
+                {
+                    SchemaVersion =
+                        "MCL-LIC-1",
+                    KeyId =
+                        keyInfo.KeyId,
+                    LicenseId =
+                        Guid.NewGuid()
+                            .ToString("D")
+                            .ToUpperInvariant(),
+                    CustomerName =
+                        customerName,
+                    MachineId =
+                        machineId,
+                    LicenseType =
+                        isTrial
+                            ? "Trial"
+                            : "Permanent",
+                    IssuedAtUtc =
+                        issuedAtUtc,
+                    ExpiresAtUtc =
+                        isTrial
+                            ? issuedAtUtc.AddDays(7)
+                            : null
+                };
+
+            byte[] canonicalBytes =
+                Encoding.UTF8.GetBytes(
+                    BuildCanonicalPayload(
+                        payload));
+
+            string privatePem =
+                File.ReadAllText(
+                    PrivateKeyPath);
+
+            using RSA rsa =
+                RSA.Create();
+
+            rsa.ImportFromEncryptedPem(
+                privatePem,
+                password);
+
+            byte[] signature =
+                rsa.SignData(
+                    canonicalBytes,
+                    HashAlgorithmName.SHA256,
+                    RSASignaturePadding.Pss);
+
+            // ตรวจด้วย Public Key ก่อนเซฟเสมอ
+            string publicPem =
+                File.ReadAllText(
+                    PublicKeyPath);
+
+            using RSA publicRsa =
+                RSA.Create();
+
+            publicRsa.ImportFromPem(
+                publicPem);
+
+            bool signatureValid =
+                publicRsa.VerifyData(
+                    canonicalBytes,
+                    signature,
+                    HashAlgorithmName.SHA256,
+                    RSASignaturePadding.Pss);
+
+            if (!signatureValid)
+            {
+                throw new CryptographicException(
+                    "ตรวจสอบ Signature หลังสร้างไม่ผ่าน");
+            }
+
+            var signedLicense =
+                new SignedLicenseFile
+                {
+                    Payload =
+                        payload,
+                    SignatureAlgorithm =
+                        "RSA-PSS-SHA256",
+                    SignatureBase64 =
+                        Convert.ToBase64String(
+                            signature)
+                };
+
+            Directory.CreateDirectory(
+                DefaultLicenseOutputDirectory);
+
+            using var dialog =
+                new SaveFileDialog
+                {
+                    Title =
+                        "บันทึก ManaChai License",
+                    Filter =
+                        "ManaChai License (*.license)|*.license",
+                    InitialDirectory =
+                        DefaultLicenseOutputDirectory,
+                    FileName =
+                        BuildDefaultFileName(
+                            machineId,
+                            payload.LicenseType)
+                };
+
+            if (dialog.ShowDialog(this) !=
+                DialogResult.OK)
+            {
+                return;
+            }
+
+            string destination =
+                EnsureLicenseExtension(
+                    dialog.FileName);
+
+            string json =
+                JsonSerializer.Serialize(
+                    signedLicense,
+                    new JsonSerializerOptions
+                    {
+                        WriteIndented = true
+                    });
+
+            File.WriteAllText(
+                destination,
+                json,
+                new UTF8Encoding(
+                    encoderShouldEmitUTF8Identifier: false));
+
+            string expiryText =
+                payload.ExpiresAtUtc.HasValue
+                    ? payload.ExpiresAtUtc.Value
+                        .ToLocalTime()
+                        .ToString("dd/MM/yyyy HH:mm")
+                    : "ไม่หมดอายุ";
+
+            MessageBox.Show(
+                "สร้าง License สำเร็จ\n\n" +
+                $"ลูกค้า: {payload.CustomerName}\n" +
+                $"Machine ID: {payload.MachineId}\n" +
+                $"ประเภท: {payload.LicenseType}\n" +
+                $"หมดอายุ: {expiryText}\n" +
+                $"Key ID: {payload.KeyId}\n\n" +
+                $"ไฟล์:\n{destination}",
+                "ManaChai License Generator",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+        }
+        catch (CryptographicException)
+        {
+            MessageBox.Show(
+                "Password ของ Vendor Private Key ไม่ถูกต้อง " +
+                "หรือไฟล์ Private Key เสียหาย",
+                "ManaChai License Generator",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"ไม่สามารถสร้าง License ได้\n\n{ex.Message}",
+                "ManaChai License Generator",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+        }
+    }
+
+    private static KeyInfo LoadAndValidateKeyMetadata()
+    {
+        if (!File.Exists(PrivateKeyPath) ||
+            !File.Exists(PublicKeyPath) ||
+            !File.Exists(KeyInfoPath))
+        {
+            throw new FileNotFoundException(
+                "ไม่พบ Vendor Signing Key จาก Phase 2L.2");
+        }
+
+        KeyInfo? info =
+            JsonSerializer.Deserialize<KeyInfo>(
+                File.ReadAllText(
+                    KeyInfoPath));
+
+        if (info is null ||
+            string.IsNullOrWhiteSpace(
+                info.KeyId))
+        {
+            throw new InvalidDataException(
+                "อ่าน key-info.json ไม่สำเร็จ");
+        }
+
+        string publicPem =
+            File.ReadAllText(
+                PublicKeyPath);
+
+        using RSA publicRsa =
+            RSA.Create();
+
+        publicRsa.ImportFromPem(
+            publicPem);
+
+        byte[] publicBytes =
+            publicRsa.ExportSubjectPublicKeyInfo();
+
+        byte[] fingerprint =
+            SHA256.HashData(
+                publicBytes);
+
+        string fingerprintText =
+            Convert.ToHexString(
+                fingerprint);
+
+        string expectedKeyId =
+            "MC-KEY-" +
+            Convert.ToHexString(
+                fingerprint.AsSpan(0, 6));
+
+        if (!string.Equals(
+                info.PublicKeySha256,
+                fingerprintText,
+                StringComparison.OrdinalIgnoreCase) ||
+            !string.Equals(
+                info.KeyId,
+                expectedKeyId,
+                StringComparison.Ordinal))
+        {
+            throw new CryptographicException(
+                "Public Key ไม่ตรงกับ key-info.json");
+        }
+
+        return info;
+    }
+
+    private static string BuildCanonicalPayload(
+        LicensePayload payload)
+    {
+        // รูปแบบนี้จะถูกใช้เหมือนกันใน Client Validator (Phase 2L.4)
+        // ห้ามเปลี่ยนลำดับ field โดยไม่เปลี่ยน SchemaVersion
+        return string.Join(
+            "\n",
+            new[]
+            {
+                $"SchemaVersion={payload.SchemaVersion}",
+                $"KeyId={payload.KeyId}",
+                $"LicenseId={payload.LicenseId}",
+                $"CustomerName={EscapeCanonical(payload.CustomerName)}",
+                $"MachineId={payload.MachineId}",
+                $"LicenseType={payload.LicenseType}",
+                $"IssuedAtUtc={payload.IssuedAtUtc.ToUniversalTime():O}",
+                $"ExpiresAtUtc={(payload.ExpiresAtUtc.HasValue ? payload.ExpiresAtUtc.Value.ToUniversalTime().ToString("O") : string.Empty)}"
+            });
+    }
+
+    private static string EscapeCanonical(
+        string value)
+    {
+        return value
+            .Replace("\\", "\\\\")
+            .Replace("\r", "\\r")
+            .Replace("\n", "\\n");
+    }
+
+    private static string NormalizeMachineId(
+        string value)
+    {
+        return value
+            .Trim()
+            .ToUpperInvariant();
+    }
+
+    private static string BuildDefaultFileName(
+        string machineId,
+        string licenseType)
+    {
+        string machinePart =
+            machineId.Replace(
+                "-",
+                string.Empty);
+
+        return
+            $"ManaChaiLeasing_{machinePart}_{licenseType}.license";
+    }
+
+    private static string EnsureLicenseExtension(
+        string path)
+    {
+        return path.EndsWith(
+                ".license",
+                StringComparison.OrdinalIgnoreCase)
+            ? path
+            : path + ".license";
+    }
+}
+
+internal sealed class PasswordDialog : Form
+{
+    private readonly TextBox _passwordBox = new();
+    private string? _result;
+
+    private PasswordDialog(
+        string title)
+    {
+        Text = title;
+        StartPosition =
+            FormStartPosition.CenterParent;
+        Width = 500;
+        Height = 205;
+        MinimizeBox = false;
+        MaximizeBox = false;
+        FormBorderStyle =
+            FormBorderStyle.FixedDialog;
+        Font =
+            new System.Drawing.Font(
+                "Segoe UI",
+                10F);
+
+        var label =
+            new Label
+            {
+                Text =
+                    "Vendor Private Key Password",
+                AutoSize = true,
+                Location =
+                    new System.Drawing.Point(
+                        24,
+                        22)
+            };
+
+        _passwordBox.Location =
+            new System.Drawing.Point(
+                24,
+                50);
+        _passwordBox.Width = 430;
+        _passwordBox.UseSystemPasswordChar =
+            true;
+
+        var cancelButton =
+            new Button
+            {
+                Text = "ยกเลิก",
+                Size =
+                    new System.Drawing.Size(
+                        105,
+                        38),
+                Location =
+                    new System.Drawing.Point(
+                        238,
+                        112),
+                DialogResult =
+                    DialogResult.Cancel
+            };
+
+        var okButton =
+            new Button
+            {
+                Text = "ตกลง",
+                Size =
+                    new System.Drawing.Size(
+                        105,
+                        38),
+                Location =
+                    new System.Drawing.Point(
+                        349,
+                        112)
+            };
+
+        okButton.Click +=
+            (_, _) =>
+            {
+                if (string.IsNullOrEmpty(
+                        _passwordBox.Text))
+                {
+                    MessageBox.Show(
+                        this,
+                        "กรุณาระบุ Password",
+                        "ManaChai License Generator",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    return;
+                }
+
+                _result =
+                    _passwordBox.Text;
+
+                DialogResult =
+                    DialogResult.OK;
+
+                Close();
+            };
+
+        AcceptButton = okButton;
+        CancelButton = cancelButton;
+
+        Controls.AddRange(
+        [
+            label,
+            _passwordBox,
+            cancelButton,
+            okButton
+        ]);
+    }
+
+    public static string? Ask(
+        IWin32Window owner,
+        string title)
+    {
+        using var dialog =
+            new PasswordDialog(
+                title);
+
+        return dialog.ShowDialog(
+                   owner) ==
+               DialogResult.OK
+            ? dialog._result
+            : null;
+    }
+}
