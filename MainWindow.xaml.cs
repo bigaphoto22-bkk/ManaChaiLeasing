@@ -22,6 +22,7 @@ public partial class MainWindow : Window
     private readonly TodaySummaryService _todaySummaryService = new();
     private readonly HomeDashboardService _homeDashboardService = new();
     private readonly DatabaseBackupService _databaseBackupService = new();
+    private readonly MachineIdentityService _machineIdentityService = new();
     private int? _selectedCustomerId;
 
     public MainWindow()
@@ -241,6 +242,7 @@ public partial class MainWindow : Window
         DatabaseFilePathText.Text =
             DatabasePaths.DatabaseFile;
 
+        LoadMachineIdentity();
         LoadBusinessSettings();
     }
 
@@ -392,6 +394,57 @@ public partial class MainWindow : Window
                    NumberStyles.Number,
                    CultureInfo.InvariantCulture,
                    out value);
+    }
+
+    private void LoadMachineIdentity()
+    {
+        try
+        {
+            MachineIdentity identity =
+                _machineIdentityService.GetIdentity();
+
+            MachineIdText.Text =
+                identity.MachineId;
+
+            MachineFingerprintVersionText.Text =
+                $"Fingerprint: {identity.FingerprintVersion}";
+        }
+        catch (Exception ex)
+        {
+            MachineIdText.Text =
+                "ไม่สามารถสร้าง Machine ID ได้";
+
+            MachineFingerprintVersionText.Text =
+                ex.Message;
+        }
+    }
+
+    private void CopyMachineIdButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        try
+        {
+            MachineIdentity identity =
+                _machineIdentityService.GetIdentity();
+
+            Clipboard.SetText(
+                identity.MachineId);
+
+            MessageBox.Show(
+                $"คัดลอกรหัสเครื่องแล้ว\n\n{identity.MachineId}",
+                AppInfo.StoreName,
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"ไม่สามารถคัดลอกรหัสเครื่องได้\n\n{ex.Message}",
+                AppInfo.StoreName,
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
     }
 
     private void BackupDatabaseButton_Click(

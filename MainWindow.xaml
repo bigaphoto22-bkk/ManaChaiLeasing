@@ -2018,6 +2018,94 @@
                                 CornerRadius="12">
                             <StackPanel>
 
+                                <TextBlock Text="สิทธิ์การใช้งาน"
+                                           FontSize="20"
+                                           FontWeight="SemiBold"
+                                           Foreground="#111827" />
+
+                                <TextBlock Margin="0,8,0,0"
+                                           Text="รหัสเครื่องนี้จะใช้สำหรับผูก License กับเครื่องลูกค้าใน Phase ถัดไป"
+                                           FontSize="14"
+                                           Foreground="#6B7280"
+                                           TextWrapping="Wrap" />
+
+                                <Border Margin="0,18,0,0"
+                                        Padding="18"
+                                        Background="#F8FAFC"
+                                        BorderBrush="#CBD5E1"
+                                        BorderThickness="1"
+                                        CornerRadius="10">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel>
+                                            <TextBlock Text="Machine ID"
+                                                       FontSize="13"
+                                                       Foreground="#64748B" />
+
+                                            <TextBlock x:Name="MachineIdText"
+                                                       Margin="0,5,0,0"
+                                                       FontSize="24"
+                                                       FontWeight="Bold"
+                                                       Foreground="#111827" />
+
+                                            <TextBlock x:Name="MachineFingerprintVersionText"
+                                                       Margin="0,5,0,0"
+                                                       FontSize="11"
+                                                       Foreground="#94A3B8" />
+                                        </StackPanel>
+
+                                        <Button Grid.Column="1"
+                                                Width="180"
+                                                Height="46"
+                                                VerticalAlignment="Center"
+                                                Content="คัดลอกรหัสเครื่อง"
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                Click="CopyMachineIdButton_Click" />
+                                    </Grid>
+                                </Border>
+
+                                <Border Margin="0,16,0,0"
+                                        Padding="16"
+                                        Background="#EFF6FF"
+                                        BorderBrush="#BFDBFE"
+                                        BorderThickness="1"
+                                        CornerRadius="8">
+                                    <StackPanel>
+                                        <TextBlock Text="สถานะ License"
+                                                   FontSize="13"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#1E3A8A" />
+
+                                        <TextBlock x:Name="LicenseFoundationStatusText"
+                                                   Margin="0,5,0,0"
+                                                   Text="Foundation Mode • ยังไม่บังคับ License"
+                                                   FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#1D4ED8" />
+
+                                        <TextBlock Margin="0,5,0,0"
+                                                   Text="Phase 2L.1 ยังไม่จำกัดเวลาใช้งานและยังไม่ล็อกโปรแกรม เพื่อให้ทดสอบ Machine ID ได้อย่างปลอดภัย"
+                                                   FontSize="12"
+                                                   Foreground="#475569"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+
+                            </StackPanel>
+                        </Border>
+
+                        <Border Margin="0,18,0,0"
+                                Padding="24"
+                                Background="White"
+                                BorderBrush="#E5E7EB"
+                                BorderThickness="1"
+                                CornerRadius="12">
+                            <StackPanel>
+
                                 <TextBlock Text="สำรองข้อมูล / กู้คืนข้อมูล"
                                            FontSize="20"
                                            FontWeight="SemiBold"
