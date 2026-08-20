@@ -165,6 +165,9 @@ public sealed class SupportDiagnosticsService
             "Single Instance: Enabled");
 
         text.AppendLine(
+            "Database Startup Health Check: Enabled");
+
+        text.AppendLine(
             $"OS: {RuntimeInformation.OSDescription}");
 
         text.AppendLine(

@@ -21,6 +21,10 @@ public sealed record DatabaseRestoreResult(
     string RestoredFromPath,
     string SafetyBackupPath);
 
+public sealed record DatabaseRecoveryRestoreResult(
+    string RestoredFromPath,
+    string PreservedDatabaseFolder);
+
 public sealed class DatabaseBackupService
 {
     public DatabaseBackupResult CreateBackup(
@@ -289,6 +293,200 @@ public sealed class DatabaseBackupService
         }
     }
 
+    public DatabaseRecoveryRestoreResult RestoreBackupForRecovery(
+        string sourcePath)
+    {
+        string source =
+            Path.GetFullPath(
+                sourcePath);
+
+        // ต้องตรวจไฟล์ Backup ก่อนแตะฐานข้อมูลที่มีปัญหา
+        ValidateDatabaseFile(
+            source);
+
+        string liveDatabase =
+            Path.GetFullPath(
+                DatabasePaths.DatabaseFile);
+
+        string dataDirectory =
+            Path.GetDirectoryName(
+                liveDatabase)
+            ?? throw new InvalidOperationException(
+                "ไม่พบตำแหน่งฐานข้อมูลปัจจุบัน");
+
+        Directory.CreateDirectory(
+            dataDirectory);
+
+        string backupDirectory =
+            GetSafetyBackupDirectory();
+
+        Directory.CreateDirectory(
+            backupDirectory);
+
+        string timestamp =
+            DateTime.Now.ToString(
+                "yyyyMMdd_HHmmss");
+
+        string preservedFolder =
+            Path.Combine(
+                backupDirectory,
+                $"BeforeRecovery_{timestamp}");
+
+        Directory.CreateDirectory(
+            preservedFolder);
+
+        string preservedDatabase =
+            Path.Combine(
+                preservedFolder,
+                "ManaChaiLeasing.db");
+
+        string preservedWal =
+            Path.Combine(
+                preservedFolder,
+                "ManaChaiLeasing.db-wal");
+
+        string preservedShm =
+            Path.Combine(
+                preservedFolder,
+                "ManaChaiLeasing.db-shm");
+
+        string tempRestorePath =
+            Path.Combine(
+                dataDirectory,
+                $"recovery_{Guid.NewGuid():N}.tmp");
+
+        string rollbackPath =
+            Path.Combine(
+                dataDirectory,
+                $"recovery_rollback_{Guid.NewGuid():N}.db");
+
+        try
+        {
+            // Preserve raw current files first.
+            // ฐานข้อมูลอาจเสียจน Online Backup ใช้งานไม่ได้
+            SqliteConnection.ClearAllPools();
+
+            CopyIfExists(
+                liveDatabase,
+                preservedDatabase);
+
+            CopyIfExists(
+                liveDatabase + "-wal",
+                preservedWal);
+
+            CopyIfExists(
+                liveDatabase + "-shm",
+                preservedShm);
+
+            // Validate a temp copy on the same drive before swapping.
+            File.Copy(
+                source,
+                tempRestorePath,
+                overwrite: true);
+
+            ValidateDatabaseFile(
+                tempRestorePath);
+
+            SqliteConnection.ClearAllPools();
+
+            // WAL/SHM ของฐานข้อมูลเดิมถูก Preserve แล้ว
+            // ห้ามให้ sidecar เก่าติดมากับฐานข้อมูลที่ Restore
+            DeleteIfExists(
+                liveDatabase + "-wal");
+
+            DeleteIfExists(
+                liveDatabase + "-shm");
+
+            if (File.Exists(
+                    liveDatabase))
+            {
+                File.Replace(
+                    tempRestorePath,
+                    liveDatabase,
+                    rollbackPath,
+                    ignoreMetadataErrors: true);
+            }
+            else
+            {
+                File.Move(
+                    tempRestorePath,
+                    liveDatabase);
+            }
+
+            DeleteIfExists(
+                liveDatabase + "-wal");
+
+            DeleteIfExists(
+                liveDatabase + "-shm");
+
+            ValidateDatabaseFile(
+                liveDatabase);
+
+            DeleteIfExists(
+                rollbackPath);
+
+            return new DatabaseRecoveryRestoreResult(
+                source,
+                preservedFolder);
+        }
+        catch
+        {
+            DeleteIfExists(
+                tempRestorePath);
+
+            try
+            {
+                SqliteConnection.ClearAllPools();
+
+                if (File.Exists(
+                        rollbackPath))
+                {
+                    File.Copy(
+                        rollbackPath,
+                        liveDatabase,
+                        overwrite: true);
+                }
+                else if (File.Exists(
+                             preservedDatabase))
+                {
+                    File.Copy(
+                        preservedDatabase,
+                        liveDatabase,
+                        overwrite: true);
+                }
+
+                DeleteIfExists(
+                    liveDatabase + "-wal");
+
+                DeleteIfExists(
+                    liveDatabase + "-shm");
+
+                CopyIfExists(
+                    preservedWal,
+                    liveDatabase + "-wal");
+
+                CopyIfExists(
+                    preservedShm,
+                    liveDatabase + "-shm");
+            }
+            catch
+            {
+                // ไฟล์เดิมที่ Preserve ไว้ยังอยู่ใน BeforeRecovery folder
+                // เพื่อให้ผู้ดูแลใช้กู้คืน/วิเคราะห์ภายหลัง
+            }
+
+            throw;
+        }
+        finally
+        {
+            DeleteIfExists(
+                tempRestorePath);
+
+            DeleteIfExists(
+                rollbackPath);
+        }
+    }
+
     private static void ValidateDatabaseFile(
         string filePath)
     {
@@ -438,6 +636,20 @@ public sealed class DatabaseBackupService
         return Path.Combine(
             root,
             "Backups");
+    }
+
+    private static void CopyIfExists(
+        string sourcePath,
+        string destinationPath)
+    {
+        if (File.Exists(
+                sourcePath))
+        {
+            File.Copy(
+                sourcePath,
+                destinationPath,
+                overwrite: true);
+        }
     }
 
     private static void DeleteIfExists(

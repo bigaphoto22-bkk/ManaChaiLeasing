@@ -1,0 +1,82 @@
+﻿ManaChaiLeasing - Phase 2M.4
+Database Health Check & Startup Recovery
+
+Version:
+0.2.6
+
+Startup flow:
+1. Validate License
+2. Check existing database readability + PRAGMA quick_check
+3. If database is new/missing -> run EF migrations/init
+4. Check database again after initialization
+5. Verify required application tables
+6. Only then show the Main Window and run Auto Backup
+
+Required tables:
+- Customers
+- PawnTickets
+- PawnTransactions
+- AppSettings
+- SmartLookupValues
+
+If health check fails:
+- Main application remains hidden
+- Business transactions are NOT allowed
+- Database Recovery Window opens
+- User can:
+  * choose a valid .db Backup and restore
+  * open Auto Backup folder
+  * open Technical Log folder
+  * exit the application
+- There is intentionally NO "continue anyway" button
+
+Recovery safety:
+- Selected Backup is validated before touching current database
+- Current problematic DB is preserved as raw files first:
+  %LOCALAPPDATA%\ManaChaiLeasing\Backups\BeforeRecovery_yyyyMMdd_HHmmss\
+- Preserves:
+  * ManaChaiLeasing.db
+  * ManaChaiLeasing.db-wal (if present)
+  * ManaChaiLeasing.db-shm (if present)
+- Restore uses a validated temporary copy
+- Existing SQLite pools are cleared before file swap
+- Old WAL/SHM are not carried into restored database
+- Restored database is validated after swap
+- If restore fails, system attempts to restore the preserved original files
+
+After successful recovery:
+- Application closes
+- User must reopen the program
+- Startup Health Check runs again on the restored database
+
+Technical logging:
+- health-check failures -> CRITICAL log
+- restore start/success/failure -> technical log
+- Support diagnostics reports:
+  Database Startup Health Check: Enabled
+
+No migration added.
+No database schema changes.
+No license / clock rollback changes.
+No Auto Backup policy changes.
+No dashboard changes.
+VendorPublicKey.cs intentionally not included.
+
+
+Phase 2M.4 Fix1
+----------------
+Startup Recovery Window visibility fix
+
+Problem:
+Database Recovery Window was assigned Owner = MainWindow
+while MainWindow was still inside its constructor and had never been shown.
+
+Fix:
+- Recovery Window is ownerless during startup recovery
+- Bring Recovery Window to foreground on Loaded
+- Topmost is temporary only, then immediately returned to false
+- Add technical log: "Opening database recovery window."
+
+No database logic changes.
+No restore logic changes.
+No migration.

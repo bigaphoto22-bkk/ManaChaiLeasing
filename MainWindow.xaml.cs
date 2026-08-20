@@ -32,6 +32,7 @@ public partial class MainWindow : Window
     private readonly TodaySummaryService _todaySummaryService = new();
     private readonly HomeDashboardService _homeDashboardService = new();
     private readonly DatabaseBackupService _databaseBackupService = new();
+    private readonly DatabaseHealthService _databaseHealthService = new();
     private readonly AutomaticBackupService _automaticBackupService = new();
     private readonly SupportDiagnosticsService _supportDiagnosticsService = new();
     private readonly MachineIdentityService _machineIdentityService = new();
@@ -65,10 +66,15 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (!EnsureHealthyDatabaseForStartup())
+        {
+            Application.Current.Shutdown();
+            return;
+        }
+
         Opacity = 1;
         ShowInTaskbar = true;
 
-        InitializeDatabase();
         RunAutomaticBackupAfterStartup();
 
         HomeCustomStartDatePicker.SelectedDate = DateTime.Today;
@@ -184,32 +190,111 @@ public partial class MainWindow : Window
             .IsValid;
     }
 
-    private void InitializeDatabase()
+    private bool EnsureHealthyDatabaseForStartup()
     {
+        DatabaseHealthResult preCheck =
+            _databaseHealthService
+                .CheckBeforeInitialization();
+
+        if (!preCheck.IsHealthy &&
+            !preCheck.IsMissing)
+        {
+            return ShowDatabaseRecovery(
+                preCheck);
+        }
+
         try
         {
             DatabaseInitializer.Initialize();
-
-            DatabaseStatusText.Text = "Offline • SQLite Ready";
-            DatabaseStatusText.Foreground = Brushes.ForestGreen;
-            DatabaseStatusText.ToolTip = DatabasePaths.DatabaseFile;
         }
         catch (Exception ex)
         {
             AppLog.Error(
-                "Handled exception in MainWindow.",
+                "Database initialization failed.",
                 ex);
 
-            DatabaseStatusText.Text = "Database Error";
-            DatabaseStatusText.Foreground = Brushes.Firebrick;
+            DatabaseHealthResult initializationFailure =
+                new(
+                    DatabaseHealthStatus.Unhealthy,
+                    "ไม่สามารถเตรียมฐานข้อมูลให้พร้อมใช้งานได้",
+                    ex.ToString());
 
-            MessageBox.Show(
-                $"ไม่สามารถเตรียมฐานข้อมูล SQLite ได้\n\n{ex.Message}",
-                ManaChaiLeasing.AppInfo.StoreName,
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
+            return ShowDatabaseRecovery(
+                initializationFailure);
         }
+
+        DatabaseHealthResult postCheck =
+            _databaseHealthService
+                .CheckAfterInitialization();
+
+        if (!postCheck.IsHealthy)
+        {
+            return ShowDatabaseRecovery(
+                postCheck);
+        }
+
+        DatabaseStatusText.Text =
+            "Offline • SQLite Ready";
+
+        DatabaseStatusText.Foreground =
+            Brushes.ForestGreen;
+
+        DatabaseStatusText.ToolTip =
+            DatabasePaths.DatabaseFile;
+
+        AppLog.Info(
+            "Database startup health check passed.");
+
+        return true;
     }
+
+    private bool ShowDatabaseRecovery(
+        DatabaseHealthResult healthResult)
+    {
+        DatabaseStatusText.Text =
+            "Database Recovery Required";
+
+        DatabaseStatusText.Foreground =
+            Brushes.Firebrick;
+
+        AppLog.Critical(
+            $"Database startup health check failed: {healthResult.TechnicalMessage}");
+
+        AppLog.Info(
+            "Opening database recovery window.");
+
+        DatabaseRecoveryWindow recoveryWindow =
+            new(
+                healthResult)
+            {
+                Topmost = true
+            };
+
+        recoveryWindow.Loaded +=
+            (_, _) =>
+            {
+                recoveryWindow.Activate();
+                recoveryWindow.Focus();
+
+                // Topmost ใช้เฉพาะตอน Startup เพื่อให้ Recovery
+                // ไม่หลบอยู่หลัง Visual Studio / หน้าต่างอื่น
+                recoveryWindow.Topmost = false;
+            };
+
+        bool? result =
+            recoveryWindow.ShowDialog();
+
+        // หลัง Restore ต้องปิดและเปิดโปรแกรมใหม่เสมอ
+        // เพื่อให้ EF/SQLite ทุก service เริ่มจากฐานข้อมูลชุดใหม่อย่างสะอาด
+        if (result == true &&
+            recoveryWindow.RecoveryCompleted)
+        {
+            return false;
+        }
+
+        return false;
+    }
+
 
     private void HomeButton_Click(object sender, RoutedEventArgs e)
     {

@@ -1,0 +1,168 @@
+﻿<Window x:Class="ManaChaiLeasing.DatabaseRecoveryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:ManaChaiLeasing"
+        Title="{x:Static local:AppInfo.DatabaseRecoveryWindowTitle}"
+        Icon="Resources/ManaChaiLeasing.ico"
+        Width="760"
+        Height="610"
+        MinWidth="700"
+        MinHeight="560"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="CanResize"
+        Background="#F8FAFC">
+
+    <Grid Margin="28">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel>
+            <TextBlock Text="ฐานข้อมูลไม่พร้อมใช้งาน"
+                       FontSize="26"
+                       FontWeight="Bold"
+                       Foreground="#B91C1C" />
+
+            <TextBlock Margin="0,7,0,0"
+                       Text="โปรแกรมจะไม่เปิดให้ทำรายการต่อจนกว่าฐานข้อมูลจะกลับมาพร้อมใช้งาน"
+                       FontSize="14"
+                       Foreground="#475569"
+                       TextWrapping="Wrap" />
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1"
+                      Margin="0,20,0,20"
+                      VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+
+                <Border Padding="18"
+                        Background="#FEF2F2"
+                        BorderBrush="#FECACA"
+                        BorderThickness="1"
+                        CornerRadius="10">
+                    <StackPanel>
+                        <TextBlock Text="ปัญหาที่ตรวจพบ"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   Foreground="#991B1B" />
+
+                        <TextBlock x:Name="IssueMessageText"
+                                   Margin="0,6,0,0"
+                                   FontSize="15"
+                                   FontWeight="SemiBold"
+                                   Foreground="#B91C1C"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <Border Margin="0,14,0,0"
+                        Padding="16"
+                        Background="White"
+                        BorderBrush="#E5E7EB"
+                        BorderThickness="1"
+                        CornerRadius="10">
+                    <StackPanel>
+                        <TextBlock Text="ฐานข้อมูลที่โปรแกรมกำลังตรวจสอบ"
+                                   FontSize="13"
+                                   Foreground="#64748B" />
+
+                        <TextBlock x:Name="DatabasePathText"
+                                   Margin="0,5,0,0"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Foreground="#334155"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <Border Margin="0,14,0,0"
+                        Padding="18"
+                        Background="#EFF6FF"
+                        BorderBrush="#BFDBFE"
+                        BorderThickness="1"
+                        CornerRadius="10">
+                    <StackPanel>
+                        <TextBlock Text="วิธีแก้ไขที่แนะนำ"
+                                   FontSize="15"
+                                   FontWeight="SemiBold"
+                                   Foreground="#1E3A8A" />
+
+                        <TextBlock Margin="0,7,0,0"
+                                   FontSize="13"
+                                   Foreground="#334155"
+                                   TextWrapping="Wrap"
+                                   Text="เลือกไฟล์ Auto Backup หรือ Manual Backup ที่ตรวจสอบแล้วว่าถูกต้อง ระบบจะเก็บสำเนาฐานข้อมูลที่มีปัญหาไว้ก่อน แล้วจึงกู้คืน Backup ที่เลือก" />
+
+                        <TextBlock x:Name="AutomaticBackupFolderText"
+                                   Margin="0,10,0,0"
+                                   FontSize="12"
+                                   Foreground="#475569"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <Expander Margin="0,14,0,0"
+                          Header="รายละเอียดทางเทคนิค"
+                          FontSize="13"
+                          Foreground="#64748B"
+                          IsExpanded="False">
+                    <Border Margin="0,8,0,0"
+                            Padding="12"
+                            Background="#F1F5F9"
+                            BorderBrush="#E2E8F0"
+                            BorderThickness="1"
+                            CornerRadius="8">
+                        <TextBlock x:Name="TechnicalDetailsText"
+                                   FontFamily="Consolas"
+                                   FontSize="11"
+                                   Foreground="#475569"
+                                   TextWrapping="Wrap" />
+                    </Border>
+                </Expander>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Orientation="Horizontal">
+                <Button Width="190"
+                        Height="44"
+                        Content="เลือก Backup และกู้คืน..."
+                        FontSize="14"
+                        FontWeight="SemiBold"
+                        Click="RestoreBackupButton_Click" />
+
+                <Button Width="180"
+                        Height="44"
+                        Margin="10,0,0,0"
+                        Content="เปิดโฟลเดอร์ Auto Backup"
+                        FontSize="13"
+                        Click="OpenAutoBackupFolderButton_Click" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="1"
+                        Orientation="Horizontal">
+                <Button Width="135"
+                        Height="44"
+                        Content="เปิดโฟลเดอร์ Log"
+                        FontSize="13"
+                        Click="OpenLogFolderButton_Click" />
+
+                <Button Width="130"
+                        Height="44"
+                        Margin="10,0,0,0"
+                        Content="ออกจากโปรแกรม"
+                        FontSize="13"
+                        Click="ExitButton_Click" />
+            </StackPanel>
+        </Grid>
+
+    </Grid>
+</Window>

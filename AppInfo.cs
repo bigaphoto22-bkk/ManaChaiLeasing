@@ -43,6 +43,9 @@ public static class AppInfo
     public const string LicenseActivationWindowTitle =
         "เปิดใช้งานโปรแกรม - " + StoreName;
 
+    public const string DatabaseRecoveryWindowTitle =
+        "ตรวจสอบฐานข้อมูล - " + StoreName;
+
     public const string RedemptionWindowTitle =
         "ไถ่ถอน - " + StoreName;
 
