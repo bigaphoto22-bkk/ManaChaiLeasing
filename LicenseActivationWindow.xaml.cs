@@ -41,6 +41,25 @@ public partial class LicenseActivationWindow : Window
         }
 
         if (result.Status ==
+            LicenseValidationStatus.ClockRollbackDetected)
+        {
+            LicenseDetailText.Text =
+                "ตรวจพบว่าวัน/เวลา Windows ย้อนกลับจากเวลาที่โปรแกรมเคยใช้งาน " +
+                "กรุณาตั้งวันที่และเวลา Windows ให้ถูกต้องแล้วเปิดโปรแกรมใหม่ " +
+                "หากยังไม่สามารถใช้งานได้ให้ติดต่อผู้จำหน่าย";
+            return;
+        }
+
+        if (result.Status ==
+            LicenseValidationStatus.ClockStateCorrupted)
+        {
+            LicenseDetailText.Text =
+                "ข้อมูลป้องกันการย้อนเวลาของ Trial License ไม่สมบูรณ์ " +
+                "กรุณาติดต่อผู้จำหน่ายเพื่อออก License ใหม่";
+            return;
+        }
+
+        if (result.Status ==
             LicenseValidationStatus.Expired &&
             result.Payload is not null)
         {

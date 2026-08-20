@@ -15,8 +15,10 @@ public enum LicenseValidationStatus
     InvalidSignature = 4,
     WrongMachine = 5,
     Expired = 6,
-    Unsupported = 7,
-    Error = 8
+    ClockRollbackDetected = 7,
+    ClockStateCorrupted = 8,
+    Unsupported = 9,
+    Error = 10
 }
 
 public sealed class ClientLicensePayload
@@ -96,6 +98,8 @@ public sealed class LicenseValidationService
 {
     private readonly MachineIdentityService _machineIdentityService = new();
 
+    private readonly ClockRollbackService _clockRollbackService = new();
+
     public LicenseValidationResult ValidateInstalledLicense()
     {
         return ValidateLicenseFile(
@@ -104,6 +108,15 @@ public sealed class LicenseValidationService
 
     public LicenseValidationResult ValidateLicenseFile(
         string filePath)
+    {
+        return ValidateLicenseFileCore(
+            filePath,
+            applyClockProtection: true);
+    }
+
+    private LicenseValidationResult ValidateLicenseFileCore(
+        string filePath,
+        bool applyClockProtection)
     {
         if (!VendorPublicKey.IsConfigured)
         {
@@ -250,6 +263,28 @@ public sealed class LicenseValidationService
                         "ระยะเวลาทดลองใช้งานสิ้นสุดแล้ว",
                         payload);
                 }
+
+                if (applyClockProtection)
+                {
+                    ClockValidationResult clockResult =
+                        _clockRollbackService.ValidateAndUpdate(
+                            payload.LicenseId,
+                            payload.IssuedAtUtc);
+
+                    if (!clockResult.IsValid)
+                    {
+                        LicenseValidationStatus status =
+                            clockResult.Status ==
+                                ClockValidationStatus.RollbackDetected
+                                ? LicenseValidationStatus.ClockRollbackDetected
+                                : LicenseValidationStatus.ClockStateCorrupted;
+
+                        return Invalid(
+                            status,
+                            clockResult.Message,
+                            payload);
+                    }
+                }
             }
             else if (string.Equals(
                          payload.LicenseType,
@@ -300,8 +335,9 @@ public sealed class LicenseValidationService
         string sourceFilePath)
     {
         LicenseValidationResult validation =
-            ValidateLicenseFile(
-                sourceFilePath);
+            ValidateLicenseFileCore(
+                sourceFilePath,
+                applyClockProtection: false);
 
         if (!validation.IsValid)
         {

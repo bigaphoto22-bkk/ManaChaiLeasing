@@ -178,3 +178,29 @@ VendorPublicKey.cs มีเฉพาะ PUBLIC KEY
 5. ใช้ ManaChai License Generator ออก .license ให้ Machine ID ของเครื่อง
 6. Import .license ใน Activation Window
 
+
+
+============================================================
+Phase 2L.5 - Clock Rollback Protection
+============================================================
+
+Trial License จะตรวจเวลาปัจจุบันเทียบกับ "เวลาที่เคยใช้งานล่าสุด"
+
+Clock State ถูกเก็บซ้ำ 3 จุด:
+1. %LOCALAPPDATA%\ManaChaiLeasing\License\clock-state.dat
+2. %APPDATA%\ManaChaiLeasing\license-clock.dat
+3. HKCU\Software\ManaChaiLeasing\License
+
+ข้อมูล state ถูกป้องกันด้วย Windows DPAPI ของ User ปัจจุบัน
+
+หาก Windows time ย้อนกลับเกิน tolerance:
+โปรแกรมจะเปิด Activation Window และไม่เข้าสู่ Main Program
+
+Permanent License:
+ไม่บังคับ Clock Rollback Protection เพราะไม่มีวันหมดอายุ
+
+สำคัญ:
+หลังแตก Phase 2L.5 FULL package ให้รัน
+06_Embed_Public_Key_Into_Client.bat
+อีกครั้งก่อน Build โปรแกรมหลัก เพราะ FULL package ไม่มี Public Key จริงของ Vendor
+

@@ -476,10 +476,16 @@ public partial class MainWindow : Window
             LicenseFoundationStatusText.Foreground =
                 Brushes.ForestGreen;
 
+            string clockProtectionText =
+                result.Payload.LicenseType == "Trial"
+                    ? " • ป้องกันย้อนเวลา: เปิดใช้งาน"
+                    : string.Empty;
+
             LicenseDetailStatusText.Text =
                 $"Machine ID: {result.Payload.MachineId} • " +
                 $"หมดอายุ: {result.ExpiryText} • " +
-                $"Key: {result.Payload.KeyId}";
+                $"Key: {result.Payload.KeyId}" +
+                clockProtectionText;
         }
         else
         {
