@@ -6,24 +6,39 @@ namespace ManaChaiLeasing.Services;
 
 public sealed class HomeDashboardSummary
 {
-    public DateTime SummaryDate { get; init; }
+    public DateTime StartDate { get; init; }
+
+    public DateTime EndDate { get; init; }
 
     public DateTime UpdatedAt { get; init; }
 
+    // สถานะ ณ สิ้นวันของ EndDate
     public int ActiveTicketCount { get; init; }
 
-    public int DueTodayCount { get; init; }
+    public int DueAtEndDateCount { get; init; }
 
     public int OverdueCount { get; init; }
 
-    public int InterestTodayCount { get; init; }
+    // ความเคลื่อนไหวภายในช่วง StartDate - EndDate
+    public int PawnCount { get; init; }
 
-    public decimal PawnExpenseToday { get; init; }
+    public int InterestCount { get; init; }
 
-    public decimal IncomeToday { get; init; }
+    public int RedemptionCount { get; init; }
 
-    public decimal NetCashToday =>
-        IncomeToday - PawnExpenseToday;
+    public decimal PawnExpense { get; init; }
+
+    public decimal InterestIncome { get; init; }
+
+    public decimal RedemptionIncome { get; init; }
+
+    public decimal TotalIncome =>
+        InterestIncome + RedemptionIncome;
+
+    public decimal TotalExpense => PawnExpense;
+
+    public decimal NetCash =>
+        TotalIncome - TotalExpense;
 }
 
 public sealed class HomeDashboardService
@@ -31,50 +46,100 @@ public sealed class HomeDashboardService
     public HomeDashboardSummary GetSummary()
     {
         DateTime today = DateTime.Today;
-        DateTime tomorrow = today.AddDays(1);
+        return GetSummary(today, today);
+    }
+
+    public HomeDashboardSummary GetSummary(
+        DateTime startDate,
+        DateTime endDate)
+    {
+        DateTime start = startDate.Date;
+        DateTime end = endDate.Date;
+
+        if (start > end)
+        {
+            throw new ArgumentException(
+                "วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุด");
+        }
+
+        DateTime endExclusive = end.AddDays(1);
 
         using AppDbContext db = new();
 
-        List<PawnTicket> activeTickets = db.PawnTickets
+        // โหลดตั๋วที่เริ่มจำนำไม่เกินวันสิ้นสุด พร้อมประวัติ Transaction
+        // เพื่อคำนวณสถานะย้อนหลังจากเหตุการณ์จริง ไม่ใช้ Current Status อย่างเดียว
+        List<PawnTicket> tickets = db.PawnTickets
             .AsNoTracking()
             .Include(ticket => ticket.Transactions)
-            .Where(ticket =>
-                ticket.Status == PawnTicketStatus.Active)
+            .Where(ticket => ticket.PawnDate < endExclusive)
             .ToList();
 
-        List<DateTime> activeDueDates = activeTickets
-            .Select(ticket =>
+        int activeTicketCount = 0;
+        int dueAtEndDateCount = 0;
+        int overdueCount = 0;
+
+        foreach (PawnTicket ticket in tickets)
+        {
+            List<PawnTransaction> transactionsThroughEnd =
+                ticket.Transactions
+                    .Where(transaction =>
+                        !transaction.IsVoided &&
+                        transaction.TransactionDate < endExclusive)
+                    .ToList();
+
+            bool redeemedByEnd = transactionsThroughEnd.Any(transaction =>
+                transaction.TransactionType ==
+                    PawnTransactionType.Redemption);
+
+            if (redeemedByEnd)
             {
-                int renewalCount = ticket.Transactions.Count(transaction =>
-                    !transaction.IsVoided &&
-                    transaction.TransactionType ==
-                        PawnTransactionType.Interest);
+                continue;
+            }
 
-                return ticket.PawnDate.Date.AddDays(
-                    ticket.InterestPeriodDays *
-                    (renewalCount + 1));
-            })
-            .ToList();
+            // ปัจจุบันระบบยังไม่มี workflow ที่เปลี่ยนสถานะเป็น Closed
+            // โดยไม่มี Transaction ประกอบ ดังนั้นประวัติย้อนหลังใช้ Pawn/Redemption
+            // เป็นหลักเพื่อให้ตั๋วที่มาไถ่ในอนาคตยังนับเป็น Active ในอดีตได้ถูกต้อง
+            int renewalCount = transactionsThroughEnd.Count(transaction =>
+                transaction.TransactionType ==
+                    PawnTransactionType.Interest);
 
-        int dueTodayCount = activeDueDates.Count(date =>
-            date.Date == today);
+            DateTime dueDate = ticket.PawnDate.Date.AddDays(
+                ticket.InterestPeriodDays *
+                (renewalCount + 1));
 
-        int overdueCount = activeDueDates.Count(date =>
-            date.Date < today);
+            activeTicketCount++;
 
-        List<PawnTransaction> todayTransactions = db.PawnTransactions
+            if (dueDate.Date == end)
+            {
+                dueAtEndDateCount++;
+            }
+            else if (dueDate.Date < end)
+            {
+                overdueCount++;
+            }
+        }
+
+        List<PawnTransaction> periodTransactions = db.PawnTransactions
             .AsNoTracking()
             .Where(transaction =>
                 !transaction.IsVoided &&
-                transaction.TransactionDate >= today &&
-                transaction.TransactionDate < tomorrow)
+                transaction.TransactionDate >= start &&
+                transaction.TransactionDate < endExclusive)
             .ToList();
 
-        int interestTodayCount = todayTransactions.Count(transaction =>
+        int pawnCount = periodTransactions.Count(transaction =>
+            transaction.TransactionType ==
+                PawnTransactionType.Pawn);
+
+        int interestCount = periodTransactions.Count(transaction =>
             transaction.TransactionType ==
                 PawnTransactionType.Interest);
 
-        decimal pawnExpenseToday = todayTransactions
+        int redemptionCount = periodTransactions.Count(transaction =>
+            transaction.TransactionType ==
+                PawnTransactionType.Redemption);
+
+        decimal pawnExpense = periodTransactions
             .Where(transaction =>
                 transaction.TransactionType ==
                     PawnTransactionType.Pawn &&
@@ -82,22 +147,36 @@ public sealed class HomeDashboardService
                     CashFlowType.Expense)
             .Sum(transaction => transaction.Amount);
 
-        decimal incomeToday = todayTransactions
+        decimal interestIncome = periodTransactions
             .Where(transaction =>
+                transaction.TransactionType ==
+                    PawnTransactionType.Interest &&
+                transaction.CashFlowType ==
+                    CashFlowType.Income)
+            .Sum(transaction => transaction.Amount);
+
+        decimal redemptionIncome = periodTransactions
+            .Where(transaction =>
+                transaction.TransactionType ==
+                    PawnTransactionType.Redemption &&
                 transaction.CashFlowType ==
                     CashFlowType.Income)
             .Sum(transaction => transaction.Amount);
 
         return new HomeDashboardSummary
         {
-            SummaryDate = today,
+            StartDate = start,
+            EndDate = end,
             UpdatedAt = DateTime.Now,
-            ActiveTicketCount = activeTickets.Count,
-            DueTodayCount = dueTodayCount,
+            ActiveTicketCount = activeTicketCount,
+            DueAtEndDateCount = dueAtEndDateCount,
             OverdueCount = overdueCount,
-            InterestTodayCount = interestTodayCount,
-            PawnExpenseToday = pawnExpenseToday,
-            IncomeToday = incomeToday
+            PawnCount = pawnCount,
+            InterestCount = interestCount,
+            RedemptionCount = redemptionCount,
+            PawnExpense = pawnExpense,
+            InterestIncome = interestIncome,
+            RedemptionIncome = redemptionIncome
         };
     }
 }

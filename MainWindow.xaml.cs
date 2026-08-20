@@ -14,6 +14,14 @@ namespace ManaChaiLeasing;
 
 public partial class MainWindow : Window
 {
+    private enum HomeDashboardPeriodPreset
+    {
+        Today,
+        ThisWeek,
+        ThisMonth,
+        Custom
+    }
+
     private bool _isInitializing = true;
     private readonly CustomerService _customerService = new();
     private readonly PawnTicketService _pawnTicketService = new();
@@ -25,6 +33,8 @@ public partial class MainWindow : Window
     private readonly MachineIdentityService _machineIdentityService = new();
     private readonly LicenseValidationService _licenseValidationService = new();
     private int? _selectedCustomerId;
+    private HomeDashboardPeriodPreset _homeDashboardPeriod =
+        HomeDashboardPeriodPreset.Today;
 
     public MainWindow()
     {
@@ -44,6 +54,13 @@ public partial class MainWindow : Window
         ShowInTaskbar = true;
 
         InitializeDatabase();
+
+        HomeCustomStartDatePicker.SelectedDate = DateTime.Today;
+        HomeCustomEndDatePicker.SelectedDate = DateTime.Today;
+        HomeCustomStartDatePicker.DisplayDateEnd = DateTime.Today;
+        HomeCustomEndDatePicker.DisplayDateEnd = DateTime.Today;
+
+        UpdateHomeDashboardPeriodButtons();
         LoadHomeDashboard();
         LoadSmartLookupValues();
 
@@ -122,15 +139,138 @@ public partial class MainWindow : Window
         LoadHomeDashboard();
     }
 
-    private void LoadHomeDashboard()
+    private void HomeDashboardTodayButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        SetHomeDashboardPeriod(
+            HomeDashboardPeriodPreset.Today);
+    }
+
+    private void HomeDashboardWeekButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        SetHomeDashboardPeriod(
+            HomeDashboardPeriodPreset.ThisWeek);
+    }
+
+    private void HomeDashboardMonthButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        SetHomeDashboardPeriod(
+            HomeDashboardPeriodPreset.ThisMonth);
+    }
+
+    private void HomeDashboardCustomButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        _homeDashboardPeriod =
+            HomeDashboardPeriodPreset.Custom;
+
+        HomeDashboardCustomRangePanel.Visibility =
+            Visibility.Visible;
+
+        HomeCustomStartDatePicker.SelectedDate ??=
+            DateTime.Today;
+
+        HomeCustomEndDatePicker.SelectedDate ??=
+            DateTime.Today;
+
+        UpdateHomeDashboardPeriodButtons();
+        LoadHomeDashboard();
+    }
+
+    private void HomeDashboardApplyCustomButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        LoadHomeDashboard(showRangeValidation: true);
+    }
+
+    private void SetHomeDashboardPeriod(
+        HomeDashboardPeriodPreset period)
+    {
+        _homeDashboardPeriod = period;
+
+        HomeDashboardCustomRangePanel.Visibility =
+            period == HomeDashboardPeriodPreset.Custom
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+
+        UpdateHomeDashboardPeriodButtons();
+        LoadHomeDashboard();
+    }
+
+    private void UpdateHomeDashboardPeriodButtons()
+    {
+        Style primary =
+            (Style)FindResource("PrimaryButtonStyle");
+
+        Style secondary =
+            (Style)FindResource("SecondaryButtonStyle");
+
+        HomeDashboardTodayButton.Style =
+            _homeDashboardPeriod ==
+                HomeDashboardPeriodPreset.Today
+                ? primary
+                : secondary;
+
+        HomeDashboardWeekButton.Style =
+            _homeDashboardPeriod ==
+                HomeDashboardPeriodPreset.ThisWeek
+                ? primary
+                : secondary;
+
+        HomeDashboardMonthButton.Style =
+            _homeDashboardPeriod ==
+                HomeDashboardPeriodPreset.ThisMonth
+                ? primary
+                : secondary;
+
+        HomeDashboardCustomButton.Style =
+            _homeDashboardPeriod ==
+                HomeDashboardPeriodPreset.Custom
+                ? primary
+                : secondary;
+    }
+
+    private void LoadHomeDashboard(
+        bool showRangeValidation = false)
     {
         try
         {
-            HomeDashboardSummary summary =
-                _homeDashboardService.GetSummary();
+            if (!TryGetHomeDashboardRange(
+                out DateTime startDate,
+                out DateTime endDate,
+                out string validationMessage))
+            {
+                HomeDashboardUpdatedText.Text =
+                    "กรุณาตรวจสอบช่วงวันที่";
 
-            HomeDashboardDateText.Text =
-                $"วันที่ {summary.SummaryDate:dd/MM/yyyy}";
+                if (showRangeValidation)
+                {
+                    MessageBox.Show(
+                        validationMessage,
+                        ManaChaiLeasing.AppInfo.StoreName,
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                }
+
+                return;
+            }
+
+            HomeDashboardSummary summary =
+                _homeDashboardService.GetSummary(
+                    startDate,
+                    endDate);
+
+            HomeDashboardPeriodText.Text =
+                summary.StartDate.Date == summary.EndDate.Date
+                    ? $"วันที่ {summary.StartDate:dd/MM/yyyy}"
+                    : $"ช่วง {summary.StartDate:dd/MM/yyyy} - {summary.EndDate:dd/MM/yyyy}";
 
             HomeDashboardUpdatedText.Text =
                 $"อัปเดตล่าสุด {summary.UpdatedAt:HH:mm}";
@@ -138,28 +278,41 @@ public partial class MainWindow : Window
             HomeActiveTicketCountText.Text =
                 $"{summary.ActiveTicketCount:N0} ตั๋ว";
 
-            HomeDueTodayCountText.Text =
-                $"{summary.DueTodayCount:N0} ตั๋ว";
+            HomeDueAtEndCountText.Text =
+                $"{summary.DueAtEndDateCount:N0} ตั๋ว";
 
             HomeOverdueCountText.Text =
-                summary.OverdueCount == 0
-                    ? "เกินกำหนด 0 ตั๋ว"
-                    : $"เกินกำหนด {summary.OverdueCount:N0} ตั๋ว";
+                $"{summary.OverdueCount:N0} ตั๋ว";
 
-            HomeInterestTodayCountText.Text =
-                $"{summary.InterestTodayCount:N0} ครั้ง";
+            HomePawnCountText.Text =
+                $"{summary.PawnCount:N0} รายการ";
 
-            HomePawnExpenseTodayText.Text =
-                $"{summary.PawnExpenseToday:N2} บาท";
+            HomePawnExpenseText.Text =
+                $"จ่ายออก {summary.PawnExpense:N2} บาท";
 
-            HomeIncomeTodayText.Text =
-                $"{summary.IncomeToday:N2} บาท";
+            HomeInterestCountText.Text =
+                $"{summary.InterestCount:N0} ครั้ง";
 
-            HomeNetCashTodayText.Text =
-                $"{summary.NetCashToday:N2} บาท";
+            HomeInterestIncomeText.Text =
+                $"รับเข้า {summary.InterestIncome:N2} บาท";
 
-            HomeNetCashTodayText.Foreground =
-                summary.NetCashToday < 0m
+            HomeRedemptionCountText.Text =
+                $"{summary.RedemptionCount:N0} รายการ";
+
+            HomeRedemptionIncomeText.Text =
+                $"รับเข้า {summary.RedemptionIncome:N2} บาท";
+
+            HomeTotalIncomeText.Text =
+                $"{summary.TotalIncome:N2} บาท";
+
+            HomeTotalExpenseText.Text =
+                $"{summary.TotalExpense:N2} บาท";
+
+            HomeNetCashText.Text =
+                $"{summary.NetCash:N2} บาท";
+
+            HomeNetCashText.Foreground =
+                summary.NetCash < 0m
                     ? Brushes.Firebrick
                     : Brushes.ForestGreen;
         }
@@ -173,6 +326,73 @@ public partial class MainWindow : Window
                 ManaChaiLeasing.AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
+        }
+    }
+
+    private bool TryGetHomeDashboardRange(
+        out DateTime startDate,
+        out DateTime endDate,
+        out string validationMessage)
+    {
+        DateTime today = DateTime.Today;
+
+        startDate = today;
+        endDate = today;
+        validationMessage = string.Empty;
+
+        switch (_homeDashboardPeriod)
+        {
+            case HomeDashboardPeriodPreset.Today:
+                return true;
+
+            case HomeDashboardPeriodPreset.ThisWeek:
+                int daysSinceMonday =
+                    ((int)today.DayOfWeek + 6) % 7;
+
+                startDate = today.AddDays(-daysSinceMonday);
+                return true;
+
+            case HomeDashboardPeriodPreset.ThisMonth:
+                startDate = new DateTime(
+                    today.Year,
+                    today.Month,
+                    1);
+
+                return true;
+
+            case HomeDashboardPeriodPreset.Custom:
+                if (!HomeCustomStartDatePicker.SelectedDate.HasValue ||
+                    !HomeCustomEndDatePicker.SelectedDate.HasValue)
+                {
+                    validationMessage =
+                        "กรุณาเลือกวันที่เริ่มต้นและวันที่สิ้นสุดให้ครบ";
+                    return false;
+                }
+
+                startDate =
+                    HomeCustomStartDatePicker.SelectedDate.Value.Date;
+
+                endDate =
+                    HomeCustomEndDatePicker.SelectedDate.Value.Date;
+
+                if (startDate > endDate)
+                {
+                    validationMessage =
+                        "วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุด";
+                    return false;
+                }
+
+                if (endDate > today)
+                {
+                    validationMessage =
+                        "วันที่สิ้นสุดต้องไม่เกินวันนี้";
+                    return false;
+                }
+
+                return true;
+
+            default:
+                return true;
         }
     }
 
