@@ -1,0 +1,41 @@
+ManaChaiLeasing - Phase 2M.3
+Single Instance & Safe Startup
+
+Version:
+0.2.5
+
+Purpose:
+ป้องกันผู้ใช้เปิด ManaChaiLeasing หลาย Instance พร้อมกันโดยไม่ตั้งใจ
+
+Behavior:
+- Instance แรกเปิดทำงานตามปกติ
+- ถ้าดับเบิลคลิก EXE / Shortcut อีกครั้ง:
+  * ไม่เปิด Main Window ตัวที่สอง
+  * ไม่เริ่ม License / Database / Auto Backup ซ้ำใน Instance ที่สอง
+  * ส่งสัญญาณไปยัง Instance เดิม
+  * ถ้า Window เดิม Minimize อยู่ จะ Restore
+  * พยายามนำ Window เดิมขึ้นมาด้านหน้า
+- ไม่แสดง popup ซ้ำซ้อนจาก Instance ที่สอง
+
+Implementation:
+- Named Mutex ต่อ Windows user session
+- Named EventWaitHandle สำหรับแจ้ง Instance เดิม
+- Background listener อยู่เฉพาะ Instance หลัก
+- ไม่มี network / server / internet dependency
+
+Why:
+- ลดโอกาสผู้ใช้กดเปิดโปรแกรมซ้ำ
+- ลดความสับสนจากหน้าต่างหลายชุด
+- ลดความเสี่ยงทำธุรกรรมซ้ำโดยไม่ตั้งใจ
+- ลด startup Auto Backup / database activity ซ้ำซ้อน
+
+Support Diagnostics:
+diagnostics.txt จะแสดง:
+Single Instance: Enabled
+
+No database migration.
+No database schema changes.
+No license / clock rollback changes.
+No Auto Backup logic changes.
+No dashboard logic changes.
+VendorPublicKey.cs intentionally not included.

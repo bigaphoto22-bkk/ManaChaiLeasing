@@ -162,6 +162,9 @@ public sealed class SupportDiagnosticsService
             $"Application: {AppInfo.ProductVersionText}");
 
         text.AppendLine(
+            "Single Instance: Enabled");
+
+        text.AppendLine(
             $"OS: {RuntimeInformation.OSDescription}");
 
         text.AppendLine(

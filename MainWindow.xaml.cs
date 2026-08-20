@@ -42,9 +42,18 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
+        if (!SingleInstanceService.TryAcquire())
+        {
+            Application.Current.Shutdown();
+            return;
+        }
+
         ApplicationDiagnosticsService.Initialize();
 
         InitializeComponent();
+
+        SingleInstanceService.StartActivationListener(
+            BringExistingInstanceToFront);
 
         // ซ่อน Main Window ไว้ก่อนจนกว่า License จะผ่าน
         Opacity = 0;
@@ -76,6 +85,76 @@ public partial class MainWindow : Window
         _isInitializing = false;
         UpdateProductForm();
         UpdateAssetPreview();
+    }
+
+    private void BringExistingInstanceToFront()
+    {
+        try
+        {
+            Dispatcher.Invoke(
+                () =>
+                {
+                    Window? targetWindow =
+                        null;
+
+                    foreach (Window window in
+                             Application.Current.Windows)
+                    {
+                        if (window.IsActive)
+                        {
+                            targetWindow =
+                                window;
+
+                            break;
+                        }
+
+                        if (targetWindow is null &&
+                            window.IsVisible)
+                        {
+                            targetWindow =
+                                window;
+                        }
+                    }
+
+                    targetWindow ??=
+                        this;
+
+                    if (targetWindow.WindowState ==
+                        WindowState.Minimized)
+                    {
+                        targetWindow.WindowState =
+                            WindowState.Normal;
+                    }
+
+                    if (!targetWindow.IsVisible)
+                    {
+                        return;
+                    }
+
+                    targetWindow.Show();
+                    targetWindow.Activate();
+
+                    // Windows บางครั้งไม่ยอมย้าย focus ข้าม process
+                    // Topmost ชั่วคราวช่วยดึง Window เดิมขึ้นหน้า
+                    // แล้วคืนค่าทันทีเพื่อไม่ให้โปรแกรมค้าง Always-on-top
+                    bool originalTopmost =
+                        targetWindow.Topmost;
+
+                    targetWindow.Topmost = true;
+                    targetWindow.Topmost =
+                        originalTopmost;
+
+                    targetWindow.Focus();
+
+                    AppLog.Info(
+                        "Existing application instance brought to foreground.");
+                });
+        }
+        catch (Exception ex)
+        {
+            AppLog.Warning(
+                $"Could not bring existing application instance to foreground: {ex.Message}");
+        }
     }
 
     private bool EnsureValidLicenseForStartup()
