@@ -1,0 +1,987 @@
+﻿using System.IO.Compression;
+using System.Security.Cryptography;
+using System.Text.Json;
+using System.Windows.Forms;
+
+namespace ManaChaiVendorKeyManager;
+
+internal static class Program
+{
+    [STAThread]
+    private static void Main()
+    {
+        ApplicationConfiguration.Initialize();
+        Application.Run(new MainForm());
+    }
+}
+
+internal sealed class KeyInfo
+{
+    public string KeyId { get; set; } = string.Empty;
+    public string Algorithm { get; set; } = "RSA-3072";
+    public string PublicKeySha256 { get; set; } = string.Empty;
+    public DateTime CreatedAtUtc { get; set; }
+}
+
+internal sealed class MainForm : Form
+{
+    private static readonly string VendorRoot =
+        Path.Combine(
+            Environment.GetFolderPath(
+                Environment.SpecialFolder.LocalApplicationData),
+            "ManaChaiLicenseVendor");
+
+    private static readonly string KeyDirectory =
+        Path.Combine(VendorRoot, "Keys");
+
+    private static readonly string BackupHistoryDirectory =
+        Path.Combine(VendorRoot, "BackupHistory");
+
+    private static readonly string PrivateKeyPath =
+        Path.Combine(KeyDirectory, "vendor-private-key.pem");
+
+    private static readonly string PublicKeyPath =
+        Path.Combine(KeyDirectory, "vendor-public-key.pem");
+
+    private static readonly string KeyInfoPath =
+        Path.Combine(KeyDirectory, "key-info.json");
+
+    private readonly Label _statusValue = new();
+    private readonly Label _keyIdValue = new();
+    private readonly Label _createdValue = new();
+    private readonly Label _locationValue = new();
+    private readonly Button _createButton = new();
+    private readonly Button _validateButton = new();
+    private readonly Button _backupButton = new();
+    private readonly Button _restoreButton = new();
+    private readonly Button _exportPublicButton = new();
+
+    public MainForm()
+    {
+        Text = "ManaChai Vendor Signing Key Manager";
+        StartPosition = FormStartPosition.CenterScreen;
+        Width = 760;
+        Height = 600;
+        MinimumSize = new System.Drawing.Size(720, 560);
+        Font = new System.Drawing.Font("Segoe UI", 10F);
+
+        BuildUi();
+        RefreshState();
+    }
+
+    private void BuildUi()
+    {
+        var title = new Label
+        {
+            Text = "ManaChai Vendor Signing Key",
+            AutoSize = true,
+            Font = new System.Drawing.Font(
+                "Segoe UI",
+                18F,
+                System.Drawing.FontStyle.Bold),
+            Location = new System.Drawing.Point(28, 24)
+        };
+
+        var subtitle = new Label
+        {
+            Text = "Private Key อยู่เฉพาะฝั่งผู้ขาย และสามารถ Backup / Restore ไปเครื่องใหม่ได้",
+            AutoSize = true,
+            ForeColor = System.Drawing.Color.DimGray,
+            Location = new System.Drawing.Point(31, 66)
+        };
+
+        var infoBox = new GroupBox
+        {
+            Text = "สถานะ Key",
+            Location = new System.Drawing.Point(28, 105),
+            Size = new System.Drawing.Size(680, 185)
+        };
+
+        AddInfoRow(infoBox, "สถานะ", _statusValue, 34);
+        AddInfoRow(infoBox, "Key ID", _keyIdValue, 70);
+        AddInfoRow(infoBox, "สร้างเมื่อ", _createdValue, 106);
+        AddInfoRow(infoBox, "ที่เก็บ", _locationValue, 142);
+
+        _locationValue.AutoEllipsis = true;
+        _locationValue.Width = 500;
+
+        var warning = new Label
+        {
+            Text =
+                "สำคัญ: Password ของ Private Key จะไม่ถูกบันทึกไว้ในโปรแกรม " +
+                "และ Private Key จะไม่ถูกเก็บในโฟลเดอร์ Git",
+            AutoSize = false,
+            Size = new System.Drawing.Size(680, 46),
+            Location = new System.Drawing.Point(28, 306),
+            ForeColor = System.Drawing.Color.DarkRed
+        };
+
+        _createButton.Text = "สร้าง Signing Key ใหม่";
+        _createButton.Size = new System.Drawing.Size(205, 46);
+        _createButton.Location = new System.Drawing.Point(28, 370);
+        _createButton.Click += CreateKey_Click;
+
+        _validateButton.Text = "ตรวจสอบ Key + Password";
+        _validateButton.Size = new System.Drawing.Size(205, 46);
+        _validateButton.Location = new System.Drawing.Point(251, 370);
+        _validateButton.Click += ValidateKey_Click;
+
+        _backupButton.Text = "Backup Key...";
+        _backupButton.Size = new System.Drawing.Size(205, 46);
+        _backupButton.Location = new System.Drawing.Point(474, 370);
+        _backupButton.Click += BackupKey_Click;
+
+        _restoreButton.Text = "Restore Key...";
+        _restoreButton.Size = new System.Drawing.Size(205, 46);
+        _restoreButton.Location = new System.Drawing.Point(28, 434);
+        _restoreButton.Click += RestoreKey_Click;
+
+        _exportPublicButton.Text = "Export Public Key Package...";
+        _exportPublicButton.Size = new System.Drawing.Size(205, 46);
+        _exportPublicButton.Location = new System.Drawing.Point(251, 434);
+        _exportPublicButton.Click += ExportPublicKey_Click;
+
+        var openFolderButton = new Button
+        {
+            Text = "เปิดโฟลเดอร์ Vendor",
+            Size = new System.Drawing.Size(205, 46),
+            Location = new System.Drawing.Point(474, 434)
+        };
+        openFolderButton.Click += (_, _) =>
+        {
+            Directory.CreateDirectory(VendorRoot);
+            System.Diagnostics.Process.Start(
+                new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = VendorRoot,
+                    UseShellExecute = true
+                });
+        };
+
+        var footer = new Label
+        {
+            Text =
+                "Phase 2L.2 • Key Pair Foundation • ยังไม่ได้เปิดใช้ License Lock ในโปรแกรมลูกค้า",
+            AutoSize = true,
+            ForeColor = System.Drawing.Color.DimGray,
+            Location = new System.Drawing.Point(31, 515)
+        };
+
+        Controls.AddRange(
+        [
+            title,
+            subtitle,
+            infoBox,
+            warning,
+            _createButton,
+            _validateButton,
+            _backupButton,
+            _restoreButton,
+            _exportPublicButton,
+            openFolderButton,
+            footer
+        ]);
+    }
+
+    private static void AddInfoRow(
+        Control parent,
+        string labelText,
+        Label valueLabel,
+        int y)
+    {
+        var label = new Label
+        {
+            Text = labelText + ":",
+            AutoSize = true,
+            ForeColor = System.Drawing.Color.DimGray,
+            Location = new System.Drawing.Point(18, y)
+        };
+
+        valueLabel.AutoSize = true;
+        valueLabel.Font = new System.Drawing.Font(
+            "Segoe UI",
+            10F,
+            System.Drawing.FontStyle.Bold);
+        valueLabel.Location = new System.Drawing.Point(120, y);
+
+        parent.Controls.Add(label);
+        parent.Controls.Add(valueLabel);
+    }
+
+    private void RefreshState()
+    {
+        bool exists =
+            File.Exists(PrivateKeyPath) &&
+            File.Exists(PublicKeyPath) &&
+            File.Exists(KeyInfoPath);
+
+        _createButton.Enabled = !exists;
+        _validateButton.Enabled = exists;
+        _backupButton.Enabled = exists;
+        _exportPublicButton.Enabled = exists;
+
+        if (!exists)
+        {
+            _statusValue.Text = "ยังไม่มี Signing Key";
+            _statusValue.ForeColor = System.Drawing.Color.DarkOrange;
+            _keyIdValue.Text = "-";
+            _createdValue.Text = "-";
+            _locationValue.Text = KeyDirectory;
+            return;
+        }
+
+        try
+        {
+            KeyInfo info = LoadKeyInfo(KeyInfoPath);
+
+            _statusValue.Text = "พร้อมใช้งาน";
+            _statusValue.ForeColor = System.Drawing.Color.DarkGreen;
+            _keyIdValue.Text = info.KeyId;
+            _createdValue.Text =
+                info.CreatedAtUtc.ToLocalTime()
+                    .ToString("dd/MM/yyyy HH:mm:ss");
+            _locationValue.Text = KeyDirectory;
+        }
+        catch
+        {
+            _statusValue.Text = "พบไฟล์ Key แต่ข้อมูลไม่สมบูรณ์";
+            _statusValue.ForeColor = System.Drawing.Color.DarkRed;
+            _keyIdValue.Text = "-";
+            _createdValue.Text = "-";
+            _locationValue.Text = KeyDirectory;
+        }
+    }
+
+    private void CreateKey_Click(
+        object? sender,
+        EventArgs e)
+    {
+        if (Directory.Exists(KeyDirectory) &&
+            Directory.EnumerateFileSystemEntries(KeyDirectory).Any())
+        {
+            MessageBox.Show(
+                "พบข้อมูล Key เดิมอยู่แล้ว ระบบจะไม่สร้างทับ",
+                "ManaChai Key Manager",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return;
+        }
+
+        string? password =
+            PasswordDialog.Ask(
+                this,
+                "กำหนด Password สำหรับ Private Key",
+                confirmPassword: true);
+
+        if (password is null)
+        {
+            return;
+        }
+
+        if (password.Length < 12)
+        {
+            MessageBox.Show(
+                "Password ต้องมีอย่างน้อย 12 ตัวอักษร",
+                "ManaChai Key Manager",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return;
+        }
+
+        try
+        {
+            Directory.CreateDirectory(KeyDirectory);
+
+            using RSA rsa = RSA.Create();
+            rsa.KeySize = 3072;
+
+            byte[] publicBytes =
+                rsa.ExportSubjectPublicKeyInfo();
+
+            byte[] hash =
+                SHA256.HashData(publicBytes);
+
+            string fingerprint =
+                Convert.ToHexString(hash);
+
+            string keyId =
+                "MC-KEY-" +
+                Convert.ToHexString(hash.AsSpan(0, 6));
+
+            var pbe =
+                new PbeParameters(
+                    PbeEncryptionAlgorithm.Aes256Cbc,
+                    HashAlgorithmName.SHA256,
+                    200_000);
+
+            byte[] encryptedPrivateBytes =
+                rsa.ExportEncryptedPkcs8PrivateKey(
+                    password,
+                    pbe);
+
+            string privatePem =
+                new string(
+                    PemEncoding.Write(
+                        "ENCRYPTED PRIVATE KEY",
+                        encryptedPrivateBytes));
+
+            string publicPem =
+                new string(
+                    PemEncoding.Write(
+                        "PUBLIC KEY",
+                        publicBytes));
+
+            var info =
+                new KeyInfo
+                {
+                    KeyId = keyId,
+                    Algorithm = "RSA-3072 / SHA-256",
+                    PublicKeySha256 = fingerprint,
+                    CreatedAtUtc = DateTime.UtcNow
+                };
+
+            File.WriteAllText(
+                PrivateKeyPath,
+                privatePem);
+
+            File.WriteAllText(
+                PublicKeyPath,
+                publicPem);
+
+            File.WriteAllText(
+                KeyInfoPath,
+                JsonSerializer.Serialize(
+                    info,
+                    new JsonSerializerOptions
+                    {
+                        WriteIndented = true
+                    }));
+
+            RefreshState();
+
+            DialogResult result =
+                MessageBox.Show(
+                    $"สร้าง Signing Key สำเร็จ\n\nKey ID: {keyId}\n\n" +
+                    "ขั้นตอนถัดไปควร Backup Key ไปยัง USB หรือที่เก็บอีกแห่งทันที\n\n" +
+                    "ต้องการสร้าง Backup ตอนนี้หรือไม่?",
+                    "ManaChai Key Manager",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Information);
+
+            if (result == DialogResult.Yes)
+            {
+                BackupKey();
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"ไม่สามารถสร้าง Signing Key ได้\n\n{ex.Message}",
+                "ManaChai Key Manager",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+        }
+    }
+
+    private void ValidateKey_Click(
+        object? sender,
+        EventArgs e)
+    {
+        if (!TryGetExistingKey())
+        {
+            return;
+        }
+
+        string? password =
+            PasswordDialog.Ask(
+                this,
+                "ใส่ Password ของ Private Key",
+                confirmPassword: false);
+
+        if (password is null)
+        {
+            return;
+        }
+
+        try
+        {
+            ValidateKeyPair(
+                PrivateKeyPath,
+                PublicKeyPath,
+                password);
+
+            KeyInfo info =
+                LoadKeyInfo(KeyInfoPath);
+
+            MessageBox.Show(
+                $"Key และ Password ถูกต้อง\n\nKey ID: {info.KeyId}",
+                "ManaChai Key Manager",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+        }
+        catch (CryptographicException)
+        {
+            MessageBox.Show(
+                "Password ไม่ถูกต้อง หรือไฟล์ Private Key เสียหาย",
+                "ManaChai Key Manager",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"ตรวจสอบ Key ไม่สำเร็จ\n\n{ex.Message}",
+                "ManaChai Key Manager",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+        }
+    }
+
+    private void BackupKey_Click(
+        object? sender,
+        EventArgs e)
+    {
+        if (!TryGetExistingKey())
+        {
+            return;
+        }
+
+        BackupKey();
+    }
+
+    private void BackupKey()
+    {
+        KeyInfo info = LoadKeyInfo(KeyInfoPath);
+
+        using var dialog =
+            new SaveFileDialog
+            {
+                Title = "เลือกตำแหน่ง Backup Vendor Signing Key",
+                Filter = "ZIP Backup (*.zip)|*.zip",
+                FileName =
+                    $"ManaChai_VendorKey_{info.KeyId}_{DateTime.Now:yyyyMMdd_HHmmss}.zip"
+            };
+
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        string destination =
+            EnsureZipExtension(dialog.FileName);
+
+        if (File.Exists(destination))
+        {
+            File.Delete(destination);
+        }
+
+        ZipFile.CreateFromDirectory(
+            KeyDirectory,
+            destination,
+            CompressionLevel.Optimal,
+            includeBaseDirectory: false);
+
+        MessageBox.Show(
+            "Backup สำเร็จ\n\n" +
+            destination +
+            "\n\nไฟล์ ZIP นี้มี Private Key แบบเข้ารหัส " +
+            "แต่ยังควรเก็บไว้ในที่ปลอดภัยและแยกจาก Password",
+            "ManaChai Key Manager",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Information);
+    }
+
+    private void RestoreKey_Click(
+        object? sender,
+        EventArgs e)
+    {
+        using var dialog =
+            new OpenFileDialog
+            {
+                Title = "เลือก Vendor Signing Key Backup",
+                Filter = "ZIP Backup (*.zip)|*.zip",
+                CheckFileExists = true,
+                Multiselect = false
+            };
+
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        string? password =
+            PasswordDialog.Ask(
+                this,
+                "ใส่ Password ของ Private Key ใน Backup",
+                confirmPassword: false);
+
+        if (password is null)
+        {
+            return;
+        }
+
+        string tempDirectory =
+            Path.Combine(
+                Path.GetTempPath(),
+                "ManaChaiKeyRestore_" +
+                Guid.NewGuid().ToString("N"));
+
+        try
+        {
+            Directory.CreateDirectory(tempDirectory);
+
+            ZipFile.ExtractToDirectory(
+                dialog.FileName,
+                tempDirectory);
+
+            string tempPrivate =
+                Path.Combine(
+                    tempDirectory,
+                    "vendor-private-key.pem");
+
+            string tempPublic =
+                Path.Combine(
+                    tempDirectory,
+                    "vendor-public-key.pem");
+
+            string tempInfo =
+                Path.Combine(
+                    tempDirectory,
+                    "key-info.json");
+
+            if (!File.Exists(tempPrivate) ||
+                !File.Exists(tempPublic) ||
+                !File.Exists(tempInfo))
+            {
+                throw new InvalidDataException(
+                    "Backup ไม่ครบ หรือไม่ใช่ ManaChai Vendor Key Backup");
+            }
+
+            ValidateKeyPair(
+                tempPrivate,
+                tempPublic,
+                password);
+
+            KeyInfo restoreInfo =
+                LoadKeyInfo(tempInfo);
+
+            DialogResult confirm =
+                MessageBox.Show(
+                    $"พบ Key ID: {restoreInfo.KeyId}\n\n" +
+                    "ต้องการ Restore Key ชุดนี้ลงเครื่องหรือไม่?",
+                    "ManaChai Key Manager",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+            if (confirm != DialogResult.Yes)
+            {
+                return;
+            }
+
+            if (Directory.Exists(KeyDirectory) &&
+                Directory.EnumerateFileSystemEntries(KeyDirectory).Any())
+            {
+                Directory.CreateDirectory(
+                    BackupHistoryDirectory);
+
+                string safetyBackup =
+                    Path.Combine(
+                        BackupHistoryDirectory,
+                        $"BeforeRestore_{DateTime.Now:yyyyMMdd_HHmmss}.zip");
+
+                ZipFile.CreateFromDirectory(
+                    KeyDirectory,
+                    safetyBackup,
+                    CompressionLevel.Optimal,
+                    includeBaseDirectory: false);
+            }
+
+            Directory.CreateDirectory(KeyDirectory);
+
+            File.Copy(
+                tempPrivate,
+                PrivateKeyPath,
+                overwrite: true);
+
+            File.Copy(
+                tempPublic,
+                PublicKeyPath,
+                overwrite: true);
+
+            File.Copy(
+                tempInfo,
+                KeyInfoPath,
+                overwrite: true);
+
+            RefreshState();
+
+            MessageBox.Show(
+                $"Restore สำเร็จ\n\nKey ID: {restoreInfo.KeyId}",
+                "ManaChai Key Manager",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+        }
+        catch (CryptographicException)
+        {
+            MessageBox.Show(
+                "Password ไม่ถูกต้อง หรือ Backup เสียหาย",
+                "ManaChai Key Manager",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"Restore ไม่สำเร็จ\n\n{ex.Message}",
+                "ManaChai Key Manager",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+        }
+        finally
+        {
+            try
+            {
+                if (Directory.Exists(tempDirectory))
+                {
+                    Directory.Delete(
+                        tempDirectory,
+                        recursive: true);
+                }
+            }
+            catch
+            {
+                // ไม่ให้ cleanup error บังผล Restore หลัก
+            }
+        }
+    }
+
+    private void ExportPublicKey_Click(
+        object? sender,
+        EventArgs e)
+    {
+        if (!TryGetExistingKey())
+        {
+            return;
+        }
+
+        KeyInfo info =
+            LoadKeyInfo(KeyInfoPath);
+
+        using var dialog =
+            new SaveFileDialog
+            {
+                Title = "Export Public Key Package",
+                Filter = "ZIP Package (*.zip)|*.zip",
+                FileName =
+                    $"ManaChai_PublicKey_{info.KeyId}.zip"
+            };
+
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        string destination =
+            EnsureZipExtension(dialog.FileName);
+
+        string tempDirectory =
+            Path.Combine(
+                Path.GetTempPath(),
+                "ManaChaiPublicKey_" +
+                Guid.NewGuid().ToString("N"));
+
+        try
+        {
+            Directory.CreateDirectory(tempDirectory);
+
+            File.Copy(
+                PublicKeyPath,
+                Path.Combine(
+                    tempDirectory,
+                    "vendor-public-key.pem"));
+
+            File.Copy(
+                KeyInfoPath,
+                Path.Combine(
+                    tempDirectory,
+                    "key-info.json"));
+
+            if (File.Exists(destination))
+            {
+                File.Delete(destination);
+            }
+
+            ZipFile.CreateFromDirectory(
+                tempDirectory,
+                destination,
+                CompressionLevel.Optimal,
+                includeBaseDirectory: false);
+
+            MessageBox.Show(
+                "Export Public Key Package สำเร็จ\n\n" +
+                destination +
+                "\n\nPackage นี้ไม่มี Private Key สามารถส่งให้ผู้พัฒนาเพื่อฝังในโปรแกรมลูกค้าได้",
+                "ManaChai Key Manager",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+        }
+        finally
+        {
+            try
+            {
+                if (Directory.Exists(tempDirectory))
+                {
+                    Directory.Delete(
+                        tempDirectory,
+                        recursive: true);
+                }
+            }
+            catch
+            {
+            }
+        }
+    }
+
+    private static void ValidateKeyPair(
+        string privateKeyPath,
+        string publicKeyPath,
+        string password)
+    {
+        string privatePem =
+            File.ReadAllText(privateKeyPath);
+
+        string publicPem =
+            File.ReadAllText(publicKeyPath);
+
+        using RSA privateRsa = RSA.Create();
+        privateRsa.ImportFromEncryptedPem(
+            privatePem,
+            password);
+
+        byte[] derivedPublic =
+            privateRsa.ExportSubjectPublicKeyInfo();
+
+        using RSA publicRsa = RSA.Create();
+        publicRsa.ImportFromPem(publicPem);
+
+        byte[] storedPublic =
+            publicRsa.ExportSubjectPublicKeyInfo();
+
+        if (!CryptographicOperations.FixedTimeEquals(
+                derivedPublic,
+                storedPublic))
+        {
+            throw new CryptographicException(
+                "Private Key และ Public Key ไม่ใช่คู่เดียวกัน");
+        }
+
+        KeyInfo info =
+            LoadKeyInfo(
+                Path.Combine(
+                    Path.GetDirectoryName(publicKeyPath)!,
+                    "key-info.json"));
+
+        byte[] fingerprint =
+            SHA256.HashData(storedPublic);
+
+        string fingerprintText =
+            Convert.ToHexString(fingerprint);
+
+        string expectedKeyId =
+            "MC-KEY-" +
+            Convert.ToHexString(
+                fingerprint.AsSpan(0, 6));
+
+        if (!string.Equals(
+                info.PublicKeySha256,
+                fingerprintText,
+                StringComparison.OrdinalIgnoreCase) ||
+            !string.Equals(
+                info.KeyId,
+                expectedKeyId,
+                StringComparison.Ordinal))
+        {
+            throw new CryptographicException(
+                "Key metadata ไม่ตรงกับ Public Key");
+        }
+    }
+
+    private bool TryGetExistingKey()
+    {
+        bool exists =
+            File.Exists(PrivateKeyPath) &&
+            File.Exists(PublicKeyPath) &&
+            File.Exists(KeyInfoPath);
+
+        if (!exists)
+        {
+            MessageBox.Show(
+                "ยังไม่มี Vendor Signing Key บนเครื่องนี้",
+                "ManaChai Key Manager",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+        }
+
+        return exists;
+    }
+
+    private static KeyInfo LoadKeyInfo(
+        string path)
+    {
+        string json =
+            File.ReadAllText(path);
+
+        KeyInfo? info =
+            JsonSerializer.Deserialize<KeyInfo>(json);
+
+        if (info is null ||
+            string.IsNullOrWhiteSpace(info.KeyId))
+        {
+            throw new InvalidDataException(
+                "อ่าน key-info.json ไม่สำเร็จ");
+        }
+
+        return info;
+    }
+
+    private static string EnsureZipExtension(
+        string path)
+    {
+        return path.EndsWith(
+                ".zip",
+                StringComparison.OrdinalIgnoreCase)
+            ? path
+            : path + ".zip";
+    }
+}
+
+internal sealed class PasswordDialog : Form
+{
+    private readonly TextBox _passwordBox = new();
+    private readonly TextBox? _confirmBox;
+    private string? _result;
+
+    private PasswordDialog(
+        string title,
+        bool confirmPassword)
+    {
+        Text = title;
+        StartPosition = FormStartPosition.CenterParent;
+        Width = 500;
+        Height = confirmPassword ? 260 : 205;
+        MinimizeBox = false;
+        MaximizeBox = false;
+        FormBorderStyle = FormBorderStyle.FixedDialog;
+        Font = new System.Drawing.Font("Segoe UI", 10F);
+
+        var passwordLabel = new Label
+        {
+            Text = "Password",
+            AutoSize = true,
+            Location = new System.Drawing.Point(24, 22)
+        };
+
+        _passwordBox.Location =
+            new System.Drawing.Point(24, 50);
+        _passwordBox.Width = 430;
+        _passwordBox.UseSystemPasswordChar = true;
+
+        Controls.Add(passwordLabel);
+        Controls.Add(_passwordBox);
+
+        int buttonY;
+
+        if (confirmPassword)
+        {
+            var confirmLabel = new Label
+            {
+                Text = "ยืนยัน Password",
+                AutoSize = true,
+                Location = new System.Drawing.Point(24, 90)
+            };
+
+            _confirmBox = new TextBox
+            {
+                Location = new System.Drawing.Point(24, 118),
+                Width = 430,
+                UseSystemPasswordChar = true
+            };
+
+            Controls.Add(confirmLabel);
+            Controls.Add(_confirmBox);
+
+            buttonY = 168;
+        }
+        else
+        {
+            buttonY = 112;
+        }
+
+        var cancelButton = new Button
+        {
+            Text = "ยกเลิก",
+            Size = new System.Drawing.Size(105, 38),
+            Location = new System.Drawing.Point(238, buttonY),
+            DialogResult = DialogResult.Cancel
+        };
+
+        var okButton = new Button
+        {
+            Text = "ตกลง",
+            Size = new System.Drawing.Size(105, 38),
+            Location = new System.Drawing.Point(349, buttonY)
+        };
+
+        okButton.Click += (_, _) =>
+        {
+            if (string.IsNullOrEmpty(_passwordBox.Text))
+            {
+                MessageBox.Show(
+                    this,
+                    "กรุณาระบุ Password",
+                    "ManaChai Key Manager",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (_confirmBox is not null &&
+                _passwordBox.Text != _confirmBox.Text)
+            {
+                MessageBox.Show(
+                    this,
+                    "Password ทั้งสองช่องไม่ตรงกัน",
+                    "ManaChai Key Manager",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
+
+            _result = _passwordBox.Text;
+            DialogResult = DialogResult.OK;
+            Close();
+        };
+
+        AcceptButton = okButton;
+        CancelButton = cancelButton;
+
+        Controls.Add(cancelButton);
+        Controls.Add(okButton);
+    }
+
+    public static string? Ask(
+        IWin32Window owner,
+        string title,
+        bool confirmPassword)
+    {
+        using var dialog =
+            new PasswordDialog(
+                title,
+                confirmPassword);
+
+        return dialog.ShowDialog(owner) ==
+            DialogResult.OK
+                ? dialog._result
+                : null;
+    }
+}
