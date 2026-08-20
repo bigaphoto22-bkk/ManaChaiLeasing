@@ -1,16 +1,15 @@
 ﻿; ============================================================
-; ManaChaiLeasing - Pilot Installer
-; Version 0.1.0
+; ManaChaiLeasing - Release Installer Template
+; Version is injected from Installer\ReleaseVersion.txt
+; by Build-Setup.ps1.
 ;
-; Place this file in:
-; C:\Dev\PawnShop-2\ManaChaiLeasing\Installer\ManaChaiLeasing_Installer_0.1.0.iss
-;
-; Expected published files:
-; C:\Dev\PawnShop-2\ManaChaiLeasing\Publish\ManaChaiLeasing-win-x64\
+; IMPORTANT:
+; Source application files must already exist in:
+; ..\Publish\ManaChaiLeasing-win-x64\
 ; ============================================================
 
 #define MyAppName "มานะชัย ลิสซิ่ง"
-#define MyAppVersion "0.1.0"
+#define MyAppVersion "__APP_VERSION__"
 #define MyAppExeName "ManaChaiLeasing.exe"
 
 [Setup]
@@ -29,7 +28,7 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 
 OutputDir=Output
-OutputBaseFilename=ManaChaiLeasing_Setup_0.1.0
+OutputBaseFilename=ManaChaiLeasing_Setup_{#MyAppVersion}
 
 Compression=lzma2
 SolidCompression=yes
@@ -38,7 +37,7 @@ WizardStyle=modern
 UninstallDisplayName={#MyAppName}
 UninstallDisplayIcon={app}\{#MyAppExeName}
 
-VersionInfoVersion=0.1.0.0
+VersionInfoVersion={#MyAppVersion}.0
 VersionInfoDescription={#MyAppName} Installer
 VersionInfoProductName={#MyAppName}
 VersionInfoProductVersion={#MyAppVersion}
