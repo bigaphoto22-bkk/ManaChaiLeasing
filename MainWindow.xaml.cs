@@ -1,4 +1,5 @@
-﻿using System;
+﻿using System.IO;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Windows;
@@ -30,6 +31,7 @@ public partial class MainWindow : Window
     private readonly TodaySummaryService _todaySummaryService = new();
     private readonly HomeDashboardService _homeDashboardService = new();
     private readonly DatabaseBackupService _databaseBackupService = new();
+    private readonly AutomaticBackupService _automaticBackupService = new();
     private readonly MachineIdentityService _machineIdentityService = new();
     private readonly LicenseValidationService _licenseValidationService = new();
     private int? _selectedCustomerId;
@@ -54,6 +56,7 @@ public partial class MainWindow : Window
         ShowInTaskbar = true;
 
         InitializeDatabase();
+        RunAutomaticBackupAfterStartup();
 
         HomeCustomStartDatePicker.SelectedDate = DateTime.Today;
         HomeCustomEndDatePicker.SelectedDate = DateTime.Today;
@@ -506,6 +509,7 @@ public partial class MainWindow : Window
         LoadMachineIdentity();
         LoadLicenseStatus();
         LoadBusinessSettings();
+        LoadAutomaticBackupSettings();
     }
 
     private void LoadBusinessSettings()
@@ -582,6 +586,8 @@ public partial class MainWindow : Window
                 $"บันทึกล่าสุด: {saved.UpdatedAt:dd/MM/yyyy HH:mm}";
 
             UpdateInterestPreview();
+
+            TryAutomaticBackupAfterDataChange();
 
             MessageBox.Show(
                 "บันทึกการตั้งค่าเรียบร้อย\n\n" +
@@ -792,6 +798,235 @@ public partial class MainWindow : Window
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
         }
+    }
+
+    private void LoadAutomaticBackupSettings()
+    {
+        AutomaticBackupSettings settings =
+            _automaticBackupService.GetSettings();
+
+        AutomaticBackupEnabledCheckBox.IsChecked =
+            settings.IsEnabled;
+
+        AutomaticBackupFolderTextBox.Text =
+            settings.BackupFolder;
+
+        UpdateAutomaticBackupStatus(
+            settings);
+    }
+
+    private void ChooseAutomaticBackupFolderButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        OpenFolderDialog dialog =
+            new()
+            {
+                Title = "เลือกโฟลเดอร์สำหรับสำรองข้อมูลอัตโนมัติ",
+                Multiselect = false
+            };
+
+        string currentFolder =
+            AutomaticBackupFolderTextBox.Text.Trim();
+
+        if (!string.IsNullOrWhiteSpace(
+                currentFolder) &&
+            Directory.Exists(
+                currentFolder))
+        {
+            dialog.InitialDirectory =
+                currentFolder;
+        }
+
+        if (dialog.ShowDialog(this) != true)
+        {
+            return;
+        }
+
+        AutomaticBackupFolderTextBox.Text =
+            dialog.FolderName;
+    }
+
+    private void SaveAutomaticBackupSettingsButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        bool isEnabled =
+            AutomaticBackupEnabledCheckBox.IsChecked == true;
+
+        try
+        {
+            AutomaticBackupSettings settings =
+                _automaticBackupService.SaveConfiguration(
+                    isEnabled,
+                    AutomaticBackupFolderTextBox.Text);
+
+            if (!isEnabled)
+            {
+                LoadAutomaticBackupSettings();
+
+                MessageBox.Show(
+                    "ปิดการสำรองข้อมูลอัตโนมัติแล้ว\n\n" +
+                    "ปุ่มสำรองข้อมูลด้วยตนเองยังใช้งานได้ตามปกติ",
+                    ManaChaiLeasing.AppInfo.StoreName,
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                return;
+            }
+
+            AutomaticBackupExecutionResult result =
+                _automaticBackupService.RunAutomaticBackup();
+
+            LoadAutomaticBackupSettings();
+
+            if (result.IsSuccess)
+            {
+                string locationNote =
+                    _automaticBackupService
+                        .IsRecommendedExternalLocation(
+                            settings.BackupFolder)
+                        ? string.Empty
+                        : "\n\nหมายเหตุ: ตำแหน่งนี้อยู่ Drive เดียวกับฐานข้อมูล แนะนำให้ใช้ Flash Drive, External Drive หรือ Drive อื่นเพื่อป้องกันกรณี Disk เสีย";
+
+                MessageBox.Show(
+                    "เปิด Auto Backup และทดสอบสำรองข้อมูลเรียบร้อย\n\n" +
+                    $"ไฟล์:\n{result.FilePath}" +
+                    locationNote,
+                    ManaChaiLeasing.AppInfo.StoreName,
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            else
+            {
+                MessageBox.Show(
+                    "บันทึกการตั้งค่าแล้ว แต่ทดสอบ Auto Backup ไม่สำเร็จ\n\n" +
+                    $"{result.ErrorMessage}\n\n" +
+                    "กรุณาตรวจว่า Drive หรือโฟลเดอร์ปลายทางยังใช้งานได้",
+                    ManaChaiLeasing.AppInfo.StoreName,
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"ไม่สามารถบันทึกการตั้งค่า Auto Backup ได้\n\n{ex.Message}",
+                ManaChaiLeasing.AppInfo.StoreName,
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
+    private void RunAutomaticBackupAfterStartup()
+    {
+        AutomaticBackupExecutionResult result =
+            _automaticBackupService.RunAutomaticBackup();
+
+        if (!result.IsFailed)
+        {
+            return;
+        }
+
+        MessageBox.Show(
+            "โปรแกรมเปิดใช้งานได้ตามปกติ แต่ Auto Backup ไม่สำเร็จ\n\n" +
+            $"{result.ErrorMessage}\n\n" +
+            "กรุณาตรวจ Drive สำรองข้อมูลที่หน้า ตั้งค่า",
+            "ตรวจสอบ Auto Backup",
+            MessageBoxButton.OK,
+            MessageBoxImage.Warning);
+    }
+
+    private void TryAutomaticBackupAfterDataChange()
+    {
+        AutomaticBackupExecutionResult result =
+            _automaticBackupService.RunAutomaticBackup();
+
+        if (SettingsContent.Visibility ==
+            Visibility.Visible)
+        {
+            LoadAutomaticBackupSettings();
+        }
+
+        if (!result.IsFailed)
+        {
+            return;
+        }
+
+        MessageBox.Show(
+            "ข้อมูลถูกบันทึกเรียบร้อยแล้ว แต่ Auto Backup ไม่สำเร็จ\n\n" +
+            $"{result.ErrorMessage}\n\n" +
+            "ข้อมูลในโปรแกรมไม่สูญหาย แต่ควรตรวจ Drive สำรองข้อมูลโดยเร็ว",
+            "Auto Backup ไม่สำเร็จ",
+            MessageBoxButton.OK,
+            MessageBoxImage.Warning);
+    }
+
+    private void UpdateAutomaticBackupStatus(
+        AutomaticBackupSettings settings)
+    {
+        if (!settings.IsEnabled)
+        {
+            AutomaticBackupStatusText.Text =
+                "สถานะ: ปิดใช้งาน";
+
+            AutomaticBackupStatusText.Foreground =
+                Brushes.DimGray;
+
+            AutomaticBackupLocationHintText.Text =
+                "แนะนำ: Flash Drive / External Drive / Drive อื่นจากฐานข้อมูล";
+
+            AutomaticBackupLocationHintText.Foreground =
+                Brushes.DimGray;
+
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(
+                settings.LastError) &&
+            (!settings.LastSuccessfulBackupAt.HasValue ||
+             (settings.LastAttemptAt.HasValue &&
+              settings.LastAttemptAt.Value >
+              settings.LastSuccessfulBackupAt.Value)))
+        {
+            AutomaticBackupStatusText.Text =
+                $"สถานะ: ต้องตรวจสอบ • ล่าสุดไม่สำเร็จ • {settings.LastAttemptAt:dd/MM/yyyy HH:mm}\n" +
+                settings.LastError;
+
+            AutomaticBackupStatusText.Foreground =
+                Brushes.Firebrick;
+        }
+        else if (settings.LastSuccessfulBackupAt.HasValue)
+        {
+            AutomaticBackupStatusText.Text =
+                $"สถานะ: พร้อมใช้งาน • สำรองล่าสุด {settings.LastSuccessfulBackupAt:dd/MM/yyyy HH:mm}";
+
+            AutomaticBackupStatusText.Foreground =
+                Brushes.ForestGreen;
+        }
+        else
+        {
+            AutomaticBackupStatusText.Text =
+                "สถานะ: เปิดใช้งาน • ยังไม่มี Backup สำเร็จ";
+
+            AutomaticBackupStatusText.Foreground =
+                Brushes.DarkOrange;
+        }
+
+        bool recommended =
+            _automaticBackupService
+                .IsRecommendedExternalLocation(
+                    settings.BackupFolder);
+
+        AutomaticBackupLocationHintText.Text =
+            recommended
+                ? $"เก็บย้อนหลัง {AutomaticBackupService.RetentionDays} วัน • ตำแหน่ง Backup อยู่คนละ Drive กับฐานข้อมูล"
+                : $"เก็บย้อนหลัง {AutomaticBackupService.RetentionDays} วัน • แนะนำให้เลือก Flash Drive, External Drive หรือ Drive อื่นจากฐานข้อมูล";
+
+        AutomaticBackupLocationHintText.Foreground =
+            recommended
+                ? Brushes.ForestGreen
+                : Brushes.DarkOrange;
     }
 
     private void BackupDatabaseButton_Click(
@@ -1053,6 +1288,8 @@ public partial class MainWindow : Window
 
             CustomerRecordStatusText.Foreground =
                 Brushes.ForestGreen;
+
+            TryAutomaticBackupAfterDataChange();
 
             MessageBox.Show(
                 $"บันทึกข้อมูลลูกค้าเรียบร้อย\n\n{savedCustomer.FirstName} {savedCustomer.LastName}",
@@ -1361,6 +1598,7 @@ public partial class MainWindow : Window
             _selectedCustomerId = savedTicket.CustomerId;
 
             LoadSmartLookupValues();
+            TryAutomaticBackupAfterDataChange();
 
             PawnSaveSuccessWindow successWindow = new(
                 savedTicket.TicketNumber,

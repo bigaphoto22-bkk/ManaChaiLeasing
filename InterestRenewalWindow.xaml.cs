@@ -7,6 +7,7 @@ namespace ManaChaiLeasing;
 public partial class InterestRenewalWindow : Window
 {
     private readonly InterestRenewalService _service = new();
+    private readonly AutomaticBackupService _automaticBackupService = new();
     private readonly InterestRenewalPreview _preview;
 
     public InterestRenewalResult? SavedResult { get; private set; }
@@ -51,6 +52,20 @@ public partial class InterestRenewalWindow : Window
                 _preview.PawnTicketId,
                 paymentMethod,
                 RenewalNoteTextBox.Text);
+
+            AutomaticBackupExecutionResult backupResult =
+                _automaticBackupService.RunAutomaticBackup();
+
+            if (backupResult.IsFailed)
+            {
+                MessageBox.Show(
+                    "บันทึกต่อดอกเรียบร้อยแล้ว แต่ Auto Backup ไม่สำเร็จ\n\n" +
+                    $"{backupResult.ErrorMessage}\n\n" +
+                    "กรุณาตรวจ Drive สำรองข้อมูลที่หน้า ตั้งค่า",
+                    "Auto Backup ไม่สำเร็จ",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            }
 
             InterestRenewalSuccessWindow successWindow =
                 new(SavedResult)

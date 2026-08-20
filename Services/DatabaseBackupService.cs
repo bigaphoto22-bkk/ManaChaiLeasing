@@ -52,6 +52,9 @@ public sealed class DatabaseBackupService
 
         Directory.CreateDirectory(directory);
 
+        DeleteSqliteSidecarFiles(
+            destination);
+
         if (File.Exists(destination))
         {
             File.Delete(destination);
@@ -76,6 +79,9 @@ public sealed class DatabaseBackupService
         source.Close();
 
         ValidateDatabaseFile(destination);
+
+        DeleteSqliteSidecarFiles(
+            destination);
 
         FileInfo fileInfo =
             new(destination);
@@ -375,7 +381,8 @@ public sealed class DatabaseBackupService
             new()
             {
                 DataSource = databaseFile,
-                Mode = mode
+                Mode = mode,
+                Pooling = false
             };
 
         return builder.ToString();
@@ -441,4 +448,33 @@ public sealed class DatabaseBackupService
             File.Delete(filePath);
         }
     }
+
+    private static void DeleteSqliteSidecarFiles(
+        string databaseFile)
+    {
+        string[] sidecarFiles =
+        [
+            databaseFile + "-wal",
+            databaseFile + "-shm"
+        ];
+
+        foreach (string sidecarFile in sidecarFiles)
+        {
+            try
+            {
+                if (File.Exists(
+                        sidecarFile))
+                {
+                    File.Delete(
+                        sidecarFile);
+                }
+            }
+            catch
+            {
+                // Sidecar cleanup is housekeeping only.
+                // The validated .db backup remains the actual backup file.
+            }
+        }
+    }
+
 }

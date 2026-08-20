@@ -1,0 +1,97 @@
+﻿ManaChaiLeasing - Phase 2M.1
+Automatic External Database Backup
+
+Version:
+0.2.3
+
+Purpose:
+ลดความเสี่ยงข้อมูลสูญหายเมื่อ Windows / SSD / เครื่องลูกค้ามีปัญหา
+
+Automatic Backup:
+- ผู้ใช้เลือกโฟลเดอร์ Backup ครั้งเดียว
+- เปิด/ปิด Auto Backup ได้จาก Settings
+- Backup ตอนเปิดโปรแกรม
+- Backup หลังบันทึกข้อมูลสำคัญ:
+  * ข้อมูลลูกค้า
+  * การตั้งค่าธุรกิจ
+  * ตั๋วจำนำใหม่
+  * ต่อดอก
+  * ไถ่ถอน
+- ความล้มเหลวของ Backup จะไม่ rollback รายการธุรกิจที่บันทึกสำเร็จแล้ว
+- ถ้า Auto Backup ล้มเหลว โปรแกรมจะแจ้งเตือน
+- ใช้ SQLite Online Backup API เดิม
+
+File policy:
+ManaChaiLeasing_AutoBackup_yyyyMMdd.db
+
+วันเดียวกัน:
+- ใช้ไฟล์เดียว
+- ทุกการเปลี่ยนแปลงสำคัญจะอัปเดตไฟล์ให้เป็นข้อมูลล่าสุด
+
+Retention:
+- เก็บย้อนหลัง 30 วัน
+- ลบเฉพาะไฟล์ ManaChaiLeasing_AutoBackup_*.db ที่เกินกำหนด
+- ไม่แตะ Manual Backup ของผู้ใช้
+
+Configuration:
+%LOCALAPPDATA%\ManaChaiLeasing\Config\automatic-backup.json
+
+Configuration แยกจาก Database:
+- Restore DB ไม่เปลี่ยนการตั้งค่า Auto Backup
+- ไม่มี Database migration ใหม่
+
+Manual Backup / Restore:
+- ของเดิมยังอยู่ครบ
+- Restore ยังสร้าง Safety Backup ก่อนสลับฐานข้อมูลเหมือนเดิม
+
+Recommended:
+Flash Drive / External Drive / Drive อื่นจาก Drive ฐานข้อมูล
+
+Security / Licensing:
+- ไม่เปลี่ยน License
+- ไม่เปลี่ยน Clock Rollback
+- ไม่รวม VendorPublicKey.cs ใน package
+
+
+Phase 2M.1 Fix2
+----------------
+1. แก้ Auto Backup วันเดียวกันแล้วขึ้น:
+   "The process cannot access the file ... because it is being used by another process."
+
+สาเหตุ:
+SQLite connection ที่ใช้ตรวจ Backup ถูกเก็บไว้ใน connection pool
+ทำให้ Windows ยังถือ handle ของไฟล์ Backup เดิมอยู่
+
+แก้:
+Backup/inspection SQLite connections ใช้ Pooling=false
+ฐานข้อมูลหลักของโปรแกรมไม่ได้เปลี่ยน connection/pooling behavior
+
+2. แก้ข้อความแจ้งเตือนที่แสดง \n เป็นตัวอักษร
+ให้ขึ้นบรรทัดใหม่ตามปกติ
+
+ไม่มี Migration ใหม่
+ไม่เปลี่ยน License / Clock Rollback / Dashboard logic
+
+
+Phase 2M.1 Fix3
+----------------
+SQLite Sidecar Cleanup
+
+อาการ:
+หลัง Auto Backup สำเร็จ มีไฟล์:
+- .db
+- .db-wal
+- .db-shm
+
+สาเหตุ:
+ฐานข้อมูลใช้ WAL mode และการเปิดไฟล์ Backup เพื่อตรวจ quick_check
+สามารถสร้าง SQLite sidecar files ได้ แม้ไฟล์ Backup หลักจะถูกต้อง
+
+แก้:
+- ลบ stale .db-wal / .db-shm ก่อนเขียนทับ Backup ของวันเดียวกัน
+- หลัง Validate Backup สำเร็จ ลบ .db-wal / .db-shm อีกครั้ง
+- ไฟล์ Backup ที่ผู้ใช้เห็นควรเหลือ .db ไฟล์เดียวต่อวัน
+- ถ้าการ cleanup sidecar ชั่วคราวล้มเหลว จะไม่ทำให้ Backup .db ที่ตรวจผ่านแล้วถูกนับว่าล้มเหลว
+
+ไม่มี Migration ใหม่
+ไม่เปลี่ยน License / Clock Rollback / Dashboard logic

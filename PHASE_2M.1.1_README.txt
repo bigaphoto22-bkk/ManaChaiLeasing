@@ -1,0 +1,27 @@
+ManaChaiLeasing - Phase 2M.1.1
+Backup UI Simplification
+
+Base:
+Phase 2M.1 FULL Fix3
+
+UI:
+- Auto Backup เป็นวิธีสำรองข้อมูลหลัก
+- เปลี่ยนส่วนล่างเป็น "กู้คืนข้อมูล"
+- ปุ่มกู้คืนข้อมูลยังมองเห็นชัด
+- ข้อความ Safety Backup ก่อน Restore ยังอยู่
+- ย้าย Manual Backup ไปใต้ "ตัวเลือกเพิ่มเติม"
+- ตัวเลือกเพิ่มเติมปิดอยู่ตามค่าเริ่มต้น
+
+Fix3 preserved:
+- Pooling=false สำหรับ backup/inspection SQLite connections
+- Cleanup .db-wal / .db-shm
+- Auto Backup เหลือ .db ไฟล์เดียวต่อวัน
+
+Version:
+0.2.3
+
+ไม่มี Migration ใหม่
+ไม่เปลี่ยน Database schema
+ไม่เปลี่ยน License / Clock Rollback
+ไม่เปลี่ยน Dashboard logic
+ไม่รวม VendorPublicKey.cs ใน package
