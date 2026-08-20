@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
@@ -32,6 +33,7 @@ public partial class MainWindow : Window
     private readonly HomeDashboardService _homeDashboardService = new();
     private readonly DatabaseBackupService _databaseBackupService = new();
     private readonly AutomaticBackupService _automaticBackupService = new();
+    private readonly SupportDiagnosticsService _supportDiagnosticsService = new();
     private readonly MachineIdentityService _machineIdentityService = new();
     private readonly LicenseValidationService _licenseValidationService = new();
     private int? _selectedCustomerId;
@@ -40,6 +42,8 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
+        ApplicationDiagnosticsService.Initialize();
+
         InitializeComponent();
 
         // ซ่อน Main Window ไว้ก่อนจนกว่า License จะผ่าน
@@ -113,6 +117,10 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
+            AppLog.Error(
+                "Handled exception in MainWindow.",
+                ex);
+
             DatabaseStatusText.Text = "Database Error";
             DatabaseStatusText.Foreground = Brushes.Firebrick;
 
@@ -321,6 +329,10 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
+            AppLog.Error(
+                "Handled exception in MainWindow.",
+                ex);
+
             HomeDashboardUpdatedText.Text =
                 "ไม่สามารถโหลด Dashboard ได้";
 
@@ -483,6 +495,10 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
+            AppLog.Error(
+                "Handled exception in MainWindow.",
+                ex);
+
             TodayTransactionsDataGrid.ItemsSource = null;
             TodayTransactionCountText.Text =
                 "ไม่สามารถโหลดข้อมูลได้";
@@ -510,6 +526,7 @@ public partial class MainWindow : Window
         LoadLicenseStatus();
         LoadBusinessSettings();
         LoadAutomaticBackupSettings();
+        LoadSupportDiagnosticsStatus();
     }
 
     private void LoadBusinessSettings()
@@ -535,6 +552,10 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
+            AppLog.Error(
+                "Handled exception in MainWindow.",
+                ex);
+
             MessageBox.Show(
                 $"ไม่สามารถอ่านการตั้งค่าได้\n\n{ex.Message}",
                 ManaChaiLeasing.AppInfo.StoreName,
@@ -599,6 +620,10 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
+            AppLog.Error(
+                "Handled exception in MainWindow.",
+                ex);
+
             MessageBox.Show(
                 $"ไม่สามารถบันทึกการตั้งค่าได้\n\n{ex.Message}",
                 ManaChaiLeasing.AppInfo.StoreName,
@@ -679,6 +704,10 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
+            AppLog.Error(
+                "Handled exception in MainWindow.",
+                ex);
+
             MachineIdText.Text =
                 "ไม่สามารถสร้าง Machine ID ได้";
 
@@ -792,6 +821,10 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
+            AppLog.Error(
+                "Handled exception in MainWindow.",
+                ex);
+
             MessageBox.Show(
                 $"ไม่สามารถคัดลอกรหัสเครื่องได้\n\n{ex.Message}",
                 AppInfo.StoreName,
@@ -910,6 +943,10 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
+            AppLog.Error(
+                "Handled exception in MainWindow.",
+                ex);
+
             MessageBox.Show(
                 $"ไม่สามารถบันทึกการตั้งค่า Auto Backup ได้\n\n{ex.Message}",
                 ManaChaiLeasing.AppInfo.StoreName,
@@ -927,6 +964,9 @@ public partial class MainWindow : Window
         {
             return;
         }
+
+        AppLog.Warning(
+            $"Automatic backup failed after startup: {result.ErrorMessage}");
 
         MessageBox.Show(
             "โปรแกรมเปิดใช้งานได้ตามปกติ แต่ Auto Backup ไม่สำเร็จ\n\n" +
@@ -952,6 +992,9 @@ public partial class MainWindow : Window
         {
             return;
         }
+
+        AppLog.Warning(
+            $"Automatic backup failed after data change: {result.ErrorMessage}");
 
         MessageBox.Show(
             "ข้อมูลถูกบันทึกเรียบร้อยแล้ว แต่ Auto Backup ไม่สำเร็จ\n\n" +
@@ -1029,6 +1072,114 @@ public partial class MainWindow : Window
                 : Brushes.DarkOrange;
     }
 
+    private void LoadSupportDiagnosticsStatus()
+    {
+        SupportDiagnosticsLogPathText.Text =
+            $"Technical Log: {_supportDiagnosticsService.LogFolder}";
+
+        SupportDiagnosticsStatusText.Text =
+            $"เก็บ Log ย้อนหลัง {AppLog.RetentionDays} วัน • ชุด Support จะรวม Log ล่าสุดไม่เกิน {SupportDiagnosticsService.IncludedLogDays} วัน";
+
+        SupportDiagnosticsStatusText.Foreground =
+            Brushes.DimGray;
+    }
+
+    private void OpenTechnicalLogFolderButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        try
+        {
+            Directory.CreateDirectory(
+                _supportDiagnosticsService.LogFolder);
+
+            Process.Start(
+                new ProcessStartInfo
+                {
+                    FileName =
+                        _supportDiagnosticsService.LogFolder,
+                    UseShellExecute = true
+                });
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error(
+                "Could not open technical log folder.",
+                ex);
+
+            MessageBox.Show(
+                $"ไม่สามารถเปิดโฟลเดอร์ Log ได้\n\n{ex.Message}",
+                AppInfo.StoreName,
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
+    private void CreateSupportPackageButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        try
+        {
+            SupportDiagnosticsStatusText.Text =
+                "กำลังสร้างชุดข้อมูล Support...";
+
+            SupportDiagnosticsStatusText.Foreground =
+                Brushes.DarkOrange;
+
+            SupportPackageResult result =
+                _supportDiagnosticsService
+                    .CreateSupportPackage();
+
+            SupportDiagnosticsStatusText.Text =
+                $"สร้างล่าสุด {result.CreatedAt:dd/MM/yyyy HH:mm} • {result.LogFileCount:N0} Log";
+
+            SupportDiagnosticsStatusText.Foreground =
+                Brushes.ForestGreen;
+
+            MessageBoxResult openResult =
+                MessageBox.Show(
+                    "สร้างชุดข้อมูล Support เรียบร้อย\n\n" +
+                    $"ไฟล์:\n{result.FilePath}\n\n" +
+                    "ภายในไม่มี Database, Backup, ไฟล์ License, Private Key หรือข้อมูลลูกค้า\n\n" +
+                    "ต้องการเปิดโฟลเดอร์ที่เก็บไฟล์หรือไม่?",
+                    "สร้างชุดข้อมูล Support สำเร็จ",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Information);
+
+            if (openResult ==
+                MessageBoxResult.Yes)
+            {
+                Process.Start(
+                    new ProcessStartInfo
+                    {
+                        FileName = "explorer.exe",
+                        Arguments =
+                            $"/select,\"{result.FilePath}\"",
+                        UseShellExecute = true
+                    });
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error(
+                "Could not create support diagnostics package.",
+                ex);
+
+            SupportDiagnosticsStatusText.Text =
+                "สร้างชุดข้อมูล Support ไม่สำเร็จ";
+
+            SupportDiagnosticsStatusText.Foreground =
+                Brushes.Firebrick;
+
+            MessageBox.Show(
+                $"ไม่สามารถสร้างชุดข้อมูล Support ได้\n\n{ex.Message}",
+                AppInfo.StoreName,
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
     private void BackupDatabaseButton_Click(
         object sender,
         RoutedEventArgs e)
@@ -1073,6 +1224,10 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
+            AppLog.Error(
+                "Handled exception in MainWindow.",
+                ex);
+
             DatabaseBackupStatusText.Text =
                 "สำรองข้อมูลไม่สำเร็จ";
 
@@ -1156,6 +1311,10 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
+            AppLog.Error(
+                "Handled exception in MainWindow.",
+                ex);
+
             DatabaseBackupStatusText.Text =
                 "กู้คืนข้อมูลไม่สำเร็จ";
 
@@ -1299,6 +1458,10 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
+            AppLog.Error(
+                "Handled exception in MainWindow.",
+                ex);
+
             MessageBox.Show(
                 $"ไม่สามารถบันทึกข้อมูลลูกค้าได้\n\n{ex.Message}",
                 ManaChaiLeasing.AppInfo.StoreName,
@@ -1613,6 +1776,10 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
+            AppLog.Error(
+                "Handled exception in MainWindow.",
+                ex);
+
             MessageBox.Show(
                 $"ไม่สามารถบันทึกตั๋วจำนำได้\n\n{ex.Message}",
                 ManaChaiLeasing.AppInfo.StoreName,
@@ -2254,6 +2421,10 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
+            AppLog.Error(
+                "Handled exception in MainWindow.",
+                ex);
+
             PawnTicketSearchDataGrid.ItemsSource = null;
             PawnTicketSearchResultCountText.Text =
                 "ค้นหาไม่สำเร็จ";
@@ -2314,6 +2485,10 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
+            AppLog.Error(
+                "Handled exception in MainWindow.",
+                ex);
+
             MessageBox.Show(
                 $"ไม่สามารถเปิดรายละเอียดตั๋วได้\n\n{ex.Message}",
                 ManaChaiLeasing.AppInfo.StoreName,

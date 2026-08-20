@@ -1,0 +1,61 @@
+ManaChaiLeasing - Phase 2M.2
+Error Logging & Support Diagnostics
+
+Version:
+0.2.4
+
+Technical Log:
+%LOCALAPPDATA%\ManaChaiLeasing\Logs
+
+Log policy:
+- 1 log file per day
+- Retention 30 days
+- Technical errors only
+- Do not intentionally log customer / pawn-ticket data
+- Logging failure must never block business operations
+
+Global error handlers:
+- WPF DispatcherUnhandledException
+- AppDomain UnhandledException
+- TaskScheduler UnobservedTaskException
+
+Handled errors:
+- MainWindow catch(Exception) errors are recorded
+- Automatic Backup failures are recorded
+
+Settings:
+Collapsed section:
+"ช่วยเหลือ / ตรวจสอบปัญหา"
+
+Functions:
+- Open Technical Log folder
+- Create Support diagnostics ZIP
+
+Support ZIP:
+Documents\ManaChai Support\ManaChaiLeasing_Support_yyyyMMdd_HHmmss.zip
+
+Includes:
+- diagnostics.txt
+- Technical Logs from up to the latest 7 days
+- privacy note
+
+Does NOT include:
+- ManaChaiLeasing.db
+- Backup .db files
+- customer/pawn-ticket data
+- License file
+- Vendor Private Key
+- Vendor key backup/password
+
+Diagnostics summary:
+- Application version
+- Windows / runtime / architecture
+- Machine ID
+- License validation status/type/expiry
+- Auto Backup enabled / last success / current-error flag
+
+No database migration.
+No database schema changes.
+No license or clock-rollback changes.
+No dashboard logic changes.
+VendorPublicKey.cs intentionally not included.

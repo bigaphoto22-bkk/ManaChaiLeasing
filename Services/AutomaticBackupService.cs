@@ -165,6 +165,10 @@ public sealed class AutomaticBackupService
         }
         catch (Exception ex)
         {
+            AppLog.Error(
+                "Automatic database backup failed.",
+                ex);
+
             settings.LastError =
                 ex.Message;
 

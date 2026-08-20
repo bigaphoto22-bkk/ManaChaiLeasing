@@ -2503,6 +2503,77 @@
                                        Text="คำแนะนำ: สำหรับใช้งานจริง ควรเก็บ Auto Backup ไว้นอก Drive ที่ติดตั้ง Windows เช่น Flash Drive, External Drive หรือ Drive สำรองอื่น" />
                         </Border>
 
+                        <Expander Margin="0,18,0,0"
+                                  Header="ช่วยเหลือ / ตรวจสอบปัญหา"
+                                  FontSize="14"
+                                  FontWeight="SemiBold"
+                                  Foreground="#374151"
+                                  IsExpanded="False">
+                            <Border Margin="0,8,0,0"
+                                    Padding="20"
+                                    Background="White"
+                                    BorderBrush="#E5E7EB"
+                                    BorderThickness="1"
+                                    CornerRadius="10">
+                                <StackPanel>
+                                    <TextBlock Text="Technical Log &amp; Support Diagnostics"
+                                               FontSize="15"
+                                               FontWeight="SemiBold"
+                                               Foreground="#111827" />
+
+                                    <TextBlock Margin="0,5,0,0"
+                                               Text="ใช้เมื่อต้องการส่งข้อมูลทางเทคนิคให้ผู้พัฒนาเพื่อตรวจสอบปัญหาจากระยะไกล"
+                                               FontSize="13"
+                                               Foreground="#6B7280"
+                                               TextWrapping="Wrap" />
+
+                                    <TextBlock x:Name="SupportDiagnosticsLogPathText"
+                                               Margin="0,12,0,0"
+                                               FontSize="12"
+                                               Foreground="#475569"
+                                               TextWrapping="Wrap" />
+
+                                    <TextBlock x:Name="SupportDiagnosticsStatusText"
+                                               Margin="0,4,0,0"
+                                               FontSize="12"
+                                               Foreground="#6B7280"
+                                               TextWrapping="Wrap" />
+
+                                    <StackPanel Margin="0,14,0,0"
+                                                Orientation="Horizontal">
+                                        <Button Width="185"
+                                                Height="42"
+                                                Content="เปิดโฟลเดอร์ Log"
+                                                FontSize="13"
+                                                FontWeight="SemiBold"
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                Click="OpenTechnicalLogFolderButton_Click" />
+
+                                        <Button Width="210"
+                                                Height="42"
+                                                Margin="12,0,0,0"
+                                                Content="สร้างชุดข้อมูล Support..."
+                                                FontSize="13"
+                                                FontWeight="SemiBold"
+                                                Style="{StaticResource PrimaryButtonStyle}"
+                                                Click="CreateSupportPackageButton_Click" />
+                                    </StackPanel>
+
+                                    <Border Margin="0,14,0,0"
+                                            Padding="12"
+                                            Background="#F8FAFC"
+                                            BorderBrush="#E2E8F0"
+                                            BorderThickness="1"
+                                            CornerRadius="8">
+                                        <TextBlock FontSize="12"
+                                                   Foreground="#475569"
+                                                   TextWrapping="Wrap"
+                                                   Text="เพื่อความเป็นส่วนตัว ชุด Support ไม่รวมฐานข้อมูล, Backup, ไฟล์ License, Private Key หรือข้อมูลลูกค้า" />
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                        </Expander>
+
                     </StackPanel>
                 </ScrollViewer>
 
