@@ -66,7 +66,7 @@ public partial class InterestRenewalWindow : Window
         {
             MessageBox.Show(
                 $"ไม่สามารถบันทึกการต่อดอกได้\n\n{ex.Message}",
-                "มานะชัย ลิสซิ่ง",
+                ManaChaiLeasing.AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
 

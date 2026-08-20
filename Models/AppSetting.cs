@@ -7,7 +7,7 @@ public class AppSetting
     public int Id { get; set; }
 
     [MaxLength(200)]
-    public string StoreName { get; set; } = "มานะชัย ลิสซิ่ง";
+    public string StoreName { get; set; } = ManaChaiLeasing.AppInfo.StoreName;
 
     public decimal InterestRatePercent { get; set; } = 5m;
 

@@ -68,7 +68,7 @@ public partial class RedemptionWindow : Window
         {
             MessageBox.Show(
                 $"ไม่สามารถบันทึกการไถ่ถอนได้\n\n{ex.Message}",
-                "มานะชัย ลิสซิ่ง",
+                ManaChaiLeasing.AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
 

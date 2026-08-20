@@ -48,7 +48,7 @@ public partial class PawnTicketDetailWindow : Window
         {
             MessageBox.Show(
                 $"ไม่สามารถเปิดหน้าต่อดอกได้\n\n{ex.Message}",
-                "มานะชัย ลิสซิ่ง",
+                ManaChaiLeasing.AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
         }
@@ -84,7 +84,7 @@ public partial class PawnTicketDetailWindow : Window
         {
             MessageBox.Show(
                 $"ไม่สามารถเปิดหน้าไถ่ถอนได้\n\n{ex.Message}",
-                "มานะชัย ลิสซิ่ง",
+                ManaChaiLeasing.AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
         }

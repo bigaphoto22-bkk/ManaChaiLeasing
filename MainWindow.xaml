@@ -1,15 +1,17 @@
 ﻿<Window x:Class="ManaChaiLeasing.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:ManaChaiLeasing"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="มานะชัย ลิสซิ่ง"
+        Title="{x:Static local:AppInfo.StoreName}"
         Width="1280"
         Height="760"
         MinWidth="1050"
         MinHeight="650"
         WindowStartupLocation="CenterScreen"
+        WindowState="Maximized"
         Background="#F5F6F8"
         FontFamily="Segoe UI">
 
@@ -165,14 +167,11 @@
                         BorderThickness="0,0,0,1">
                     <StackPanel VerticalAlignment="Center"
                                 Margin="24,0">
-                        <TextBlock Text="มานะชัย"
-                                   FontSize="24"
+                        <TextBlock Text="{x:Static local:AppInfo.StoreName}"
+                                   FontSize="22"
                                    FontWeight="Bold"
-                                   Foreground="#111827" />
-                        <TextBlock Text="ลิสซิ่ง"
-                                   Margin="0,2,0,0"
-                                   FontSize="15"
-                                   Foreground="#6B7280" />
+                                   Foreground="#111827"
+                                   TextWrapping="NoWrap" />
                     </StackPanel>
                 </Border>
 
@@ -220,7 +219,7 @@
                         BorderThickness="0,1,0,0">
                     <StackPanel VerticalAlignment="Center"
                                 Margin="24,0">
-                        <TextBlock Text="มานะชัย ลิสซิ่ง"
+                        <TextBlock Text="{x:Static local:AppInfo.StoreName}"
                                    FontSize="12"
                                    Foreground="#6B7280" />
                         <TextBlock x:Name="DatabaseStatusText"
@@ -302,7 +301,7 @@
                                 </Grid.ColumnDefinitions>
 
                                 <StackPanel>
-                                    <TextBlock Text="มานะชัย ลิสซิ่ง"
+                                    <TextBlock Text="{x:Static local:AppInfo.StoreName}"
                                                FontSize="28"
                                                FontWeight="Bold"
                                                Foreground="#111827" />
@@ -1781,35 +1780,22 @@
                                 CornerRadius="12">
                             <StackPanel>
 
-                                <TextBlock Text="ข้อมูลร้าน"
+<TextBlock Text="เงื่อนไขการต่อดอก"
                                            FontSize="20"
                                            FontWeight="SemiBold"
                                            Foreground="#111827" />
 
-                                <StackPanel Margin="0,18,0,0"
-                                            Width="460"
-                                            HorizontalAlignment="Left">
-                                    <TextBlock Text="ชื่อร้าน"
-                                               FontSize="15"
-                                               FontWeight="SemiBold"
-                                               Foreground="#374151"
-                                               Margin="0,0,0,7" />
-
-                                    <TextBox x:Name="StoreNameSettingTextBox"
-                                             Height="46"
-                                             Padding="12,7"
-                                             FontSize="17"
-                                             VerticalContentAlignment="Center"
-                                             BorderBrush="#D1D5DB"
-                                             BorderThickness="1" />
-                                </StackPanel>
-
-                                <Separator Margin="0,24,0,22" />
-
-                                <TextBlock Text="เงื่อนไขการต่อดอก"
-                                           FontSize="20"
+                                <TextBlock Margin="0,6,0,0"
+                                           Text="{x:Static local:AppInfo.StoreName}"
+                                           FontSize="14"
                                            FontWeight="SemiBold"
-                                           Foreground="#111827" />
+                                           Foreground="#374151" />
+
+                                <TextBlock Margin="0,3,0,0"
+                                           Text="ชื่อร้านกำหนดไว้ในตัวโปรแกรม ไม่สามารถแก้ไขจากหน้านี้"
+                                           FontSize="12"
+                                           Foreground="#6B7280"
+                                           TextWrapping="Wrap" />
 
                                 <Grid Margin="0,18,0,0"
                                       HorizontalAlignment="Left">
@@ -1919,15 +1905,101 @@
                         </Border>
 
                         <Border Margin="0,18,0,0"
+                                Padding="24"
+                                Background="White"
+                                BorderBrush="#E5E7EB"
+                                BorderThickness="1"
+                                CornerRadius="12">
+                            <StackPanel>
+
+                                <TextBlock Text="สำรองข้อมูล / กู้คืนข้อมูล"
+                                           FontSize="20"
+                                           FontWeight="SemiBold"
+                                           Foreground="#111827" />
+
+                                <TextBlock Margin="0,8,0,0"
+                                           Text="สำรองฐานข้อมูลลูกค้า ตั๋วจำนำ และประวัติรายการทั้งหมดเป็นไฟล์ .db สำหรับเก็บไว้ใน Flash Drive, External Drive หรือพื้นที่สำรองข้อมูลอื่น"
+                                           FontSize="14"
+                                           Foreground="#6B7280"
+                                           TextWrapping="Wrap" />
+
+                                <Border Margin="0,18,0,0"
+                                        Padding="18"
+                                        Background="#F8FAFC"
+                                        BorderBrush="#E2E8F0"
+                                        BorderThickness="1"
+                                        CornerRadius="10">
+                                    <StackPanel>
+                                        <TextBlock Text="ฐานข้อมูลที่กำลังใช้งาน"
+                                                   FontSize="13"
+                                                   Foreground="#64748B" />
+
+                                        <TextBlock x:Name="DatabaseFilePathText"
+                                                   Margin="0,5,0,0"
+                                                   FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#334155"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Grid Margin="0,20,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="210" />
+                                        <ColumnDefinition Width="16" />
+                                        <ColumnDefinition Width="210" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Button Grid.Column="0"
+                                            Height="50"
+                                            Content="สำรองข้อมูล..."
+                                            FontSize="16"
+                                            FontWeight="SemiBold"
+                                            Style="{StaticResource PrimaryButtonStyle}"
+                                            Click="BackupDatabaseButton_Click" />
+
+                                    <Button Grid.Column="2"
+                                            Height="50"
+                                            Content="กู้คืนข้อมูล..."
+                                            FontSize="16"
+                                            FontWeight="SemiBold"
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            Click="RestoreDatabaseButton_Click" />
+                                </Grid>
+
+                                <TextBlock x:Name="DatabaseBackupStatusText"
+                                           Margin="0,14,0,0"
+                                           Text="ยังไม่มีการสำรองหรือกู้คืนข้อมูลในรอบการเปิดโปรแกรมนี้"
+                                           FontSize="13"
+                                           Foreground="#6B7280"
+                                           TextWrapping="Wrap" />
+
+                                <Border Margin="0,18,0,0"
+                                        Padding="16"
+                                        Background="#FFFBEB"
+                                        BorderBrush="#FDE68A"
+                                        BorderThickness="1"
+                                        CornerRadius="8">
+                                    <TextBlock FontSize="13"
+                                               Foreground="#92400E"
+                                               TextWrapping="Wrap"
+                                               Text="ก่อนกู้คืน ระบบจะสร้าง Backup ของข้อมูลปัจจุบันให้อัตโนมัติ และเมื่อกู้คืนสำเร็จโปรแกรมจะปิดเพื่อให้เปิดใหม่ด้วยฐานข้อมูลที่กู้คืน" />
+                                </Border>
+
+                            </StackPanel>
+                        </Border>
+
+                        <Border Margin="0,18,0,0"
                                 Padding="18"
-                                Background="#FFFBEB"
-                                BorderBrush="#FDE68A"
+                                Background="#EFF6FF"
+                                BorderBrush="#BFDBFE"
                                 BorderThickness="1"
                                 CornerRadius="10">
                             <TextBlock FontSize="13"
-                                       Foreground="#92400E"
+                                       Foreground="#1E3A8A"
                                        TextWrapping="Wrap"
-                                       Text="Phase 2F : ต่อดอกจริงได้แล้ว โดยใช้เงื่อนไขที่ Snapshot ไว้กับตั๋วแต่ละใบ และบันทึกเป็นรายรับในประวัติรายการ" />
+                                       Text="Phase 2I : Backup / Restore — สำรอง SQLite แบบ Online Backup, ตรวจสอบไฟล์ก่อน Restore และสร้าง Safety Backup อัตโนมัติก่อนกู้คืน" />
                         </Border>
 
                     </StackPanel>

@@ -45,7 +45,7 @@ public partial class CustomerLookupWindow : Window
         {
             MessageBox.Show(
                 $"ไม่สามารถค้นหาข้อมูลลูกค้าได้\n\n{ex.Message}",
-                "มานะชัย ลิสซิ่ง",
+                ManaChaiLeasing.AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
         }
@@ -71,7 +71,7 @@ public partial class CustomerLookupWindow : Window
         {
             MessageBox.Show(
                 "กรุณาเลือกลูกค้าที่ต้องการก่อน",
-                "มานะชัย ลิสซิ่ง",
+                ManaChaiLeasing.AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
 

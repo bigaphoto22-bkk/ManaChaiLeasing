@@ -22,7 +22,7 @@ public sealed class AppSettingService
 
         AppSetting defaultSetting = new()
         {
-            StoreName = "มานะชัย ลิสซิ่ง",
+            StoreName = ManaChaiLeasing.AppInfo.StoreName,
             InterestRatePercent = 5m,
             InterestPeriodDays = 15,
             UpdatedAt = DateTime.Now
@@ -35,18 +35,9 @@ public sealed class AppSettingService
     }
 
     public AppSetting SaveSettings(
-        string storeName,
         decimal interestRatePercent,
         int interestPeriodDays)
     {
-        string cleanedStoreName = storeName.Trim();
-
-        if (string.IsNullOrWhiteSpace(cleanedStoreName))
-        {
-            throw new InvalidOperationException(
-                "กรุณาระบุชื่อร้าน");
-        }
-
         if (interestRatePercent <= 0m ||
             interestRatePercent > 100m)
         {
@@ -73,7 +64,7 @@ public sealed class AppSettingService
             db.AppSettings.Add(setting);
         }
 
-        setting.StoreName = cleanedStoreName;
+        setting.StoreName = ManaChaiLeasing.AppInfo.StoreName;
         setting.InterestRatePercent = interestRatePercent;
         setting.InterestPeriodDays = interestPeriodDays;
         setting.UpdatedAt = DateTime.Now;

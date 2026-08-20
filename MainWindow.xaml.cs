@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using Microsoft.Win32;
 using ManaChaiLeasing.Data;
 using ManaChaiLeasing.Models;
 using ManaChaiLeasing.Services;
@@ -20,6 +21,7 @@ public partial class MainWindow : Window
     private readonly AppSettingService _appSettingService = new();
     private readonly TodaySummaryService _todaySummaryService = new();
     private readonly HomeDashboardService _homeDashboardService = new();
+    private readonly DatabaseBackupService _databaseBackupService = new();
     private int? _selectedCustomerId;
 
     public MainWindow()
@@ -54,7 +56,7 @@ public partial class MainWindow : Window
 
             MessageBox.Show(
                 $"ไม่สามารถเตรียมฐานข้อมูล SQLite ได้\n\n{ex.Message}",
-                "มานะชัย ลิสซิ่ง",
+                ManaChaiLeasing.AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
         }
@@ -121,7 +123,7 @@ public partial class MainWindow : Window
 
             MessageBox.Show(
                 $"ไม่สามารถโหลดข้อมูลหน้าหลักได้\n\n{ex.Message}",
-                "มานะชัย ลิสซิ่ง",
+                ManaChaiLeasing.AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
         }
@@ -217,7 +219,7 @@ public partial class MainWindow : Window
 
             MessageBox.Show(
                 $"ไม่สามารถโหลดรายการวันนี้ได้\n\n{ex.Message}",
-                "มานะชัย ลิสซิ่ง",
+                ManaChaiLeasing.AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
         }
@@ -229,7 +231,10 @@ public partial class MainWindow : Window
             SettingsContent,
             SettingsButton,
             "ตั้งค่า",
-            "ตั้งค่าข้อมูลร้านและเงื่อนไขการใช้งานระบบ");
+            "ตั้งค่าข้อมูลร้าน เงื่อนไข และการสำรองข้อมูล");
+
+        DatabaseFilePathText.Text =
+            DatabasePaths.DatabaseFile;
 
         LoadBusinessSettings();
     }
@@ -240,9 +245,6 @@ public partial class MainWindow : Window
         {
             AppSetting setting =
                 _appSettingService.GetSettings();
-
-            StoreNameSettingTextBox.Text =
-                setting.StoreName;
 
             InterestRateSettingTextBox.Text =
                 setting.InterestRatePercent.ToString(
@@ -262,7 +264,7 @@ public partial class MainWindow : Window
         {
             MessageBox.Show(
                 $"ไม่สามารถอ่านการตั้งค่าได้\n\n{ex.Message}",
-                "มานะชัย ลิสซิ่ง",
+                ManaChaiLeasing.AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
         }
@@ -278,7 +280,7 @@ public partial class MainWindow : Window
         {
             MessageBox.Show(
                 "กรุณาระบุอัตราดอกเบี้ยเป็นตัวเลข เช่น 5 หรือ 5.5",
-                "มานะชัย ลิสซิ่ง",
+                ManaChaiLeasing.AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
 
@@ -292,7 +294,7 @@ public partial class MainWindow : Window
         {
             MessageBox.Show(
                 "กรุณาระบุจำนวนวันต่อรอบเป็นตัวเลขจำนวนเต็ม เช่น 15",
-                "มานะชัย ลิสซิ่ง",
+                ManaChaiLeasing.AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
 
@@ -304,7 +306,6 @@ public partial class MainWindow : Window
         {
             AppSetting saved =
                 _appSettingService.SaveSettings(
-                    StoreNameSettingTextBox.Text,
                     interestRate,
                     periodDays);
 
@@ -315,10 +316,9 @@ public partial class MainWindow : Window
 
             MessageBox.Show(
                 "บันทึกการตั้งค่าเรียบร้อย\n\n" +
-                $"ชื่อร้าน: {saved.StoreName}\n" +
                 $"ดอกเบี้ย: {saved.InterestRatePercent:0.##}% ต่อรอบ\n" +
                 $"ระยะเวลา: {saved.InterestPeriodDays:N0} วันต่อรอบ",
-                "มานะชัย ลิสซิ่ง",
+                ManaChaiLeasing.AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
         }
@@ -326,7 +326,7 @@ public partial class MainWindow : Window
         {
             MessageBox.Show(
                 $"ไม่สามารถบันทึกการตั้งค่าได้\n\n{ex.Message}",
-                "มานะชัย ลิสซิ่ง",
+                ManaChaiLeasing.AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
         }
@@ -389,6 +389,167 @@ public partial class MainWindow : Window
                    out value);
     }
 
+    private void BackupDatabaseButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        SaveFileDialog dialog =
+            new()
+            {
+                Title = $"สำรองข้อมูล {ManaChaiLeasing.AppInfo.StoreName}",
+                Filter =
+                    "ManaChaiLeasing Backup (*.db)|*.db|All files (*.*)|*.*",
+                DefaultExt = ".db",
+                AddExtension = true,
+                OverwritePrompt = true,
+                FileName =
+                    $"ManaChaiLeasing_Backup_{DateTime.Now:yyyyMMdd_HHmmss}.db"
+            };
+
+        if (dialog.ShowDialog(this) != true)
+        {
+            return;
+        }
+
+        try
+        {
+            DatabaseBackupResult result =
+                _databaseBackupService.CreateBackup(
+                    dialog.FileName);
+
+            DatabaseBackupStatusText.Text =
+                $"สำรองล่าสุด: {result.CreatedAt:dd/MM/yyyy HH:mm} • {result.FilePath}";
+
+            DatabaseBackupStatusText.Foreground =
+                Brushes.ForestGreen;
+
+            MessageBox.Show(
+                "สำรองข้อมูลเรียบร้อย\n\n" +
+                $"ไฟล์:\n{result.FilePath}\n\n" +
+                $"ขนาด: {FormatFileSize(result.FileSizeBytes)}",
+                ManaChaiLeasing.AppInfo.StoreName,
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            DatabaseBackupStatusText.Text =
+                "สำรองข้อมูลไม่สำเร็จ";
+
+            DatabaseBackupStatusText.Foreground =
+                Brushes.Firebrick;
+
+            MessageBox.Show(
+                $"ไม่สามารถสำรองข้อมูลได้\n\n{ex.Message}",
+                ManaChaiLeasing.AppInfo.StoreName,
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
+    private void RestoreDatabaseButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        OpenFileDialog dialog =
+            new()
+            {
+                Title = "เลือกไฟล์ Backup ที่ต้องการกู้คืน",
+                Filter =
+                    "ManaChaiLeasing Backup (*.db)|*.db|All files (*.*)|*.*",
+                DefaultExt = ".db",
+                CheckFileExists = true,
+                Multiselect = false
+            };
+
+        if (dialog.ShowDialog(this) != true)
+        {
+            return;
+        }
+
+        try
+        {
+            DatabaseBackupInfo info =
+                _databaseBackupService.InspectBackup(
+                    dialog.FileName);
+
+            MessageBoxResult confirm =
+                MessageBox.Show(
+                    "ตรวจพบไฟล์ Backup ที่ใช้งานได้\n\n" +
+                    $"ชื่อร้าน: {info.StoreName}\n" +
+                    $"ลูกค้า: {info.CustomerCount:N0} ราย\n" +
+                    $"ตั๋วจำนำ: {info.PawnTicketCount:N0} ใบ\n" +
+                    $"ประวัติรายการ: {info.TransactionCount:N0} รายการ\n" +
+                    $"วันที่ไฟล์: {info.FileModifiedAt:dd/MM/yyyy HH:mm}\n\n" +
+                    "ข้อมูลปัจจุบันในโปรแกรมจะถูกแทนด้วยข้อมูลจากไฟล์นี้\n" +
+                    "ระบบจะสำรองข้อมูลปัจจุบันให้อัตโนมัติก่อนกู้คืน\n\n" +
+                    "ยืนยันกู้คืนข้อมูลหรือไม่?",
+                    "ยืนยันกู้คืนข้อมูล",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+            if (confirm != MessageBoxResult.Yes)
+            {
+                return;
+            }
+
+            DatabaseRestoreResult result =
+                _databaseBackupService.RestoreBackup(
+                    dialog.FileName);
+
+            DatabaseBackupStatusText.Text =
+                "กู้คืนข้อมูลสำเร็จ • กำลังปิดโปรแกรม";
+
+            DatabaseBackupStatusText.Foreground =
+                Brushes.ForestGreen;
+
+            MessageBox.Show(
+                "กู้คืนข้อมูลเรียบร้อย\n\n" +
+                "ระบบได้สร้าง Safety Backup ของข้อมูลก่อนกู้คืนไว้ที่:\n" +
+                $"{result.SafetyBackupPath}\n\n" +
+                "โปรแกรมจะปิดในตอนนี้ กรุณาเปิดใหม่อีกครั้งเพื่อใช้งานฐานข้อมูลที่กู้คืน",
+                "กู้คืนข้อมูลสำเร็จ",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+
+            Application.Current.Shutdown();
+        }
+        catch (Exception ex)
+        {
+            DatabaseBackupStatusText.Text =
+                "กู้คืนข้อมูลไม่สำเร็จ";
+
+            DatabaseBackupStatusText.Foreground =
+                Brushes.Firebrick;
+
+            MessageBox.Show(
+                $"ไม่สามารถกู้คืนข้อมูลได้\n\n{ex.Message}\n\n" +
+                "ฐานข้อมูลปัจจุบันจะไม่ถูกเปลี่ยน หากกระบวนการ Restore ยังไม่ผ่านการตรวจสอบ",
+                ManaChaiLeasing.AppInfo.StoreName,
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
+    private static string FormatFileSize(
+        long bytes)
+    {
+        const double oneKb = 1024d;
+        const double oneMb = oneKb * 1024d;
+
+        if (bytes >= oneMb)
+        {
+            return $"{bytes / oneMb:N2} MB";
+        }
+
+        if (bytes >= oneKb)
+        {
+            return $"{bytes / oneKb:N2} KB";
+        }
+
+        return $"{bytes:N0} bytes";
+    }
+
     private void SearchExistingCustomer_Click(
         object sender,
         RoutedEventArgs e)
@@ -421,7 +582,7 @@ public partial class MainWindow : Window
         {
             MessageBox.Show(
                 "กรุณากรอกชื่อและนามสกุลลูกค้า",
-                "มานะชัย ลิสซิ่ง",
+                ManaChaiLeasing.AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
 
@@ -434,7 +595,7 @@ public partial class MainWindow : Window
         {
             MessageBox.Show(
                 "เลขบัตรประชาชนต้องเป็นตัวเลข 13 หลัก หรือเว้นว่างไว้",
-                "มานะชัย ลิสซิ่ง",
+                ManaChaiLeasing.AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
 
@@ -452,7 +613,7 @@ public partial class MainWindow : Window
             {
                 MessageBox.Show(
                     "อายุต้องเป็นตัวเลขระหว่าง 1 - 120 ปี หรือเว้นว่างไว้",
-                    "มานะชัย ลิสซิ่ง",
+                    ManaChaiLeasing.AppInfo.StoreName,
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);
 
@@ -490,7 +651,7 @@ public partial class MainWindow : Window
 
             MessageBox.Show(
                 $"บันทึกข้อมูลลูกค้าเรียบร้อย\n\n{savedCustomer.FirstName} {savedCustomer.LastName}",
-                "มานะชัย ลิสซิ่ง",
+                ManaChaiLeasing.AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
         }
@@ -498,7 +659,7 @@ public partial class MainWindow : Window
         {
             MessageBox.Show(
                 $"ไม่สามารถบันทึกข้อมูลลูกค้าได้\n\n{ex.Message}",
-                "มานะชัย ลิสซิ่ง",
+                ManaChaiLeasing.AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
         }
@@ -727,7 +888,7 @@ public partial class MainWindow : Window
             {
                 MessageBox.Show(
                     "กรุณากรอกหมายเลขตั๋ว",
-                    "มานะชัย ลิสซิ่ง",
+                    ManaChaiLeasing.AppInfo.StoreName,
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);
 
@@ -739,7 +900,7 @@ public partial class MainWindow : Window
             {
                 MessageBox.Show(
                     "กรุณาเลือกวันที่รับจำนำ",
-                    "มานะชัย ลิสซิ่ง",
+                    ManaChaiLeasing.AppInfo.StoreName,
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);
 
@@ -754,7 +915,7 @@ public partial class MainWindow : Window
             {
                 MessageBox.Show(
                     "กรุณากรอกยอดเงินจำนำให้ถูกต้อง และต้องมากกว่า 0 บาท",
-                    "มานะชัย ลิสซิ่ง",
+                    ManaChaiLeasing.AppInfo.StoreName,
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);
 
@@ -768,7 +929,7 @@ public partial class MainWindow : Window
             {
                 MessageBox.Show(
                     "กรุณากรอกรายละเอียดสินค้าอย่างน้อย 1 ช่อง",
-                    "มานะชัย ลิสซิ่ง",
+                    ManaChaiLeasing.AppInfo.StoreName,
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);
 
@@ -811,7 +972,7 @@ public partial class MainWindow : Window
         {
             MessageBox.Show(
                 $"ไม่สามารถบันทึกตั๋วจำนำได้\n\n{ex.Message}",
-                "มานะชัย ลิสซิ่ง",
+                ManaChaiLeasing.AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
         }
@@ -838,7 +999,7 @@ public partial class MainWindow : Window
         {
             MessageBox.Show(
                 "กรุณากรอกชื่อและนามสกุลลูกค้า",
-                "มานะชัย ลิสซิ่ง",
+                ManaChaiLeasing.AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
 
@@ -851,7 +1012,7 @@ public partial class MainWindow : Window
         {
             MessageBox.Show(
                 "เลขบัตรประชาชนต้องเป็นตัวเลข 13 หลัก หรือเว้นว่างไว้",
-                "มานะชัย ลิสซิ่ง",
+                ManaChaiLeasing.AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
 
@@ -869,7 +1030,7 @@ public partial class MainWindow : Window
             {
                 MessageBox.Show(
                     "อายุต้องเป็นตัวเลขระหว่าง 1 - 120 ปี หรือเว้นว่างไว้",
-                    "มานะชัย ลิสซิ่ง",
+                    ManaChaiLeasing.AppInfo.StoreName,
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);
 
@@ -1431,7 +1592,7 @@ public partial class MainWindow : Window
 
             MessageBox.Show(
                 $"ไม่สามารถค้นหารายการได้\n\n{ex.Message}",
-                "มานะชัย ลิสซิ่ง",
+                ManaChaiLeasing.AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
         }
@@ -1458,7 +1619,7 @@ public partial class MainWindow : Window
         {
             MessageBox.Show(
                 "กรุณาเลือกรายการที่ต้องการเปิดดู",
-                "มานะชัย ลิสซิ่ง",
+                ManaChaiLeasing.AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
 
@@ -1487,7 +1648,7 @@ public partial class MainWindow : Window
         {
             MessageBox.Show(
                 $"ไม่สามารถเปิดรายละเอียดตั๋วได้\n\n{ex.Message}",
-                "มานะชัย ลิสซิ่ง",
+                ManaChaiLeasing.AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
         }

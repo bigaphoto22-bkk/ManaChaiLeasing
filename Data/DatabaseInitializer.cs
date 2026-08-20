@@ -20,13 +20,36 @@ public static class DatabaseInitializer
         {
             db.AppSettings.Add(new AppSetting
             {
-                StoreName = "มานะชัย ลิสซิ่ง",
+                StoreName = ManaChaiLeasing.AppInfo.StoreName,
                 InterestRatePercent = 5m,
                 InterestPeriodDays = 15,
                 UpdatedAt = DateTime.Now
             });
 
             db.SaveChanges();
+        }
+        else
+        {
+            // StoreName ยังเก็บใน DB เพื่อรองรับ Schema/Backup เดิม
+            // แต่ค่าที่ใช้งานจริงถูกกำหนดจาก AppInfo เพียงจุดเดียว
+            AppSetting setting =
+                db.AppSettings
+                    .OrderBy(item => item.Id)
+                    .First();
+
+            if (!string.Equals(
+                    setting.StoreName,
+                    ManaChaiLeasing.AppInfo.StoreName,
+                    StringComparison.Ordinal))
+            {
+                setting.StoreName =
+                    ManaChaiLeasing.AppInfo.StoreName;
+
+                setting.UpdatedAt =
+                    DateTime.Now;
+
+                db.SaveChanges();
+            }
         }
 
         return DatabasePaths.DatabaseFile;
