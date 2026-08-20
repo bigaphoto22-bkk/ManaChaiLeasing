@@ -4,6 +4,27 @@ public static class AppInfo
 {
     public const string StoreName = "มานะชัย ลิสซิ่ง";
 
+    public static string VersionText
+    {
+        get
+        {
+            Version? version =
+                typeof(AppInfo).Assembly
+                    .GetName()
+                    .Version;
+
+            if (version is null)
+            {
+                return "v-";
+            }
+
+            return $"v{version.Major}.{version.Minor}.{version.Build}";
+        }
+    }
+
+    public static string ProductVersionText =>
+        $"ManaChaiLeasing {VersionText}";
+
     public const string CustomerLookupWindowTitle =
         "ค้นหาลูกค้าเก่า - " + StoreName;
 

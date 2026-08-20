@@ -220,3 +220,35 @@ Invoke-Checked รับ option -o แล้ว PowerShell ตีความเ
 - Clock rollback
 - Inno Setup template
 - Database
+
+
+============================================================
+Phase 2L.7 - Application Version Display
+============================================================
+
+เลขเวอร์ชันมี Source of Truth จุดเดียว:
+Installer\ReleaseVersion.txt
+
+Directory.Build.props จะอ่านเลขนี้ตอน Build แล้วกำหนด:
+- Version
+- AssemblyVersion
+- FileVersion
+- InformationalVersion
+
+ดังนั้นเลขใน:
+- Sidebar ของโปรแกรม
+- ตั้งค่า > สิทธิ์การใช้งาน
+- ManaChaiLeasing.exe Properties > Details
+- Windows Installed Apps / Programs and Features
+- ชื่อ Setup.exe
+
+จะอ้างอิง ReleaseVersion เดียวกัน
+
+เมื่อเปลี่ยน ReleaseVersion.txt เช่น:
+0.2.1
+
+Build ครั้งถัดไปตัวโปรแกรมจะแสดง:
+v0.2.1
+
+และ One-click Release จะสร้าง:
+ManaChaiLeasing_Setup_0.2.1.exe

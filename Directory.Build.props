@@ -1,0 +1,14 @@
+﻿<Project>
+  <PropertyGroup>
+    <!--
+      Phase 2L.7
+      Application + Installer version use the same source of truth:
+      Installer\ReleaseVersion.txt
+    -->
+    <ManaChaiReleaseVersion>$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)Installer\ReleaseVersion.txt').Trim())</ManaChaiReleaseVersion>
+    <Version>$(ManaChaiReleaseVersion)</Version>
+    <AssemblyVersion>$(ManaChaiReleaseVersion).0</AssemblyVersion>
+    <FileVersion>$(ManaChaiReleaseVersion).0</FileVersion>
+    <InformationalVersion>$(ManaChaiReleaseVersion)</InformationalVersion>
+  </PropertyGroup>
+</Project>
