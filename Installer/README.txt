@@ -252,3 +252,23 @@ v0.2.1
 
 และ One-click Release จะสร้าง:
 ManaChaiLeasing_Setup_0.2.1.exe
+
+
+============================================================
+Phase 2L.8 - Application Icon & Installer Branding
+============================================================
+
+Official icon:
+..\Resources\ManaChaiLeasing.ico
+
+ใช้กับ:
+- Application EXE
+- WPF Windows / Taskbar
+- Start Menu / Desktop Shortcut
+- Installed Apps / Programs and Features
+- Setup.exe
+
+Release version:
+0.2.2
+
+ไม่มี Private Key ใน icon หรือ installer branding

@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:ManaChaiLeasing"
         Title="{x:Static local:AppInfo.RedemptionWindowTitle}"
+        Icon="Resources/ManaChaiLeasing.ico"
         Width="780"
         Height="760"
         MinWidth="720"

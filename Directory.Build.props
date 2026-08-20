@@ -1,7 +1,7 @@
 ﻿<Project>
   <PropertyGroup>
     <!--
-      Phase 2L.7
+      Phase 2L.7 + 2L.8
       Application + Installer version use the same source of truth:
       Installer\ReleaseVersion.txt
     -->
@@ -10,5 +10,11 @@
     <AssemblyVersion>$(ManaChaiReleaseVersion).0</AssemblyVersion>
     <FileVersion>$(ManaChaiReleaseVersion).0</FileVersion>
     <InformationalVersion>$(ManaChaiReleaseVersion)</InformationalVersion>
+    <ApplicationIcon>$(MSBuildThisFileDirectory)Resources\ManaChaiLeasing.ico</ApplicationIcon>
   </PropertyGroup>
+  <ItemGroup>
+    <Resource Include="$(MSBuildThisFileDirectory)Resources\ManaChaiLeasing.ico">
+      <Link>Resources\ManaChaiLeasing.ico</Link>
+    </Resource>
+  </ItemGroup>
 </Project>

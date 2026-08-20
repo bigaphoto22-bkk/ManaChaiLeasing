@@ -1,0 +1,41 @@
+ManaChaiLeasing - Phase 2L.8
+Application Icon & Installer Branding
+
+Version:
+0.2.2
+
+Official Icon:
+Resources\ManaChaiLeasing.ico
+
+Source:
+ใช้ไฟล์ ManaChaiLeasing.ico ที่ผู้ใช้จัดเตรียม
+เป็น Windows multi-resolution ICO:
+16, 32, 48, 64, 128, 256 px
+
+Applied to:
+- ManaChaiLeasing.exe (ApplicationIcon)
+- WPF application windows / title bar
+- Windows Taskbar
+- Start Menu shortcut
+- Desktop shortcut
+- Programs and Features / Installed apps
+- Setup.exe (Inno Setup SetupIconFile)
+- Uninstaller entry continues to use ManaChaiLeasing.exe icon
+
+Notes:
+- ไม่มี Migration ใหม่
+- ไม่เปลี่ยน Database schema
+- ไม่เปลี่ยน Dashboard logic
+- ไม่เปลี่ยน License / Clock Rollback logic
+- ไม่รวม VendorPublicKey.cs ใน package เพื่อไม่เขียนทับ Public Key จริง
+- Printing ยังคง HOLD
+
+Build:
+dotnet clean
+dotnet build
+
+Release installer:
+Installer\00_Build_Release_Setup.bat
+
+Expected setup:
+Installer\Output\ManaChaiLeasing_Setup_0.2.2.exe
