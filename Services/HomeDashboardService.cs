@@ -14,6 +14,8 @@ public sealed class HomeDashboardSummary
 
     public int DueTodayCount { get; init; }
 
+    public int OverdueCount { get; init; }
+
     public int InterestTodayCount { get; init; }
 
     public decimal PawnExpenseToday { get; init; }
@@ -40,20 +42,25 @@ public sealed class HomeDashboardService
                 ticket.Status == PawnTicketStatus.Active)
             .ToList();
 
-        int dueTodayCount = activeTickets.Count(ticket =>
-        {
-            int renewalCount = ticket.Transactions.Count(transaction =>
-                !transaction.IsVoided &&
-                transaction.TransactionType ==
-                    PawnTransactionType.Interest);
+        List<DateTime> activeDueDates = activeTickets
+            .Select(ticket =>
+            {
+                int renewalCount = ticket.Transactions.Count(transaction =>
+                    !transaction.IsVoided &&
+                    transaction.TransactionType ==
+                        PawnTransactionType.Interest);
 
-            DateTime currentDueDate =
-                ticket.PawnDate.Date.AddDays(
+                return ticket.PawnDate.Date.AddDays(
                     ticket.InterestPeriodDays *
                     (renewalCount + 1));
+            })
+            .ToList();
 
-            return currentDueDate.Date == today;
-        });
+        int dueTodayCount = activeDueDates.Count(date =>
+            date.Date == today);
+
+        int overdueCount = activeDueDates.Count(date =>
+            date.Date < today);
 
         List<PawnTransaction> todayTransactions = db.PawnTransactions
             .AsNoTracking()
@@ -87,6 +94,7 @@ public sealed class HomeDashboardService
             UpdatedAt = DateTime.Now,
             ActiveTicketCount = activeTickets.Count,
             DueTodayCount = dueTodayCount,
+            OverdueCount = overdueCount,
             InterestTodayCount = interestTodayCount,
             PawnExpenseToday = pawnExpenseToday,
             IncomeToday = incomeToday

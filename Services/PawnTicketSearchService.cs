@@ -5,6 +5,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ManaChaiLeasing.Services;
 
+public enum PawnTicketSearchFilter
+{
+    All = 0,
+    Active = 1,
+    DueToday = 2,
+    Overdue = 3,
+    Redeemed = 4
+}
+
 public sealed class PawnTicketSearchResult
 {
     public int Id { get; init; }
@@ -30,6 +39,34 @@ public sealed class PawnTicketSearchResult
     public PawnTicketStatus Status { get; init; }
 
     public int InterestRenewalCount { get; init; }
+
+    public DateTime? CurrentDueDate { get; init; }
+
+    public string CurrentDueDateText =>
+        Status == PawnTicketStatus.Active &&
+        CurrentDueDate.HasValue
+            ? CurrentDueDate.Value.ToString("dd/MM/yyyy")
+            : "-";
+
+    public bool IsDueToday =>
+        Status == PawnTicketStatus.Active &&
+        CurrentDueDate.HasValue &&
+        CurrentDueDate.Value.Date == DateTime.Today;
+
+    public bool IsOverdue =>
+        Status == PawnTicketStatus.Active &&
+        CurrentDueDate.HasValue &&
+        CurrentDueDate.Value.Date < DateTime.Today;
+
+    public string DueStateText =>
+        IsOverdue
+            ? $"เกิน {(DateTime.Today - CurrentDueDate!.Value.Date).Days:N0} วัน"
+            : IsDueToday
+                ? "ครบกำหนดวันนี้"
+                : string.Empty;
+
+    public bool HasDueAlert =>
+        IsDueToday || IsOverdue;
 
     public string StatusText => Status switch
     {
@@ -192,13 +229,16 @@ public sealed class PawnTransactionDetailRow
 
 public sealed class PawnTicketSearchService
 {
-    public List<PawnTicketSearchResult> Search(string? keyword)
+    public List<PawnTicketSearchResult> Search(
+        string? keyword,
+        PawnTicketSearchFilter filter = PawnTicketSearchFilter.All)
     {
         using AppDbContext db = new();
 
         IQueryable<PawnTicket> query = db.PawnTickets
             .AsNoTracking()
-            .Include(ticket => ticket.Customer);
+            .Include(ticket => ticket.Customer)
+            .Include(ticket => ticket.Transactions);
 
         string term = keyword?.Trim() ?? string.Empty;
 
@@ -262,29 +302,82 @@ public sealed class PawnTicketSearchService
                     ticket.PawnDate < dateEnd));
         }
 
-        return query
+        switch (filter)
+        {
+            case PawnTicketSearchFilter.Active:
+            case PawnTicketSearchFilter.DueToday:
+            case PawnTicketSearchFilter.Overdue:
+                query = query.Where(ticket =>
+                    ticket.Status == PawnTicketStatus.Active);
+                break;
+
+            case PawnTicketSearchFilter.Redeemed:
+                query = query.Where(ticket =>
+                    ticket.Status == PawnTicketStatus.Redeemed);
+                break;
+        }
+
+        IOrderedQueryable<PawnTicket> orderedQuery = query
             .OrderByDescending(ticket => ticket.PawnDate)
-            .ThenByDescending(ticket => ticket.Id)
+            .ThenByDescending(ticket => ticket.Id);
+
+        // Due/Overdue ต้องคำนวณวันครบกำหนดจากจำนวนครั้งต่อดอกจริง
+        // จึงโหลด Active ที่ตรงคำค้นมาก่อนแล้วกรองวันที่ใน memory
+        List<PawnTicket> tickets =
+            filter is PawnTicketSearchFilter.DueToday
+                or PawnTicketSearchFilter.Overdue
+                ? orderedQuery.ToList()
+                : orderedQuery.Take(300).ToList();
+
+        IEnumerable<PawnTicketSearchResult> results =
+            tickets.Select(BuildSearchResult);
+
+        results = filter switch
+        {
+            PawnTicketSearchFilter.DueToday =>
+                results.Where(item => item.IsDueToday),
+
+            PawnTicketSearchFilter.Overdue =>
+                results.Where(item => item.IsOverdue),
+
+            _ => results
+        };
+
+        return results
             .Take(300)
-            .Select(ticket => new PawnTicketSearchResult
-            {
-                Id = ticket.Id,
-                TicketNumber = ticket.TicketNumber,
-                PawnDate = ticket.PawnDate,
-                CustomerName =
-                    ticket.Customer.FirstName + " " +
-                    ticket.Customer.LastName,
-                CitizenId = ticket.Customer.CitizenId,
-                Phone = ticket.Customer.Phone,
-                ProductSummary = ticket.ProductSummary,
-                PrincipalAmount = ticket.PrincipalAmount,
-                Status = ticket.Status,
-                InterestRenewalCount = ticket.Transactions.Count(transaction =>
-                    !transaction.IsVoided &&
-                    transaction.TransactionType ==
-                        PawnTransactionType.Interest)
-            })
             .ToList();
+    }
+
+    private static PawnTicketSearchResult BuildSearchResult(
+        PawnTicket ticket)
+    {
+        int renewalCount = ticket.Transactions.Count(transaction =>
+            !transaction.IsVoided &&
+            transaction.TransactionType ==
+                PawnTransactionType.Interest);
+
+        DateTime? currentDueDate =
+            ticket.Status == PawnTicketStatus.Active
+                ? ticket.PawnDate.Date.AddDays(
+                    ticket.InterestPeriodDays *
+                    (renewalCount + 1))
+                : null;
+
+        return new PawnTicketSearchResult
+        {
+            Id = ticket.Id,
+            TicketNumber = ticket.TicketNumber,
+            PawnDate = ticket.PawnDate,
+            CustomerName =
+                $"{ticket.Customer.FirstName} {ticket.Customer.LastName}".Trim(),
+            CitizenId = ticket.Customer.CitizenId,
+            Phone = ticket.Customer.Phone,
+            ProductSummary = ticket.ProductSummary,
+            PrincipalAmount = ticket.PrincipalAmount,
+            Status = ticket.Status,
+            InterestRenewalCount = renewalCount,
+            CurrentDueDate = currentDueDate
+        };
     }
 
     public PawnTicketDetail GetDetail(int pawnTicketId)

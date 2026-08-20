@@ -99,6 +99,11 @@ public partial class MainWindow : Window
             HomeDueTodayCountText.Text =
                 $"{summary.DueTodayCount:N0} ตั๋ว";
 
+            HomeOverdueCountText.Text =
+                summary.OverdueCount == 0
+                    ? "เกินกำหนด 0 ตั๋ว"
+                    : $"เกินกำหนด {summary.OverdueCount:N0} ตั๋ว";
+
             HomeInterestTodayCountText.Text =
                 $"{summary.InterestTodayCount:N0} ครั้ง";
 
@@ -1557,6 +1562,30 @@ public partial class MainWindow : Window
         TicketNumberTextBox.Focus();
     }
 
+    private void PawnTicketSearchFilterComboBox_SelectionChanged(
+        object sender,
+        SelectionChangedEventArgs e)
+    {
+        if (_isInitializing)
+        {
+            return;
+        }
+
+        LoadPawnTicketSearchResults();
+    }
+
+    private PawnTicketSearchFilter GetPawnTicketSearchFilter()
+    {
+        return PawnTicketSearchFilterComboBox.SelectedIndex switch
+        {
+            1 => PawnTicketSearchFilter.Active,
+            2 => PawnTicketSearchFilter.DueToday,
+            3 => PawnTicketSearchFilter.Overdue,
+            4 => PawnTicketSearchFilter.Redeemed,
+            _ => PawnTicketSearchFilter.All
+        };
+    }
+
     private void PawnTicketSearchTextBox_TextChanged(
         object sender,
         TextChangedEventArgs e)
@@ -1575,7 +1604,8 @@ public partial class MainWindow : Window
         {
             List<PawnTicketSearchResult> results =
                 _pawnTicketSearchService.Search(
-                    PawnTicketSearchTextBox.Text);
+                    PawnTicketSearchTextBox.Text,
+                    GetPawnTicketSearchFilter());
 
             PawnTicketSearchDataGrid.ItemsSource = results;
 

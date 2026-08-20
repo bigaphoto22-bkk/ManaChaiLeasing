@@ -391,6 +391,11 @@
                                                Text="ตั๋ว Active ที่ถึงกำหนดวันนี้"
                                                FontSize="12"
                                                Foreground="#9CA3AF" />
+                                    <TextBlock x:Name="HomeOverdueCountText"
+                                               Margin="0,5,0,0"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"
+                                               Foreground="#B91C1C" />
                                 </StackPanel>
                             </Border>
 
@@ -1352,10 +1357,55 @@
                                          TextChanged="PawnTicketSearchTextBox_TextChanged" />
                             </Border>
 
-                            <TextBlock x:Name="PawnTicketSearchResultCountText"
-                                       Margin="0,10,0,0"
-                                       FontSize="13"
-                                       Foreground="#6B7280" />
+                            <Grid Margin="0,12,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="12" />
+                                    <ColumnDefinition Width="220" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0"
+                                           VerticalAlignment="Center"
+                                           Text="แสดง:"
+                                           FontSize="14"
+                                           FontWeight="SemiBold"
+                                           Foreground="#374151" />
+
+                                <ComboBox x:Name="PawnTicketSearchFilterComboBox"
+                                          Grid.Column="2"
+                                          Height="42"
+                                          Padding="12,0"
+                                          FontSize="14"
+                                          VerticalContentAlignment="Center"
+                                          SelectedIndex="0"
+                                          SelectionChanged="PawnTicketSearchFilterComboBox_SelectionChanged">
+
+                                    <ComboBox.ItemContainerStyle>
+                                        <Style TargetType="ComboBoxItem">
+                                            <Setter Property="MinHeight"
+                                                    Value="38" />
+                                            <Setter Property="Padding"
+                                                    Value="12,7" />
+                                            <Setter Property="VerticalContentAlignment"
+                                                    Value="Center" />
+                                        </Style>
+                                    </ComboBox.ItemContainerStyle>
+
+                                    <ComboBoxItem Content="ทั้งหมด" />
+                                    <ComboBoxItem Content="กำลังจำนำ" />
+                                    <ComboBoxItem Content="ครบกำหนดวันนี้" />
+                                    <ComboBoxItem Content="เกินกำหนด" />
+                                    <ComboBoxItem Content="ไถ่ถอนแล้ว" />
+                                </ComboBox>
+
+                                <TextBlock x:Name="PawnTicketSearchResultCountText"
+                                           Grid.Column="4"
+                                           VerticalAlignment="Center"
+                                           FontSize="13"
+                                           Foreground="#6B7280" />
+                            </Grid>
                         </StackPanel>
                     </Border>
 
@@ -1394,6 +1444,62 @@
                                 <DataGridTextColumn Header="ยอดเงิน"
                                                     Binding="{Binding PrincipalAmountText}"
                                                     Width="115" />
+                                <DataGridTemplateColumn Header="ครบกำหนด"
+                                                        Width="125">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding CurrentDueDateText}"
+                                                           FontSize="14"
+                                                           FontWeight="SemiBold">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground"
+                                                                    Value="#475569" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsDueToday}"
+                                                                             Value="True">
+                                                                    <Setter Property="Foreground"
+                                                                            Value="#B45309" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IsOverdue}"
+                                                                             Value="True">
+                                                                    <Setter Property="Foreground"
+                                                                            Value="#B91C1C" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+
+                                                <TextBlock Margin="0,2,0,0"
+                                                           Text="{Binding DueStateText}"
+                                                           FontSize="11"
+                                                           FontWeight="SemiBold">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground"
+                                                                    Value="#B45309" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding HasDueAlert}"
+                                                                             Value="False">
+                                                                    <Setter Property="Visibility"
+                                                                            Value="Collapsed" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IsOverdue}"
+                                                                             Value="True">
+                                                                    <Setter Property="Foreground"
+                                                                            Value="#B91C1C" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
                                 <DataGridTemplateColumn Header="สถานะ"
                                                         Width="150">
                                     <DataGridTemplateColumn.CellTemplate>
