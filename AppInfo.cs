@@ -19,6 +19,9 @@ public static class AppInfo
     public const string PawnTicketDetailWindowTitle =
         "รายละเอียดตั๋วจำนำ - " + StoreName;
 
+    public const string LicenseActivationWindowTitle =
+        "เปิดใช้งานโปรแกรม - " + StoreName;
+
     public const string RedemptionWindowTitle =
         "ไถ่ถอน - " + StoreName;
 

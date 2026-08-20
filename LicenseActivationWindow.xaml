@@ -1,0 +1,152 @@
+﻿<Window x:Class="ManaChaiLeasing.LicenseActivationWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:ManaChaiLeasing"
+        Title="{x:Static local:AppInfo.LicenseActivationWindowTitle}"
+        Width="720"
+        Height="590"
+        MinWidth="680"
+        MinHeight="550"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        Background="#F8FAFC"
+        FontFamily="Segoe UI">
+
+    <Grid Margin="34">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="22" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="18" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="{x:Static local:AppInfo.StoreName}"
+                       FontSize="27"
+                       FontWeight="Bold"
+                       Foreground="#111827"
+                       HorizontalAlignment="Center" />
+
+            <TextBlock Margin="0,7,0,0"
+                       Text="เปิดใช้งานโปรแกรม"
+                       FontSize="19"
+                       FontWeight="SemiBold"
+                       Foreground="#374151"
+                       HorizontalAlignment="Center" />
+
+            <TextBlock Margin="0,8,0,0"
+                       Text="โปรแกรมนี้ต้องใช้ License ที่ออกสำหรับเครื่องนี้โดยเฉพาะ"
+                       FontSize="13"
+                       Foreground="#6B7280"
+                       HorizontalAlignment="Center" />
+        </StackPanel>
+
+        <Border Grid.Row="2"
+                Padding="20"
+                Background="White"
+                BorderBrush="#D1D5DB"
+                BorderThickness="1"
+                CornerRadius="12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel>
+                    <TextBlock Text="Machine ID"
+                               FontSize="13"
+                               Foreground="#64748B" />
+
+                    <TextBlock x:Name="MachineIdText"
+                               Margin="0,5,0,0"
+                               FontSize="25"
+                               FontWeight="Bold"
+                               Foreground="#111827" />
+
+                    <TextBlock Margin="0,7,0,0"
+                               Text="ส่งรหัสนี้ให้ผู้จำหน่ายเพื่อออก License"
+                               FontSize="12"
+                               Foreground="#64748B" />
+                </StackPanel>
+
+                <Button Grid.Column="1"
+                        Width="170"
+                        Height="46"
+                        VerticalAlignment="Center"
+                        Content="คัดลอกรหัสเครื่อง"
+                        FontSize="14"
+                        Click="CopyMachineIdButton_Click" />
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="4"
+                Padding="18"
+                Background="#FFF7ED"
+                BorderBrush="#FDBA74"
+                BorderThickness="1"
+                CornerRadius="10">
+            <StackPanel>
+                <TextBlock Text="สถานะ"
+                           FontSize="12"
+                           Foreground="#9A3412" />
+
+                <TextBlock x:Name="LicenseStatusText"
+                           Margin="0,5,0,0"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           Foreground="#C2410C"
+                           TextWrapping="Wrap" />
+
+                <TextBlock x:Name="LicenseDetailText"
+                           Margin="0,6,0,0"
+                           FontSize="12"
+                           Foreground="#7C2D12"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+
+        <StackPanel Grid.Row="5"
+                    Margin="0,18,0,0">
+            <TextBlock Text="ขั้นตอนเปิดใช้งาน"
+                       FontSize="15"
+                       FontWeight="SemiBold"
+                       Foreground="#374151" />
+
+            <TextBlock Margin="0,7,0,0"
+                       Text="1. ส่ง Machine ID ให้ผู้จำหน่าย&#x0a;2. รับไฟล์ .license ที่ออกให้เครื่องนี้&#x0a;3. กด “นำเข้า License...” แล้วเลือกไฟล์"
+                       FontSize="13"
+                       LineHeight="23"
+                       Foreground="#4B5563" />
+        </StackPanel>
+
+        <Grid Grid.Row="6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="140" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="210" />
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="1"
+                    Height="50"
+                    Content="ออกจากโปรแกรม"
+                    FontSize="15"
+                    Click="ExitButton_Click" />
+
+            <Button Grid.Column="3"
+                    Height="50"
+                    Content="นำเข้า License..."
+                    FontSize="16"
+                    FontWeight="SemiBold"
+                    Background="#1D4ED8"
+                    Foreground="White"
+                    BorderBrush="#1D4ED8"
+                    IsDefault="True"
+                    Click="ImportLicenseButton_Click" />
+        </Grid>
+    </Grid>
+</Window>

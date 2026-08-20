@@ -146,3 +146,35 @@ Phase 2L.3.1 = Convenience Tools เท่านั้น
 - Customer application lock
 
 การบังคับ License ฝั่งลูกค้าจะเริ่มใน Phase 2L.4
+
+
+============================================================
+Phase 2L.4 - ฝัง Public Key ลง Client
+============================================================
+
+ก่อน Build โปรแกรมหลักครั้งแรกหลังติดตั้ง Phase 2L.4 ให้ดับเบิลคลิก:
+
+06_Embed_Public_Key_Into_Client.bat
+
+สคริปต์จะอ่านเฉพาะ:
+%LOCALAPPDATA%\ManaChaiLicenseVendor\Keys\vendor-public-key.pem
+%LOCALAPPDATA%\ManaChaiLicenseVendor\Keys\key-info.json
+
+แล้วสร้าง/อัปเดต:
+Licensing\VendorPublicKey.cs
+
+VendorPublicKey.cs มีเฉพาะ PUBLIC KEY
+สามารถ Commit เข้า Git ได้ และจำเป็นสำหรับ Client License Validation
+
+สคริปต์จะไม่อ่าน/คัดลอก:
+- vendor-private-key.pem
+- Private Key Password
+
+หลังฝัง Public Key แล้ว:
+1. dotnet clean
+2. dotnet build
+3. เปิดโปรแกรม
+4. ถ้ายังไม่มี License โปรแกรมจะเปิด Activation Window
+5. ใช้ ManaChai License Generator ออก .license ให้ Machine ID ของเครื่อง
+6. Import .license ใน Activation Window
+

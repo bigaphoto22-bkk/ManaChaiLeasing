@@ -23,11 +23,25 @@ public partial class MainWindow : Window
     private readonly HomeDashboardService _homeDashboardService = new();
     private readonly DatabaseBackupService _databaseBackupService = new();
     private readonly MachineIdentityService _machineIdentityService = new();
+    private readonly LicenseValidationService _licenseValidationService = new();
     private int? _selectedCustomerId;
 
     public MainWindow()
     {
         InitializeComponent();
+
+        // ซ่อน Main Window ไว้ก่อนจนกว่า License จะผ่าน
+        Opacity = 0;
+        ShowInTaskbar = false;
+
+        if (!EnsureValidLicenseForStartup())
+        {
+            Application.Current.Shutdown();
+            return;
+        }
+
+        Opacity = 1;
+        ShowInTaskbar = true;
 
         InitializeDatabase();
         LoadHomeDashboard();
@@ -38,6 +52,33 @@ public partial class MainWindow : Window
         _isInitializing = false;
         UpdateProductForm();
         UpdateAssetPreview();
+    }
+
+    private bool EnsureValidLicenseForStartup()
+    {
+        LicenseValidationResult result =
+            _licenseValidationService
+                .ValidateInstalledLicense();
+
+        if (result.IsValid)
+        {
+            return true;
+        }
+
+        LicenseActivationWindow activationWindow =
+            new(result);
+
+        bool? activated =
+            activationWindow.ShowDialog();
+
+        if (activated != true)
+        {
+            return false;
+        }
+
+        return _licenseValidationService
+            .ValidateInstalledLicense()
+            .IsValid;
     }
 
     private void InitializeDatabase()
@@ -243,6 +284,7 @@ public partial class MainWindow : Window
             DatabasePaths.DatabaseFile;
 
         LoadMachineIdentity();
+        LoadLicenseStatus();
         LoadBusinessSettings();
     }
 
@@ -417,6 +459,85 @@ public partial class MainWindow : Window
             MachineFingerprintVersionText.Text =
                 ex.Message;
         }
+    }
+
+    private void LoadLicenseStatus()
+    {
+        LicenseValidationResult result =
+            _licenseValidationService
+                .ValidateInstalledLicense();
+
+        if (result.IsValid &&
+            result.Payload is not null)
+        {
+            LicenseFoundationStatusText.Text =
+                $"{result.LicenseTypeText} • {result.Payload.CustomerName}";
+
+            LicenseFoundationStatusText.Foreground =
+                Brushes.ForestGreen;
+
+            LicenseDetailStatusText.Text =
+                $"Machine ID: {result.Payload.MachineId} • " +
+                $"หมดอายุ: {result.ExpiryText} • " +
+                $"Key: {result.Payload.KeyId}";
+        }
+        else
+        {
+            LicenseFoundationStatusText.Text =
+                result.Message;
+
+            LicenseFoundationStatusText.Foreground =
+                Brushes.Firebrick;
+
+            LicenseDetailStatusText.Text =
+                $"ตำแหน่ง License: {LicensePaths.LicenseFile}";
+        }
+    }
+
+    private void ImportLicenseFromSettingsButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        OpenFileDialog dialog =
+            new()
+            {
+                Title = "เลือก ManaChai License",
+                Filter =
+                    "ManaChai License (*.license)|*.license|All files (*.*)|*.*",
+                DefaultExt = ".license",
+                CheckFileExists = true,
+                Multiselect = false
+            };
+
+        if (dialog.ShowDialog(this) != true)
+        {
+            return;
+        }
+
+        LicenseValidationResult result =
+            _licenseValidationService
+                .InstallLicense(
+                    dialog.FileName);
+
+        LoadLicenseStatus();
+
+        if (!result.IsValid)
+        {
+            MessageBox.Show(
+                $"ไม่สามารถติดตั้ง License นี้ได้\n\n{result.Message}",
+                AppInfo.StoreName,
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+
+        MessageBox.Show(
+            "ติดตั้ง License เรียบร้อย\n\n" +
+            $"ประเภท: {result.LicenseTypeText}\n" +
+            $"หมดอายุ: {result.ExpiryText}",
+            AppInfo.StoreName,
+            MessageBoxButton.OK,
+            MessageBoxImage.Information);
     }
 
     private void CopyMachineIdButton_Click(
