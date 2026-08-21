@@ -2018,9 +2018,8 @@ public partial class MainWindow : Window
     {
         _selectedCustomerId = customer.Id;
 
-        // 2N.3 intentionally keeps the current database values on screen.
-        // The fresh card data stays in memory for the explicit comparison
-        // and update decision that belongs to Phase 2N.4.
+        // Always start from the CURRENT values stored in the database.
+        // Card values are applied only after an explicit 2N.4 review choice.
         FirstNameTextBox.Text = customer.FirstName;
         LastNameTextBox.Text = customer.LastName;
         CitizenIdTextBox.Text = customer.CitizenId ?? cardData.CitizenId;
@@ -2028,32 +2027,92 @@ public partial class MainWindow : Window
         PhoneTextBox.Text = customer.Phone ?? string.Empty;
         AddressTextBox.Text = customer.Address ?? string.Empty;
 
+        ThaiIdCustomerUpdateReviewWindow reviewWindow =
+            new(
+                customer,
+                cardData)
+            {
+                Owner = this
+            };
+
+        bool? reviewResult =
+            reviewWindow.ShowDialog();
+
+        int selectedCount = 0;
+
+        if (reviewResult == true &&
+            reviewWindow.Selection is not null)
+        {
+            ThaiIdCustomerUpdateSelection selection =
+                reviewWindow.Selection;
+
+            if (selection.FirstName)
+            {
+                FirstNameTextBox.Text =
+                    cardData.ThaiFirstName.Trim();
+            }
+
+            if (selection.LastName)
+            {
+                LastNameTextBox.Text =
+                    cardData.ThaiLastName.Trim();
+            }
+
+            if (selection.Age)
+            {
+                int? cardAge =
+                    cardData.CalculateAge(
+                        DateTime.Today);
+
+                AgeTextBox.Text =
+                    cardAge?.ToString() ?? string.Empty;
+            }
+
+            if (selection.Address)
+            {
+                AddressTextBox.Text =
+                    cardData.Address.Trim();
+            }
+
+            selectedCount =
+                selection.SelectedCount;
+        }
+
+        // Citizen ID is the identity key that produced the match.
+        // Never change it here. Phone is not present on the ID card,
+        // so it is also always preserved from the database.
+        CitizenIdTextBox.Text =
+            customer.CitizenId ?? cardData.CitizenId;
+
+        PhoneTextBox.Text =
+            customer.Phone ?? string.Empty;
+
         if (_thaiIdMockDataLoaded)
         {
             CustomerRecordStatusText.Text =
-                $"DEV MOCK • พบลูกค้าเดิม #{customer.Id} • ห้ามบันทึก";
+                selectedCount > 0
+                    ? $"DEV MOCK • ลูกค้าเดิม #{customer.Id} • เลือกอัปเดต {selectedCount} ช่อง • ห้ามบันทึก"
+                    : $"DEV MOCK • ลูกค้าเดิม #{customer.Id} • ใช้ข้อมูลเดิม • ห้ามบันทึก";
 
             CustomerRecordStatusText.Foreground =
                 Brushes.Firebrick;
         }
+        else if (selectedCount > 0)
+        {
+            CustomerRecordStatusText.Text =
+                $"ลูกค้าเดิมจากบัตร • #{customer.Id} • ปรับข้อมูลในฟอร์ม {selectedCount} ช่อง • ยังไม่ได้บันทึก";
+
+            CustomerRecordStatusText.Foreground =
+                Brushes.DarkOrange;
+        }
         else
         {
             CustomerRecordStatusText.Text =
-                $"พบลูกค้าเดิมจากบัตร • #{customer.Id}";
+                $"ลูกค้าเดิมจากบัตร • #{customer.Id} • ใช้ข้อมูลเดิม";
 
             CustomerRecordStatusText.Foreground =
                 Brushes.ForestGreen;
         }
-
-        MessageBox.Show(
-            $"พบลูกค้าเดิมจากเลขบัตรประชาชน\n\n" +
-            $"ลูกค้า #{customer.Id} • {customer.FirstName} {customer.LastName}\n\n" +
-            "ระบบโหลดข้อมูลเดิมจากฐานข้อมูลแล้ว\n" +
-            "ข้อมูลล่าสุดบนบัตรยังไม่ถูกเขียนทับข้อมูลเดิมอัตโนมัติ\n" +
-            "การเปรียบเทียบและเลือกอัปเดตจะทำใน Phase 2N.4",
-            "พบลูกค้าเดิม",
-            MessageBoxButton.OK,
-            MessageBoxImage.Information);
 
         FirstNameTextBox.Focus();
     }

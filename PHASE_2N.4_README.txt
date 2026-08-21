@@ -1,0 +1,71 @@
+ManaChaiLeasing - Phase 2N.4
+Customer Data Update Review
+
+Version:
+0.3.1
+
+Goal:
+When Thai ID Auto Match finds an existing customer by exact 13-digit Citizen ID,
+compare current database values with the latest card values and require explicit
+operator selection before any card value is copied into the customer form.
+
+Workflow:
+Thai ID / DEV Mock
+ -> Preview
+ -> Auto Match by Citizen ID
+ -> Existing customer found
+ -> 2N.4 Review window
+ -> Show ONLY fields that differ
+ -> All update checkboxes start UNCHECKED
+ -> Operator explicitly selects fields
+ -> Selected card values are copied into the form
+ -> Database is still NOT saved automatically
+ -> Normal Save Customer / Save Pawn workflow remains the only persistence point
+
+Fields reviewed in current customer model:
+- First name
+- Last name
+- Age (calculated from card birth date)
+- Address
+
+Identity safety:
+- Citizen ID is the exact match key and is never changed by this review window.
+- Phone is always preserved because Thai ID card data does not contain shop phone number.
+
+Missing-card-data safety:
+- Blank/unreadable card values are never offered as replacements.
+- This prevents incomplete reads from erasing saved customer data.
+
+Operator safety:
+- Default choice is KEEP CURRENT DATA.
+- No update checkbox is preselected.
+- "เลือกทั้งหมด" is an explicit operator action.
+- "นำรายการที่เลือกไปใช้" stays disabled until at least one changed field is selected.
+- Review changes affect the form first, not the database.
+
+DEV Mock safety:
+- Existing mock-save protection remains unchanged.
+- Mock can be used to UAT the entire comparison/selection/form-mapping workflow.
+- Mock values cannot be committed to Customer or Pawn Ticket database records.
+
+Support diagnostics:
+Thai ID Customer Data Update Review: Enabled
+
+Privacy:
+No customer/card values or comparison payloads are added to Support ZIP.
+
+Roadmap:
+2N.1  Thai ID Reader Foundation                 PASS
+2N.2A Thai ID Reading Engine + Mock UAT         PASS
+2N.2B Real Reader/Card Validation               Waiting for hardware
+2N.3  Customer Auto Match                       PASS
+2N.4  Customer Data Update Review               This phase
+2N.5  ID Card Photo
+2N.6  Full Hardware & Real-device UAT
+
+No migration.
+No database schema change.
+No license change.
+No Auto Backup policy change.
+No financial calculation change.
+VendorPublicKey.cs intentionally not included.

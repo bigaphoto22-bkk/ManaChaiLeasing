@@ -28,6 +28,9 @@ public static class AppInfo
     public const string CustomerLookupWindowTitle =
         "ค้นหาลูกค้าเก่า - " + StoreName;
 
+    public const string ThaiIdCustomerUpdateReviewWindowTitle =
+        "ตรวจสอบการอัปเดตข้อมูลลูกค้า - " + StoreName;
+
     public const string InterestRenewalWindowTitle =
         "ต่อดอก - " + StoreName;
 
