@@ -1,0 +1,31 @@
+ManaChaiLeasing - Phase 2N.5A
+STATUS: CANCELLED / CLEANED UP BEFORE RELEASE
+
+Decision:
+Customer photo support has been removed from the product scope.
+The shop workflow remains focused on reading essential Thai ID text data
+and filling the customer form quickly. A photo is not required and the
+application must remain fully usable without a card reader.
+
+Cleanup behavior:
+- Removes all customer-photo UI from New Pawn / Thai ID preview / review.
+- Removes customer-photo save/load logic.
+- Removes CustomerPhoto navigation/model use from runtime code.
+- Keeps the historical AddCustomerPhotos migration in the migration chain
+  only so databases that already ran the abandoned 2N.5A build can be
+  reconciled safely.
+- Adds RemoveCustomerPhotos migration. If AddCustomerPhotos was already
+  applied, the table is dropped. If it was never applied, EF applies Add
+  then Remove and ends in the same final schema.
+- Final model snapshot has NO CustomerPhotos table.
+- No photo BLOB is retained as an application feature.
+- No photo is required for customer/pawn operations.
+
+Thai ID scope retained:
+- Reader foundation
+- Text-data reading engine
+- Customer auto match
+- Customer data update review
+- Real reader/card validation when hardware is available
+
+Version: 0.3.2
