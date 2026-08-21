@@ -21,6 +21,8 @@ public sealed class SupportDiagnosticsService
 
     private readonly AutomaticBackupService _automaticBackupService = new();
 
+    private readonly ThaiIdCardReaderService _thaiIdCardReaderService = new();
+
     public string LogFolder =>
         AppLog.LogFolder;
 
@@ -243,6 +245,32 @@ public sealed class SupportDiagnosticsService
         {
             text.AppendLine(
                 $"Auto Backup Status: unavailable ({ex.GetType().Name})");
+        }
+
+        try
+        {
+            ThaiIdReaderDetectionResult reader =
+                _thaiIdCardReaderService.Detect();
+
+            text.AppendLine(
+                "Thai ID Reader Foundation: Enabled");
+
+            text.AppendLine(
+                $"Thai ID Reader Status: {reader.Status}");
+
+            text.AppendLine(
+                $"Thai ID Reader Count: {reader.ReaderCount}");
+
+            text.AppendLine(
+                $"Thai ID Reader Name: {reader.ReaderName ?? "-"}");
+
+            text.AppendLine(
+                $"Thai ID Card Present: {reader.Status == ThaiIdReaderStatus.Ready}");
+        }
+        catch (Exception ex)
+        {
+            text.AppendLine(
+                $"Thai ID Reader Status: unavailable ({ex.GetType().Name})");
         }
 
         text.AppendLine();

@@ -782,6 +782,59 @@
                                             Click="SaveCustomerButton_Click" />
                                 </Grid>
 
+                                <Border Margin="0,0,0,16"
+                                        Padding="14"
+                                        Background="#F8FAFC"
+                                        BorderBrush="#CBD5E1"
+                                        BorderThickness="1"
+                                        CornerRadius="9">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Ellipse x:Name="ThaiIdReaderDot"
+                                                         Width="10"
+                                                         Height="10"
+                                                         Margin="0,0,8,0"
+                                                         VerticalAlignment="Center"
+                                                         Fill="#9CA3AF" />
+
+                                                <TextBlock Text="บัตรประชาชน"
+                                                           FontSize="14"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="#374151" />
+                                            </StackPanel>
+
+                                            <TextBlock x:Name="ThaiIdReaderStatusText"
+                                                       Margin="18,4,0,0"
+                                                       Text="กำลังตรวจสอบเครื่องอ่าน..."
+                                                       FontSize="13"
+                                                       Foreground="#6B7280" />
+
+                                            <TextBlock x:Name="ThaiIdReaderNameText"
+                                                       Margin="18,2,0,0"
+                                                       FontSize="11"
+                                                       Foreground="#94A3B8"
+                                                       TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+
+                                        <Button Grid.Column="1"
+                                                Width="170"
+                                                Height="42"
+                                                Margin="18,0,0,0"
+                                                VerticalAlignment="Center"
+                                                Content="อ่านบัตรประชาชน"
+                                                FontSize="14"
+                                                FontWeight="SemiBold"
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                Click="ReadThaiIdCardButton_Click" />
+                                    </Grid>
+                                </Border>
+
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />

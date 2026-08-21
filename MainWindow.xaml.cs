@@ -36,6 +36,7 @@ public partial class MainWindow : Window
     private readonly DatabaseHealthService _databaseHealthService = new();
     private readonly AutomaticBackupService _automaticBackupService = new();
     private readonly SupportDiagnosticsService _supportDiagnosticsService = new();
+    private readonly ThaiIdCardReaderService _thaiIdCardReaderService = new();
     private readonly MachineIdentityService _machineIdentityService = new();
     private readonly LicenseValidationService _licenseValidationService = new();
     private int? _selectedCustomerId;
@@ -583,7 +584,8 @@ public partial class MainWindow : Window
             NewPawnButton,
             "รับจำนำใหม่",
             "บันทึกข้อมูลลูกค้า สินค้า หมายเลขตั๋ว และยอดเงิน");
-    }
+            RefreshThaiIdReaderStatus();
+}
 
     private void SearchButton_Click(object sender, RoutedEventArgs e)
     {
@@ -1834,6 +1836,107 @@ public partial class MainWindow : Window
         {
             parts.Add($"{label}: {value.Trim()}");
         }
+    }
+
+    private void ReadThaiIdCardButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        ThaiIdReaderDetectionResult result =
+            RefreshThaiIdReaderStatus();
+
+        switch (result.Status)
+        {
+            case ThaiIdReaderStatus.Ready:
+                MessageBox.Show(
+                    "ตรวจพบเครื่องอ่านและบัตรประชาชนแล้ว\n\n" +
+                    "Phase 2N.1 วางระบบตรวจจับ Hardware เรียบร้อย\n" +
+                    "การอ่านเลขบัตร ชื่อ ที่อยู่ และข้อมูลจริงจากบัตรจะเปิดใช้งานใน Phase 2N.2\n\n" +
+                    "ตอนนี้สามารถกรอกข้อมูลลูกค้าด้วยตนเองได้ตามปกติ",
+                    "Thai ID Reader พร้อมใช้งาน",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+                break;
+
+            case ThaiIdReaderStatus.ReaderFoundNoCard:
+                MessageBox.Show(
+                    "พบเครื่องอ่านบัตรแล้ว แต่ยังไม่พบบัตรประชาชน\n\n" +
+                    "กรุณาเสียบบัตรให้สุด แล้วกด อ่านบัตรประชาชน อีกครั้ง\n\n" +
+                    "หากไม่ต้องการใช้ Reader สามารถกรอกข้อมูลด้วยตนเองได้ตามปกติ",
+                    "ยังไม่พบบัตรประชาชน",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+                break;
+
+            case ThaiIdReaderStatus.NoReader:
+                MessageBox.Show(
+                    "ไม่พบเครื่องอ่านบัตรประชาชนที่ Windows รู้จัก\n\n" +
+                    "ตรวจสาย USB / Driver / Smart Card service แล้วลองใหม่\n\n" +
+                    "การรับจำนำยังใช้งานต่อได้โดยกรอกข้อมูลด้วยตนเอง",
+                    "ไม่พบ Thai ID Reader",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                break;
+
+            case ThaiIdReaderStatus.PcScUnavailable:
+            case ThaiIdReaderStatus.Error:
+                MessageBox.Show(
+                    $"{result.StatusText}\n\n" +
+                    "การรับจำนำยังใช้งานต่อได้โดยกรอกข้อมูลด้วยตนเอง",
+                    "Thai ID Reader",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                break;
+        }
+    }
+
+    private ThaiIdReaderDetectionResult RefreshThaiIdReaderStatus()
+    {
+        ThaiIdReaderDetectionResult result =
+            _thaiIdCardReaderService.Detect();
+
+        ThaiIdReaderStatusText.Text =
+            result.StatusText;
+
+        ThaiIdReaderNameText.Text =
+            string.IsNullOrWhiteSpace(
+                result.ReaderName)
+                ? string.Empty
+                : $"Reader: {result.ReaderName}";
+
+        switch (result.Status)
+        {
+            case ThaiIdReaderStatus.Ready:
+                ThaiIdReaderStatusText.Foreground = Brushes.ForestGreen;
+                ThaiIdReaderDot.Fill = Brushes.ForestGreen;
+                break;
+
+            case ThaiIdReaderStatus.ReaderFoundNoCard:
+                ThaiIdReaderStatusText.Foreground = Brushes.DarkOrange;
+                ThaiIdReaderDot.Fill = Brushes.DarkOrange;
+                break;
+
+            case ThaiIdReaderStatus.NoReader:
+            case ThaiIdReaderStatus.PcScUnavailable:
+                ThaiIdReaderStatusText.Foreground = Brushes.DimGray;
+                ThaiIdReaderDot.Fill = Brushes.Gray;
+                break;
+
+            default:
+                ThaiIdReaderStatusText.Foreground = Brushes.Firebrick;
+                ThaiIdReaderDot.Fill = Brushes.Firebrick;
+                break;
+        }
+
+        if (!string.IsNullOrWhiteSpace(
+                result.TechnicalMessage) &&
+            result.Status == ThaiIdReaderStatus.Error)
+        {
+            AppLog.Warning(
+                $"Thai ID reader status: {result.TechnicalMessage}");
+        }
+
+        return result;
     }
 
     private void SavePawnTicket_Click(

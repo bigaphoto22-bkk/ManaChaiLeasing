@@ -1,0 +1,63 @@
+ManaChaiLeasing - Phase 2N.1
+Thai ID Reader Foundation
+
+Version:
+0.2.8
+
+Goal:
+วาง Hardware abstraction สำหรับ USB Thai ID Card Reader
+โดย Reader เป็นตัวช่วยกรอกข้อมูล ไม่ใช่สิ่งที่โปรแกรมขาดไม่ได้
+
+Technology:
+- Windows PC/SC
+- winscard.dll ที่มากับ Windows
+- ไม่ผูก Vendor SDK
+- ไม่มี NuGet ใหม่
+
+Capabilities in 2N.1:
+- Detect Smart Card Reader ที่ Windows รู้จัก
+- Detect ว่ามี Card เสียบอยู่หรือไม่
+- แสดง Reader name
+- แสดงสถานะในหน้า รับจำนำใหม่ > ข้อมูลลูกค้า
+- ปุ่ม อ่านบัตรประชาชน
+- หาก Reader/Driver/Smart Card service มีปัญหา ผู้ใช้ยังกรอกข้อมูลเองและทำรายการต่อได้
+
+Statuses:
+- Ready
+- ReaderFoundNoCard
+- NoReader
+- PcScUnavailable
+- Error
+
+2N.1 intentionally does NOT read/store:
+- เลขบัตรประชาชน
+- ชื่อ/นามสกุล
+- วันเกิด/เพศ
+- ที่อยู่
+- วันออกบัตร/วันหมดอายุ
+- รูปจากบัตร
+
+Actual Thai National ID data reading starts in Phase 2N.2.
+
+Support Diagnostics includes hardware-only information:
+- Thai ID Reader Foundation enabled
+- Reader status
+- Reader count
+- Reader name
+- Card present true/false
+
+No card personal data is included in Support ZIP.
+
+Roadmap:
+2N.2 Read Thai National ID
+2N.3 Customer Auto Match
+2N.4 Customer Data Update Review
+2N.5 ID Card Photo
+2N.6 Hardware & Real-device UAT
+
+No migration.
+No database schema change.
+No license changes.
+No Auto Backup changes.
+No transaction calculation changes.
+VendorPublicKey.cs intentionally not included.
