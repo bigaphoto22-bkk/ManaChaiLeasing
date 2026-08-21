@@ -1,0 +1,91 @@
+ManaChaiLeasing - Phase 2N.3
+Customer Auto Match
+
+Version:
+0.3.0
+
+Goal:
+After Thai ID data is read and the operator accepts the preview,
+use the 13-digit Citizen ID to identify an existing Customer automatically.
+
+Workflow:
+Thai ID / DEV Mock
+ -> Preview
+ -> Operator clicks "เติมข้อมูลลงฟอร์ม"
+ -> Exact Citizen ID lookup
+ -> Existing customer found:
+      - set SelectedCustomerId to the existing Customer
+      - load CURRENT database customer values into the form
+      - preserve fresh card data in memory
+      - do NOT overwrite database values automatically
+      - Phase 2N.4 will compare old database data vs new card data
+ -> No existing customer:
+      - prepare customer form from card data
+      - customer remains unsaved/new
+
+Why existing DB values stay on screen in 2N.3:
+A returning customer's address or other card data may have changed.
+Silently overwriting saved data would be unsafe.
+2N.4 is the explicit review/approval phase for those differences.
+
+Customer identity rule:
+- Exact 13-digit Citizen ID match only.
+- No fuzzy matching by name/address.
+- No new migration or schema change.
+- Existing unique CitizenId index remains unchanged.
+
+Phone safety:
+- New card data never supplies/overwrites phone.
+- Existing matched customer keeps the saved phone number.
+
+Development UAT without real Reader:
+The DEV mock now supports an optional Citizen ID override taken from the current form.
+This is Debug-only and is still protected by the existing mock-save block.
+
+Test no-match:
+- Clear form
+- Click "ทดสอบข้อมูลจำลอง (DEV)"
+- Default mock Citizen ID 0000000000000 should normally have no customer match
+- After Apply, status:
+  DEV MOCK • ไม่พบลูกค้าเดิม • ห้ามบันทึก
+
+Test existing-match:
+- Use "ค้นหาลูกค้าเก่า" and select a saved customer that has a 13-digit Citizen ID
+- Leave that customer on the form
+- Click "ทดสอบข้อมูลจำลอง (DEV)"
+- The mock parser uses the current 13-digit Citizen ID as its DEV override
+- Preview will still show fictional mock name/address, but the same Citizen ID
+- Click Apply
+- Auto Match must find the existing customer
+- Form must return to the SAVED database customer name/phone/address
+- Status:
+  DEV MOCK • พบลูกค้าเดิม #... • ห้ามบันทึก
+- Message explains that card data is not auto-overwriting the database
+
+Mock safety remains:
+- Customer Save blocked while mock data is loaded
+- Pawn Ticket Save blocked while mock data is loaded
+- Clear Form resets mock/auto-match state
+- DEV Mock button remains hidden in Release builds
+
+Support diagnostics adds:
+Thai ID Customer Auto Match: Enabled
+
+Privacy:
+No Citizen ID, customer name, address, or card payload is added to Support diagnostics.
+
+Roadmap:
+2N.1 Reader Foundation                         PASS
+2N.2A Reading Engine + Mock UAT                PASS
+2N.2B Real Reader/Card Validation              Waiting for hardware
+2N.3 Customer Auto Match                       This phase
+2N.4 Customer Data Update Review               Next
+2N.5 ID Card Photo
+2N.6 Full Hardware & Real-device UAT
+
+No migration.
+No database schema change.
+No license change.
+No transaction calculation change.
+No Auto Backup policy change.
+VendorPublicKey.cs intentionally not included.

@@ -4,11 +4,17 @@ public sealed class ThaiIdCardDevelopmentMockService
 {
     private readonly ThaiIdCardParser _parser = new();
 
-    public ThaiIdCardData CreateParsedMockData()
+    public ThaiIdCardData CreateParsedMockData(
+        string? citizenIdOverride = null)
     {
+        string mockCitizenId =
+            IsValidCitizenId(citizenIdOverride)
+                ? citizenIdOverride!.Trim()
+                : "0000000000000";
+
         ThaiIdCardRawData raw = new(
             CitizenId: Encode(
-                "0000000000000",
+                mockCitizenId,
                 13),
             ThaiFullName: Encode(
                 "นาย#มานะ##ทดสอบระบบ#",
@@ -38,6 +44,16 @@ public sealed class ThaiIdCardDevelopmentMockService
         return _parser.Parse(
             raw,
             ThaiIdCardDataSource.DevelopmentMock);
+    }
+
+    private static bool IsValidCitizenId(
+        string? value)
+    {
+        string cleaned =
+            value?.Trim() ?? string.Empty;
+
+        return cleaned.Length == 13 &&
+               cleaned.All(char.IsDigit);
     }
 
     private static byte[] Encode(

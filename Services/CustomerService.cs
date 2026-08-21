@@ -38,6 +38,26 @@ public class CustomerService
             .ToList();
     }
 
+    public Customer? FindByCitizenId(
+        string? citizenId)
+    {
+        string cleaned =
+            citizenId?.Trim() ?? string.Empty;
+
+        if (cleaned.Length != 13 ||
+            !cleaned.All(char.IsDigit))
+        {
+            return null;
+        }
+
+        using AppDbContext db = new();
+
+        return db.Customers
+            .AsNoTracking()
+            .SingleOrDefault(customer =>
+                customer.CitizenId == cleaned);
+    }
+
     public Customer SaveCustomer(
         Customer input,
         int? selectedCustomerId)

@@ -259,6 +259,9 @@ public sealed class SupportDiagnosticsService
                 "Thai ID Reading Engine: Enabled");
 
             text.AppendLine(
+                "Thai ID Customer Auto Match: Enabled");
+
+            text.AppendLine(
                 "Thai ID Mock Tools: Debug only");
 
             text.AppendLine(

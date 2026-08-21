@@ -27,6 +27,7 @@ public partial class MainWindow : Window
     private bool _isInitializing = true;
     private bool _isSavingPawnTicket;
     private bool _thaiIdMockDataLoaded;
+    private ThaiIdCardData? _pendingThaiIdCardData;
     private readonly CustomerService _customerService = new();
     private readonly PawnTicketService _pawnTicketService = new();
     private readonly PawnTicketSearchService _pawnTicketSearchService = new();
@@ -1533,6 +1534,7 @@ public partial class MainWindow : Window
         if (result == true &&
             lookupWindow.SelectedCustomer is not null)
         {
+            _pendingThaiIdCardData = null;
             FillCustomerForm(lookupWindow.SelectedCustomer);
         }
     }
@@ -1675,6 +1677,7 @@ public partial class MainWindow : Window
     private void ResetCustomerState()
     {
         _thaiIdMockDataLoaded = false;
+        _pendingThaiIdCardData = null;
         _selectedCustomerId = null;
 
         CustomerRecordStatusText.Text =
@@ -1936,8 +1939,12 @@ public partial class MainWindow : Window
 #if DEBUG
         try
         {
+            string citizenIdOverride =
+                CitizenIdTextBox.Text.Trim();
+
             ThaiIdCardData mockData =
-                _thaiIdDevelopmentMockService.CreateParsedMockData();
+                _thaiIdDevelopmentMockService.CreateParsedMockData(
+                    citizenIdOverride);
 
             ShowThaiIdCardPreview(
                 mockData);
@@ -1981,6 +1988,79 @@ public partial class MainWindow : Window
     {
         ResetCustomerState();
 
+        _pendingThaiIdCardData =
+            cardData;
+
+        _thaiIdMockDataLoaded =
+            cardData.Source ==
+            ThaiIdCardDataSource.DevelopmentMock;
+
+        Customer? matchedCustomer =
+            _customerService.FindByCitizenId(
+                cardData.CitizenId);
+
+        if (matchedCustomer is not null)
+        {
+            ApplyExistingCustomerMatchedFromThaiId(
+                matchedCustomer,
+                cardData);
+
+            return;
+        }
+
+        ApplyNewCustomerDataFromThaiId(
+            cardData);
+    }
+
+    private void ApplyExistingCustomerMatchedFromThaiId(
+        Customer customer,
+        ThaiIdCardData cardData)
+    {
+        _selectedCustomerId = customer.Id;
+
+        // 2N.3 intentionally keeps the current database values on screen.
+        // The fresh card data stays in memory for the explicit comparison
+        // and update decision that belongs to Phase 2N.4.
+        FirstNameTextBox.Text = customer.FirstName;
+        LastNameTextBox.Text = customer.LastName;
+        CitizenIdTextBox.Text = customer.CitizenId ?? cardData.CitizenId;
+        AgeTextBox.Text = customer.Age?.ToString() ?? string.Empty;
+        PhoneTextBox.Text = customer.Phone ?? string.Empty;
+        AddressTextBox.Text = customer.Address ?? string.Empty;
+
+        if (_thaiIdMockDataLoaded)
+        {
+            CustomerRecordStatusText.Text =
+                $"DEV MOCK • พบลูกค้าเดิม #{customer.Id} • ห้ามบันทึก";
+
+            CustomerRecordStatusText.Foreground =
+                Brushes.Firebrick;
+        }
+        else
+        {
+            CustomerRecordStatusText.Text =
+                $"พบลูกค้าเดิมจากบัตร • #{customer.Id}";
+
+            CustomerRecordStatusText.Foreground =
+                Brushes.ForestGreen;
+        }
+
+        MessageBox.Show(
+            $"พบลูกค้าเดิมจากเลขบัตรประชาชน\n\n" +
+            $"ลูกค้า #{customer.Id} • {customer.FirstName} {customer.LastName}\n\n" +
+            "ระบบโหลดข้อมูลเดิมจากฐานข้อมูลแล้ว\n" +
+            "ข้อมูลล่าสุดบนบัตรยังไม่ถูกเขียนทับข้อมูลเดิมอัตโนมัติ\n" +
+            "การเปรียบเทียบและเลือกอัปเดตจะทำใน Phase 2N.4",
+            "พบลูกค้าเดิม",
+            MessageBoxButton.OK,
+            MessageBoxImage.Information);
+
+        FirstNameTextBox.Focus();
+    }
+
+    private void ApplyNewCustomerDataFromThaiId(
+        ThaiIdCardData cardData)
+    {
         FirstNameTextBox.Text =
             cardData.ThaiFirstName;
 
@@ -1996,17 +2076,15 @@ public partial class MainWindow : Window
         AgeTextBox.Text =
             age?.ToString() ?? string.Empty;
 
+        // ID card does not contain the shop customer's phone number.
+        // Never overwrite a phone value from card-reading workflow.
         AddressTextBox.Text =
             cardData.Address;
-
-        _thaiIdMockDataLoaded =
-            cardData.Source ==
-            ThaiIdCardDataSource.DevelopmentMock;
 
         if (_thaiIdMockDataLoaded)
         {
             CustomerRecordStatusText.Text =
-                "ข้อมูลจำลอง DEV • ห้ามบันทึก";
+                "DEV MOCK • ไม่พบลูกค้าเดิม • ห้ามบันทึก";
 
             CustomerRecordStatusText.Foreground =
                 Brushes.Firebrick;
@@ -2014,7 +2092,7 @@ public partial class MainWindow : Window
         else
         {
             CustomerRecordStatusText.Text =
-                "ข้อมูลจากบัตร • ยังไม่ได้บันทึก";
+                "ลูกค้าใหม่จากบัตร • ยังไม่ได้บันทึก";
 
             CustomerRecordStatusText.Foreground =
                 Brushes.DarkBlue;
