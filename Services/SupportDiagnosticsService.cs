@@ -256,6 +256,12 @@ public sealed class SupportDiagnosticsService
                 "Thai ID Reader Foundation: Enabled");
 
             text.AppendLine(
+                "Thai ID Reading Engine: Enabled");
+
+            text.AppendLine(
+                "Thai ID Mock Tools: Debug only");
+
+            text.AppendLine(
                 $"Thai ID Reader Status: {reader.Status}");
 
             text.AppendLine(

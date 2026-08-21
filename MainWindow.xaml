@@ -822,16 +822,26 @@
                                                        TextTrimming="CharacterEllipsis" />
                                         </StackPanel>
 
-                                        <Button Grid.Column="1"
-                                                Width="170"
-                                                Height="42"
-                                                Margin="18,0,0,0"
-                                                VerticalAlignment="Center"
-                                                Content="อ่านบัตรประชาชน"
-                                                FontSize="14"
-                                                FontWeight="SemiBold"
-                                                Style="{StaticResource SecondaryButtonStyle}"
-                                                Click="ReadThaiIdCardButton_Click" />
+                                        <StackPanel Grid.Column="1"
+                                                    Margin="18,0,0,0"
+                                                    VerticalAlignment="Center">
+                                            <Button Width="170"
+                                                    Height="42"
+                                                    Content="อ่านบัตรประชาชน"
+                                                    FontSize="14"
+                                                    FontWeight="SemiBold"
+                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                    Click="ReadThaiIdCardButton_Click" />
+
+                                            <Button x:Name="ThaiIdMockButton"
+                                                    Width="170"
+                                                    Height="34"
+                                                    Margin="0,7,0,0"
+                                                    Content="ทดสอบข้อมูลจำลอง (DEV)"
+                                                    FontSize="11"
+                                                    Visibility="Collapsed"
+                                                    Click="ThaiIdMockButton_Click" />
+                                        </StackPanel>
                                     </Grid>
                                 </Border>
 

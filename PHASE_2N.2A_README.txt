@@ -1,0 +1,86 @@
+ManaChaiLeasing - Phase 2N.2A
+Thai ID Reading Engine & Mock Test
+
+Version:
+0.2.9
+
+Scope:
+Build the real Thai ID data-reading architecture now, while real Reader hardware is not yet available for UAT.
+The hardware path is implemented but remains UNVERIFIED until Phase 2N.2B.
+
+Architecture:
+USB Thai ID Card Reader
+ -> Windows PC/SC (winscard.dll)
+ -> SELECT Thai Personal application
+ -> APDU READ BINARY / GET RESPONSE
+ -> ThaiIdCardRawData
+ -> ThaiIdCardParser
+ -> ThaiIdCardData
+ -> Preview window
+ -> Fill existing customer form only after operator confirmation
+
+Fields parsed:
+- Citizen ID
+- Thai prefix / first name / last name
+- English prefix / first name / last name
+- Birth date
+- Gender
+- Card issuer
+- Issue date
+- Expire date
+- Address
+
+Encoding:
+Built-in Thai TIS-620/Windows-874-compatible character mapping for the ranges used by Thai ID text.
+No extra NuGet package and no csproj change.
+
+Dates:
+Card BE year is converted to Gregorian DateTime internally.
+Preview displays Thai Buddhist year.
+Age is calculated from BirthDate as of today.
+
+Data safety:
+- Reading NEVER auto-saves a customer or pawn ticket.
+- Operator sees ThaiIdCardPreviewWindow first.
+- Only after 'เติมข้อมูลลงฟอร์ม' are existing fields populated.
+- Current database schema is unchanged.
+- Prefix, gender, birth date, issue/expiry and issuer are preview-only in 2N.2A.
+- Existing form receives FirstName, LastName, CitizenId, Age and Address.
+- Phone is never overwritten by ID-card reading.
+
+Development Mock:
+- Debug builds only: button 'ทดสอบข้อมูลจำลอง (DEV)'
+- Release builds keep this button Collapsed.
+- Mock bytes are encoded and sent through the SAME ThaiIdCardParser.
+- Mock data is clearly labeled DEV MOCK.
+- If mock data is filled into the form, both Customer Save and Pawn Ticket Save are blocked.
+- Click 'ล้างฟอร์ม' before returning to normal entry.
+
+Fictional mock identity:
+- Citizen ID: 0000000000000
+- Thai: นาย มานะ ทดสอบระบบ
+- English: Mr. Mana Test
+- Birth date: 15/01/2530 BE
+- Gender: ชาย
+- Issue date: 01/01/2566 BE
+- Expire date: 01/01/2573 BE
+- Fictional test address
+
+Real hardware path:
+Implemented in 2N.2A, but DO NOT mark Real Reader UAT passed yet.
+2N.2B will validate PC/SC protocol/APDU/encoding against the customer's actual Reader and a real Thai ID card.
+
+Privacy / logging:
+- No raw APDU payload is logged.
+- No citizen ID, name, address, birthday or card data is added to Support diagnostics.
+- Support diagnostics reports capabilities/status only.
+
+Support diagnostics adds:
+Thai ID Reading Engine: Enabled
+Thai ID Mock Tools: Debug only
+
+No migration.
+No database schema change.
+No customer auto-match yet (2N.3).
+No card photo yet (2N.5).
+No VendorPublicKey.cs in this package.

@@ -26,6 +26,7 @@ public partial class MainWindow : Window
 
     private bool _isInitializing = true;
     private bool _isSavingPawnTicket;
+    private bool _thaiIdMockDataLoaded;
     private readonly CustomerService _customerService = new();
     private readonly PawnTicketService _pawnTicketService = new();
     private readonly PawnTicketSearchService _pawnTicketSearchService = new();
@@ -37,6 +38,7 @@ public partial class MainWindow : Window
     private readonly AutomaticBackupService _automaticBackupService = new();
     private readonly SupportDiagnosticsService _supportDiagnosticsService = new();
     private readonly ThaiIdCardReaderService _thaiIdCardReaderService = new();
+    private readonly ThaiIdCardDevelopmentMockService _thaiIdDevelopmentMockService = new();
     private readonly MachineIdentityService _machineIdentityService = new();
     private readonly LicenseValidationService _licenseValidationService = new();
     private int? _selectedCustomerId;
@@ -54,6 +56,7 @@ public partial class MainWindow : Window
         ApplicationDiagnosticsService.Initialize();
 
         InitializeComponent();
+        ConfigureThaiIdDevelopmentTools();
 
         SingleInstanceService.StartActivationListener(
             BringExistingInstanceToFront);
@@ -1538,6 +1541,17 @@ public partial class MainWindow : Window
         object sender,
         RoutedEventArgs e)
     {
+        if (_thaiIdMockDataLoaded)
+        {
+            MessageBox.Show(
+                "ข้อมูลในฟอร์มมาจาก DEV MOCK และไม่อนุญาตให้บันทึกลงฐานข้อมูล\n\n" +
+                "กรุณากด ล้างฟอร์ม แล้วกรอกข้อมูลจริงก่อนบันทึก",
+                "ป้องกันข้อมูลจำลอง",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+
         string firstName = FirstNameTextBox.Text.Trim();
         string lastName = LastNameTextBox.Text.Trim();
         string citizenId = CitizenIdTextBox.Text.Trim();
@@ -1639,6 +1653,7 @@ public partial class MainWindow : Window
 
     private void FillCustomerForm(Customer customer)
     {
+        _thaiIdMockDataLoaded = false;
         _selectedCustomerId = customer.Id;
 
         FirstNameTextBox.Text = customer.FirstName;
@@ -1659,6 +1674,7 @@ public partial class MainWindow : Window
 
     private void ResetCustomerState()
     {
+        _thaiIdMockDataLoaded = false;
         _selectedCustomerId = null;
 
         CustomerRecordStatusText.Text =
@@ -1842,22 +1858,45 @@ public partial class MainWindow : Window
         object sender,
         RoutedEventArgs e)
     {
-        ThaiIdReaderDetectionResult result =
+        ThaiIdReaderDetectionResult detection =
             RefreshThaiIdReaderStatus();
 
-        switch (result.Status)
+        if (detection.Status ==
+            ThaiIdReaderStatus.Ready)
         {
-            case ThaiIdReaderStatus.Ready:
-                MessageBox.Show(
-                    "ตรวจพบเครื่องอ่านและบัตรประชาชนแล้ว\n\n" +
-                    "Phase 2N.1 วางระบบตรวจจับ Hardware เรียบร้อย\n" +
-                    "การอ่านเลขบัตร ชื่อ ที่อยู่ และข้อมูลจริงจากบัตรจะเปิดใช้งานใน Phase 2N.2\n\n" +
-                    "ตอนนี้สามารถกรอกข้อมูลลูกค้าด้วยตนเองได้ตามปกติ",
-                    "Thai ID Reader พร้อมใช้งาน",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
-                break;
+            Mouse.OverrideCursor = Cursors.Wait;
 
+            try
+            {
+                ThaiIdCardReadResult readResult =
+                    _thaiIdCardReaderService.ReadCard();
+
+                if (!readResult.Success ||
+                    readResult.Data is null)
+                {
+                    MessageBox.Show(
+                        $"{readResult.UserMessage}\n\n" +
+                        "หาก Reader ใช้งานไม่ได้ สามารถกรอกข้อมูลลูกค้าด้วยตนเองได้ตามปกติ",
+                        "อ่านบัตรประชาชนไม่สำเร็จ",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+
+                ShowThaiIdCardPreview(
+                    readResult.Data);
+            }
+            finally
+            {
+                Mouse.OverrideCursor = null;
+                RefreshThaiIdReaderStatus();
+            }
+
+            return;
+        }
+
+        switch (detection.Status)
+        {
             case ThaiIdReaderStatus.ReaderFoundNoCard:
                 MessageBox.Show(
                     "พบเครื่องอ่านบัตรแล้ว แต่ยังไม่พบบัตรประชาชน\n\n" +
@@ -1881,13 +1920,116 @@ public partial class MainWindow : Window
             case ThaiIdReaderStatus.PcScUnavailable:
             case ThaiIdReaderStatus.Error:
                 MessageBox.Show(
-                    $"{result.StatusText}\n\n" +
+                    $"{detection.StatusText}\n\n" +
                     "การรับจำนำยังใช้งานต่อได้โดยกรอกข้อมูลด้วยตนเอง",
                     "Thai ID Reader",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
                 break;
         }
+    }
+
+    private void ThaiIdMockButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+#if DEBUG
+        try
+        {
+            ThaiIdCardData mockData =
+                _thaiIdDevelopmentMockService.CreateParsedMockData();
+
+            ShowThaiIdCardPreview(
+                mockData);
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error(
+                "Thai ID development mock parser failed.",
+                ex);
+
+            MessageBox.Show(
+                $"Mock Parser Test ไม่สำเร็จ\n\n{ex.Message}",
+                "Thai ID DEV Test",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+#endif
+    }
+
+    private void ShowThaiIdCardPreview(
+        ThaiIdCardData cardData)
+    {
+        ThaiIdCardPreviewWindow previewWindow =
+            new(cardData)
+            {
+                Owner = this
+            };
+
+        bool? result =
+            previewWindow.ShowDialog();
+
+        if (result == true)
+        {
+            ApplyThaiIdCardDataToCustomerForm(
+                cardData);
+        }
+    }
+
+    private void ApplyThaiIdCardDataToCustomerForm(
+        ThaiIdCardData cardData)
+    {
+        ResetCustomerState();
+
+        FirstNameTextBox.Text =
+            cardData.ThaiFirstName;
+
+        LastNameTextBox.Text =
+            cardData.ThaiLastName;
+
+        CitizenIdTextBox.Text =
+            cardData.CitizenId;
+
+        int? age =
+            cardData.CalculateAge(DateTime.Today);
+
+        AgeTextBox.Text =
+            age?.ToString() ?? string.Empty;
+
+        AddressTextBox.Text =
+            cardData.Address;
+
+        _thaiIdMockDataLoaded =
+            cardData.Source ==
+            ThaiIdCardDataSource.DevelopmentMock;
+
+        if (_thaiIdMockDataLoaded)
+        {
+            CustomerRecordStatusText.Text =
+                "ข้อมูลจำลอง DEV • ห้ามบันทึก";
+
+            CustomerRecordStatusText.Foreground =
+                Brushes.Firebrick;
+        }
+        else
+        {
+            CustomerRecordStatusText.Text =
+                "ข้อมูลจากบัตร • ยังไม่ได้บันทึก";
+
+            CustomerRecordStatusText.Foreground =
+                Brushes.DarkBlue;
+        }
+
+        FirstNameTextBox.Focus();
+    }
+
+    private void ConfigureThaiIdDevelopmentTools()
+    {
+#if DEBUG
+        ThaiIdMockButton.Visibility = Visibility.Visible;
+#else
+        ThaiIdMockButton.Visibility = Visibility.Collapsed;
+#endif
     }
 
     private ThaiIdReaderDetectionResult RefreshThaiIdReaderStatus()
@@ -2072,6 +2214,17 @@ public partial class MainWindow : Window
     private bool TryBuildCustomerInput(out Customer customer)
     {
         customer = new Customer();
+
+        if (_thaiIdMockDataLoaded)
+        {
+            MessageBox.Show(
+                "ข้อมูลในฟอร์มมาจาก DEV MOCK และไม่อนุญาตให้สร้างตั๋วจำนำ\n\n" +
+                "กรุณากด ล้างฟอร์ม แล้วกรอกข้อมูลจริงก่อนบันทึก",
+                "ป้องกันข้อมูลจำลอง",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return false;
+        }
 
         string firstName = FirstNameTextBox.Text.Trim();
         string lastName = LastNameTextBox.Text.Trim();

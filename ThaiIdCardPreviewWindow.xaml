@@ -1,0 +1,170 @@
+﻿<Window x:Class="ManaChaiLeasing.ThaiIdCardPreviewWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ตรวจสอบข้อมูลบัตรประชาชน - มานะชัย ลิสซิ่ง"
+        Icon="Resources/ManaChaiLeasing.ico"
+        Width="760"
+        Height="690"
+        MinWidth="700"
+        MinHeight="620"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
+        Background="#F3F4F6"
+        FontFamily="Segoe UI">
+
+    <Window.Resources>
+        <Style x:Key="PreviewLabelStyle" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,8,12,8" />
+            <Setter Property="Foreground" Value="#6B7280" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+        </Style>
+
+        <Style x:Key="PreviewValueStyle" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,8,0,8" />
+            <Setter Property="Foreground" Value="#111827" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="14" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="16" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0"
+                Padding="16"
+                Background="White"
+                BorderBrush="#E5E7EB"
+                BorderThickness="1"
+                CornerRadius="10">
+            <StackPanel>
+                <TextBlock Text="ตรวจสอบข้อมูลจากบัตรประชาชน"
+                           FontSize="21"
+                           FontWeight="Bold"
+                           Foreground="#111827" />
+
+                <TextBlock x:Name="SourceStatusText"
+                           Margin="0,6,0,0"
+                           FontSize="13"
+                           FontWeight="SemiBold"
+                           Foreground="#2563EB" />
+
+                <TextBlock x:Name="MockWarningText"
+                           Margin="0,8,0,0"
+                           Padding="10"
+                           Background="#FEF2F2"
+                           Foreground="#B91C1C"
+                           FontSize="13"
+                           FontWeight="SemiBold"
+                           TextWrapping="Wrap"
+                           Visibility="Collapsed"
+                           Text="ข้อมูลชุดนี้เป็นข้อมูลจำลองสำหรับ Development เท่านั้น ระบบจะป้องกันไม่ให้บันทึกลงฐานข้อมูล" />
+            </StackPanel>
+        </Border>
+
+        <ScrollViewer Grid.Row="2"
+                      VerticalScrollBarVisibility="Auto">
+            <Border Padding="18"
+                    Background="White"
+                    BorderBrush="#E5E7EB"
+                    BorderThickness="1"
+                    CornerRadius="10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="190" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="เลขบัตรประชาชน" Style="{StaticResource PreviewLabelStyle}" />
+                    <TextBlock Grid.Row="0" Grid.Column="1" x:Name="CitizenIdText" Style="{StaticResource PreviewValueStyle}" />
+
+                    <TextBlock Grid.Row="1" Text="ชื่อภาษาไทย" Style="{StaticResource PreviewLabelStyle}" />
+                    <TextBlock Grid.Row="1" Grid.Column="1" x:Name="ThaiNameText" Style="{StaticResource PreviewValueStyle}" />
+
+                    <TextBlock Grid.Row="2" Text="ชื่อภาษาอังกฤษ" Style="{StaticResource PreviewLabelStyle}" />
+                    <TextBlock Grid.Row="2" Grid.Column="1" x:Name="EnglishNameText" Style="{StaticResource PreviewValueStyle}" />
+
+                    <TextBlock Grid.Row="3" Text="วันเกิด / อายุ" Style="{StaticResource PreviewLabelStyle}" />
+                    <TextBlock Grid.Row="3" Grid.Column="1" x:Name="BirthDateText" Style="{StaticResource PreviewValueStyle}" />
+
+                    <TextBlock Grid.Row="4" Text="เพศ" Style="{StaticResource PreviewLabelStyle}" />
+                    <TextBlock Grid.Row="4" Grid.Column="1" x:Name="GenderText" Style="{StaticResource PreviewValueStyle}" />
+
+                    <TextBlock Grid.Row="5" Text="หน่วยงานออกบัตร" Style="{StaticResource PreviewLabelStyle}" />
+                    <TextBlock Grid.Row="5" Grid.Column="1" x:Name="IssuerText" Style="{StaticResource PreviewValueStyle}" TextWrapping="Wrap" />
+
+                    <TextBlock Grid.Row="6" Text="วันออกบัตร" Style="{StaticResource PreviewLabelStyle}" />
+                    <TextBlock Grid.Row="6" Grid.Column="1" x:Name="IssueDateText" Style="{StaticResource PreviewValueStyle}" />
+
+                    <TextBlock Grid.Row="7" Text="วันหมดอายุ" Style="{StaticResource PreviewLabelStyle}" />
+                    <TextBlock Grid.Row="7" Grid.Column="1" x:Name="ExpireDateText" Style="{StaticResource PreviewValueStyle}" />
+
+                    <TextBlock Grid.Row="8" Text="ที่อยู่" Style="{StaticResource PreviewLabelStyle}" />
+                    <TextBlock Grid.Row="8" Grid.Column="1" x:Name="AddressText" Style="{StaticResource PreviewValueStyle}" TextWrapping="Wrap" />
+
+                    <Border Grid.Row="9"
+                            Grid.ColumnSpan="2"
+                            Margin="0,16,0,0"
+                            Padding="12"
+                            Background="#EFF6FF"
+                            CornerRadius="7">
+                        <TextBlock Text="ระบบจะยังไม่บันทึกข้อมูลอัตโนมัติ • กด เติมข้อมูลลงฟอร์ม แล้วตรวจสอบอีกครั้งก่อนบันทึกลูกค้า/ตั๋วจำนำ"
+                                   FontSize="13"
+                                   Foreground="#1D4ED8"
+                                   TextWrapping="Wrap" />
+                    </Border>
+                </Grid>
+            </Border>
+        </ScrollViewer>
+
+        <Grid Grid.Row="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock VerticalAlignment="Center"
+                       Foreground="#6B7280"
+                       FontSize="12"
+                       Text="2N.2A • Preview ก่อนนำไปใช้" />
+
+            <Button Grid.Column="1"
+                    Width="120"
+                    Height="42"
+                    Content="ยกเลิก"
+                    IsCancel="True"
+                    Click="CancelButton_Click" />
+
+            <Button Grid.Column="3"
+                    Width="180"
+                    Height="42"
+                    Content="เติมข้อมูลลงฟอร์ม"
+                    FontWeight="SemiBold"
+                    IsDefault="True"
+                    Click="ApplyButton_Click" />
+        </Grid>
+    </Grid>
+
+
+</Window>
