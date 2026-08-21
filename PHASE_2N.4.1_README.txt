@@ -1,0 +1,28 @@
+ManaChaiLeasing - Phase 2N.4.1
+Search Result Selection Readability
+
+Version:
+0.3.3
+
+Scope:
+UI polish only for the pawn-ticket search results.
+
+Changes:
+- Selected row uses a consistent blue background across all columns.
+- Selected primary text is white.
+- Selected secondary due/status text is near-white.
+- Unselected semantic status colors remain unchanged.
+- Due date and status keep SemiBold typography.
+- Vertical alignment remains centered.
+- No business logic, database, Thai ID, licensing or backup changes.
+- No migration.
+
+Goal:
+Make selected rows substantially easier to read, especially for older operators.
+
+Note:
+Customer-photo scope remains cancelled. Cleanup placeholders/migrations from the
+previous cancellation package are preserved only for safe upgrade history.
+
+VendorPublicKey.cs intentionally not included.
+ManaChaiLeasing.csproj intentionally not included.

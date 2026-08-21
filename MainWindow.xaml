@@ -1642,21 +1642,80 @@
                                   FontSize="14"
                                   MouseDoubleClick="PawnTicketSearchDataGrid_MouseDoubleClick">
 
+                            <DataGrid.Resources>
+                                <Style x:Key="SearchResultTextCellStyle"
+                                       TargetType="TextBlock">
+                                    <Setter Property="VerticalAlignment"
+                                            Value="Center" />
+                                    <Setter Property="Padding"
+                                            Value="4,0,4,0" />
+                                    <Setter Property="TextTrimming"
+                                            Value="CharacterEllipsis" />
+                                </Style>
+                            </DataGrid.Resources>
+
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow">
+                                    <Setter Property="Background"
+                                            Value="White" />
+                                    <Setter Property="Foreground"
+                                            Value="#111827" />
+                                    <Setter Property="VerticalContentAlignment"
+                                            Value="Center" />
+
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected"
+                                                 Value="True">
+                                            <Setter Property="Background"
+                                                    Value="#0B82D6" />
+                                            <Setter Property="Foreground"
+                                                    Value="White" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.RowStyle>
+
+                            <DataGrid.CellStyle>
+                                <Style TargetType="DataGridCell">
+                                    <Setter Property="Background"
+                                            Value="Transparent" />
+                                    <Setter Property="BorderThickness"
+                                            Value="0" />
+                                    <Setter Property="VerticalContentAlignment"
+                                            Value="Center" />
+
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected"
+                                                 Value="True">
+                                            <Setter Property="Background"
+                                                    Value="#0B82D6" />
+                                            <Setter Property="Foreground"
+                                                    Value="White" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.CellStyle>
+
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="เลขตั๋ว"
                                                     Binding="{Binding TicketNumber}"
+                                                    ElementStyle="{StaticResource SearchResultTextCellStyle}"
                                                     Width="125" />
                                 <DataGridTextColumn Header="วันที่"
                                                     Binding="{Binding PawnDateText}"
+                                                    ElementStyle="{StaticResource SearchResultTextCellStyle}"
                                                     Width="105" />
                                 <DataGridTextColumn Header="ลูกค้า"
                                                     Binding="{Binding CustomerName}"
+                                                    ElementStyle="{StaticResource SearchResultTextCellStyle}"
                                                     Width="180" />
                                 <DataGridTextColumn Header="สินค้า"
                                                     Binding="{Binding ProductSummary}"
+                                                    ElementStyle="{StaticResource SearchResultTextCellStyle}"
                                                     Width="*" />
                                 <DataGridTextColumn Header="ยอดเงิน"
                                                     Binding="{Binding PrincipalAmountText}"
+                                                    ElementStyle="{StaticResource SearchResultTextCellStyle}"
                                                     Width="115" />
                                 <DataGridTemplateColumn Header="ครบกำหนด"
                                                         Width="125">
@@ -1681,6 +1740,12 @@
                                                                     <Setter Property="Foreground"
                                                                             Value="#B91C1C" />
                                                                 </DataTrigger>
+
+                                                                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type DataGridRow}}}"
+                                                                             Value="True">
+                                                                    <Setter Property="Foreground"
+                                                                            Value="White" />
+                                                                </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
                                                     </TextBlock.Style>
@@ -1704,6 +1769,12 @@
                                                                              Value="True">
                                                                     <Setter Property="Foreground"
                                                                             Value="#B91C1C" />
+                                                                </DataTrigger>
+
+                                                                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type DataGridRow}}}"
+                                                                             Value="True">
+                                                                    <Setter Property="Foreground"
+                                                                            Value="#F8FAFC" />
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -1746,6 +1817,12 @@
                                                                     <Setter Property="Foreground"
                                                                             Value="#6B7280" />
                                                                 </DataTrigger>
+
+                                                                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type DataGridRow}}}"
+                                                                             Value="True">
+                                                                    <Setter Property="Foreground"
+                                                                            Value="White" />
+                                                                </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
                                                     </TextBlock.Style>
@@ -1771,6 +1848,12 @@
                                                                              Value="True">
                                                                     <Setter Property="Foreground"
                                                                             Value="#1D4ED8" />
+                                                                </DataTrigger>
+
+                                                                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type DataGridRow}}}"
+                                                                             Value="True">
+                                                                    <Setter Property="Foreground"
+                                                                            Value="#EAF4FF" />
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>

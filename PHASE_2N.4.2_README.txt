@@ -1,0 +1,35 @@
+ManaChaiLeasing - Phase 2N.4.2
+Search Row Vertical Alignment Polish
+
+Version:
+0.3.4
+
+Scope:
+UI-only polish for the "ค้นหารายการ" result grid.
+
+Problem:
+Template columns (Due Date / Status) were vertically centered,
+while DataGridTextColumn cells were visually aligned near the top.
+
+Change:
+- Add SearchResultTextCellStyle for plain text cells.
+- Vertically center:
+  * Ticket Number
+  * Pawn Date
+  * Customer
+  * Product
+  * Principal Amount
+- Keep Due Date and Status two-line layout unchanged.
+- Keep selected-row readability behavior from 2N.4.1 unchanged.
+- Keep semantic colors for unselected rows unchanged.
+- Add small horizontal padding and character ellipsis for long text.
+
+No business logic changes.
+No database changes.
+No migration.
+No Thai ID changes.
+No backup/license changes.
+
+Version: 0.3.4
+VendorPublicKey.cs intentionally not included.
+ManaChaiLeasing.csproj intentionally not included.
