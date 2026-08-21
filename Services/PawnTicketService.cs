@@ -25,66 +25,70 @@ public sealed class PawnTicketService
 {
     public PawnTicket SavePawnTicket(PawnTicketSaveRequest request)
     {
-        using AppDbContext db = new();
-        using var dbTransaction = db.Database.BeginTransaction();
-
-        string ticketNumber = request.Ticket.TicketNumber.Trim();
-
-        bool ticketExists = db.PawnTickets.Any(item =>
-            item.TicketNumber.ToUpper() == ticketNumber.ToUpper());
-
-        if (ticketExists)
+        lock (BusinessTransactionGate.SyncRoot)
         {
-            throw new InvalidOperationException(
-                $"หมายเลขตั๋ว {ticketNumber} มีอยู่ในระบบแล้ว");
+            using AppDbContext db = new();
+            using var dbTransaction = db.Database.BeginTransaction();
+
+            string ticketNumber = request.Ticket.TicketNumber.Trim();
+
+            bool ticketExists = db.PawnTickets.Any(item =>
+                item.TicketNumber.ToUpper() == ticketNumber.ToUpper());
+
+            if (ticketExists)
+            {
+                throw new InvalidOperationException(
+                    $"หมายเลขตั๋ว {ticketNumber} มีอยู่ในระบบแล้ว");
+            }
+
+            DateTime now = DateTime.Now;
+
+            Customer customer = ResolveCustomer(
+                db,
+                request.Customer,
+                request.SelectedCustomerId,
+                now);
+
+            AppSetting settings = db.AppSettings
+                .AsNoTracking()
+                .OrderBy(item => item.Id)
+                .FirstOrDefault()
+                ?? throw new InvalidOperationException(
+                    "ไม่พบการตั้งค่าดอกเบี้ย กรุณาเข้าเมนูตั้งค่าแล้วบันทึกข้อมูลก่อน");
+
+            PawnTicket ticket = request.Ticket;
+
+            ticket.TicketNumber = ticketNumber;
+            ticket.Customer = customer;
+            ticket.InterestRatePercent = settings.InterestRatePercent;
+            ticket.InterestPeriodDays = settings.InterestPeriodDays;
+            ticket.Status = PawnTicketStatus.Active;
+            ticket.CreatedAt = now;
+            ticket.UpdatedAt = now;
+
+            ticket.Transactions.Add(new PawnTransaction
+            {
+                TransactionType = PawnTransactionType.Pawn,
+                CashFlowType = CashFlowType.Expense,
+                TransactionDate = ticket.PawnDate,
+                Amount = ticket.PrincipalAmount,
+                CreatedAt = now
+            });
+
+            db.PawnTickets.Add(ticket);
+
+            LearnSmartLookupValues(
+                db,
+                request.SmartLookupValues,
+                now);
+
+            db.SaveChanges();
+            dbTransaction.Commit();
+
+            return ticket;
+    
         }
-
-        DateTime now = DateTime.Now;
-
-        Customer customer = ResolveCustomer(
-            db,
-            request.Customer,
-            request.SelectedCustomerId,
-            now);
-
-        AppSetting settings = db.AppSettings
-            .AsNoTracking()
-            .OrderBy(item => item.Id)
-            .FirstOrDefault()
-            ?? throw new InvalidOperationException(
-                "ไม่พบการตั้งค่าดอกเบี้ย กรุณาเข้าเมนูตั้งค่าแล้วบันทึกข้อมูลก่อน");
-
-        PawnTicket ticket = request.Ticket;
-
-        ticket.TicketNumber = ticketNumber;
-        ticket.Customer = customer;
-        ticket.InterestRatePercent = settings.InterestRatePercent;
-        ticket.InterestPeriodDays = settings.InterestPeriodDays;
-        ticket.Status = PawnTicketStatus.Active;
-        ticket.CreatedAt = now;
-        ticket.UpdatedAt = now;
-
-        ticket.Transactions.Add(new PawnTransaction
-        {
-            TransactionType = PawnTransactionType.Pawn,
-            CashFlowType = CashFlowType.Expense,
-            TransactionDate = ticket.PawnDate,
-            Amount = ticket.PrincipalAmount,
-            CreatedAt = now
-        });
-
-        db.PawnTickets.Add(ticket);
-
-        LearnSmartLookupValues(
-            db,
-            request.SmartLookupValues,
-            now);
-
-        db.SaveChanges();
-        dbTransaction.Commit();
-
-        return ticket;
-    }
+}
 
     public List<string> GetSmartLookupValues(
         string category,

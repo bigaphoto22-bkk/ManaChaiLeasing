@@ -10,6 +10,8 @@ public partial class RedemptionWindow : Window
     private readonly AutomaticBackupService _automaticBackupService = new();
     private readonly RedemptionPreview _preview;
 
+    private bool _isSaving;
+
     public RedemptionResult? SavedResult { get; private set; }
 
     public RedemptionWindow(
@@ -25,33 +27,44 @@ public partial class RedemptionWindow : Window
         object sender,
         RoutedEventArgs e)
     {
-        string paymentMethod =
-            (PaymentMethodComboBox.SelectedItem as ComboBoxItem)
-                ?.Content
-                ?.ToString()
-            ?? string.Empty;
-
-        MessageBoxResult confirm = MessageBox.Show(
-            $"ยืนยันไถ่ถอนเลขตั๋ว {_preview.TicketNumber}\n\n" +
-            $"เงินต้น {_preview.PrincipalAmount:N2} บาท\n" +
-            $"ดอกเบี้ยรอบสุดท้าย {_preview.FinalInterestAmount:N2} บาท\n" +
-            $"รับชำระทั้งหมด {_preview.RedemptionTotal:N2} บาท\n\n" +
-            "หลังยืนยัน ตั๋วจะเปลี่ยนเป็นสถานะไถ่ถอนแล้ว",
-            "ยืนยันไถ่ถอน",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question);
-
-        if (confirm != MessageBoxResult.Yes)
+        if (_isSaving)
         {
+            AppLog.Warning(
+                "Duplicate redemption save action blocked at UI.");
+
             return;
         }
 
+        _isSaving = true;
         SaveRedemptionButton.IsEnabled = false;
+        SaveRedemptionButton.Content = "กำลังบันทึก...";
 
         try
         {
+            string paymentMethod =
+                (PaymentMethodComboBox.SelectedItem as ComboBoxItem)
+                    ?.Content
+                    ?.ToString()
+                ?? string.Empty;
+
+            MessageBoxResult confirm = MessageBox.Show(
+                $"ยืนยันไถ่ถอนเลขตั๋ว {_preview.TicketNumber}\n\n" +
+                $"เงินต้น {_preview.PrincipalAmount:N2} บาท\n" +
+                $"ดอกเบี้ยรอบสุดท้าย {_preview.FinalInterestAmount:N2} บาท\n" +
+                $"รับชำระทั้งหมด {_preview.RedemptionTotal:N2} บาท\n\n" +
+                "หลังยืนยัน ตั๋วจะเปลี่ยนเป็นสถานะไถ่ถอนแล้ว",
+                "ยืนยันไถ่ถอน",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (confirm != MessageBoxResult.Yes)
+            {
+                return;
+            }
+
             SavedResult = _service.SaveRedemption(
                 _preview.PawnTicketId,
+                _preview.InterestRenewalCount,
                 paymentMethod,
                 RedemptionNoteTextBox.Text);
 
@@ -81,13 +94,24 @@ public partial class RedemptionWindow : Window
         }
         catch (Exception ex)
         {
+            AppLog.Error(
+                "Redemption save failed.",
+                ex);
+
             MessageBox.Show(
                 $"ไม่สามารถบันทึกการไถ่ถอนได้\n\n{ex.Message}",
-                ManaChaiLeasing.AppInfo.StoreName,
+                AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
-
-            SaveRedemptionButton.IsEnabled = true;
+        }
+        finally
+        {
+            if (DialogResult != true)
+            {
+                _isSaving = false;
+                SaveRedemptionButton.IsEnabled = true;
+                SaveRedemptionButton.Content = "ยืนยันไถ่ถอน";
+            }
         }
     }
 

@@ -78,76 +78,97 @@ public sealed class RedemptionService
 
     public RedemptionResult SaveRedemption(
         int pawnTicketId,
+        int expectedRenewalCount,
         string paymentMethod,
         string? note)
     {
-        string cleanedPaymentMethod = paymentMethod.Trim();
-
-        if (string.IsNullOrWhiteSpace(cleanedPaymentMethod))
+        lock (BusinessTransactionGate.SyncRoot)
         {
-            throw new InvalidOperationException(
-                "กรุณาเลือกช่องทางการชำระเงิน");
+            string cleanedPaymentMethod = paymentMethod.Trim();
+
+            if (string.IsNullOrWhiteSpace(cleanedPaymentMethod))
+            {
+                throw new InvalidOperationException(
+                    "กรุณาเลือกช่องทางการชำระเงิน");
+            }
+
+            using AppDbContext db = new();
+            using var dbTransaction = db.Database.BeginTransaction();
+
+            PawnTicket? ticket = db.PawnTickets
+                .Include(item => item.Transactions)
+                .SingleOrDefault(item => item.Id == pawnTicketId);
+
+            if (ticket is null)
+            {
+                throw new InvalidOperationException(
+                    "ไม่พบตั๋วจำนำที่ต้องการไถ่ถอน");
+            }
+
+            ValidateActiveTicket(ticket);
+
+            RedemptionPreview preview =
+                BuildPreview(ticket);
+
+            if (preview.InterestRenewalCount !=
+                expectedRenewalCount)
+            {
+                throw new InvalidOperationException(
+                    "ข้อมูลตั๋วมีการเปลี่ยนแปลงแล้ว กรุณาปิดหน้าต่างนี้และเปิดรายการใหม่ก่อนทำการไถ่ถอน");
+            }
+
+            if (ticket.Transactions.Any(transaction =>
+                    !transaction.IsVoided &&
+                    transaction.TransactionType ==
+                        PawnTransactionType.Redemption))
+            {
+                throw new InvalidOperationException(
+                    "ตั๋วนี้มีรายการไถ่ถอนแล้ว ไม่สามารถบันทึกไถ่ถอนซ้ำได้");
+            }
+
+            DateTime now = DateTime.Now;
+
+            string auditNote =
+                $"ไถ่ถอน เงินต้น {preview.PrincipalAmount:N2} บาท " +
+                $"+ ดอกเบี้ยรอบสุดท้าย {preview.FinalInterestAmount:N2} บาท " +
+                $"({preview.InterestRatePercent:0.##}% / " +
+                $"{preview.InterestPeriodDays:N0} วัน)";
+
+            string cleanedNote = note?.Trim() ?? string.Empty;
+
+            if (!string.IsNullOrWhiteSpace(cleanedNote))
+            {
+                auditNote += $" • {cleanedNote}";
+            }
+
+            ticket.Transactions.Add(new PawnTransaction
+            {
+                TransactionType = PawnTransactionType.Redemption,
+                CashFlowType = CashFlowType.Income,
+                TransactionDate = now,
+                Amount = preview.RedemptionTotal,
+                PaymentMethod = cleanedPaymentMethod,
+                Note = auditNote,
+                CreatedAt = now
+            });
+
+            ticket.Status = PawnTicketStatus.Redeemed;
+            ticket.UpdatedAt = now;
+
+            db.SaveChanges();
+            dbTransaction.Commit();
+
+            return new RedemptionResult(
+                PawnTicketId: ticket.Id,
+                TicketNumber: ticket.TicketNumber,
+                PrincipalAmount: preview.PrincipalAmount,
+                FinalInterestAmount: preview.FinalInterestAmount,
+                RedemptionTotal: preview.RedemptionTotal,
+                TransactionDate: now,
+                PaymentMethod: cleanedPaymentMethod);
+    
         }
-
-        using AppDbContext db = new();
-        using var dbTransaction = db.Database.BeginTransaction();
-
-        PawnTicket? ticket = db.PawnTickets
-            .Include(item => item.Transactions)
-            .SingleOrDefault(item => item.Id == pawnTicketId);
-
-        if (ticket is null)
-        {
-            throw new InvalidOperationException(
-                "ไม่พบตั๋วจำนำที่ต้องการไถ่ถอน");
-        }
-
-        ValidateActiveTicket(ticket);
-
-        RedemptionPreview preview =
-            BuildPreview(ticket);
-
-        DateTime now = DateTime.Now;
-
-        string auditNote =
-            $"ไถ่ถอน เงินต้น {preview.PrincipalAmount:N2} บาท " +
-            $"+ ดอกเบี้ยรอบสุดท้าย {preview.FinalInterestAmount:N2} บาท " +
-            $"({preview.InterestRatePercent:0.##}% / " +
-            $"{preview.InterestPeriodDays:N0} วัน)";
-
-        string cleanedNote = note?.Trim() ?? string.Empty;
-
-        if (!string.IsNullOrWhiteSpace(cleanedNote))
-        {
-            auditNote += $" • {cleanedNote}";
-        }
-
-        ticket.Transactions.Add(new PawnTransaction
-        {
-            TransactionType = PawnTransactionType.Redemption,
-            CashFlowType = CashFlowType.Income,
-            TransactionDate = now,
-            Amount = preview.RedemptionTotal,
-            PaymentMethod = cleanedPaymentMethod,
-            Note = auditNote,
-            CreatedAt = now
-        });
-
-        ticket.Status = PawnTicketStatus.Redeemed;
-        ticket.UpdatedAt = now;
-
-        db.SaveChanges();
-        dbTransaction.Commit();
-
-        return new RedemptionResult(
-            PawnTicketId: ticket.Id,
-            TicketNumber: ticket.TicketNumber,
-            PrincipalAmount: preview.PrincipalAmount,
-            FinalInterestAmount: preview.FinalInterestAmount,
-            RedemptionTotal: preview.RedemptionTotal,
-            TransactionDate: now,
-            PaymentMethod: cleanedPaymentMethod);
-    }
+}
 
     private static RedemptionPreview BuildPreview(
         PawnTicket ticket)

@@ -168,6 +168,9 @@ public sealed class SupportDiagnosticsService
             "Database Startup Health Check: Enabled");
 
         text.AppendLine(
+            "Duplicate Action Protection: Enabled");
+
+        text.AppendLine(
             $"OS: {RuntimeInformation.OSDescription}");
 
         text.AppendLine(

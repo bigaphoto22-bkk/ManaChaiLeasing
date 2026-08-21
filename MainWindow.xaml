@@ -1437,7 +1437,8 @@
                                     Style="{StaticResource SecondaryButtonStyle}"
                                     Click="ClearNewPawnForm_Click" />
 
-                            <Button Grid.Column="3"
+                            <Button x:Name="SavePawnTicketButton"
+                                    Grid.Column="3"
                                     Width="180"
                                     Content="บันทึกข้อมูล"
                                     Style="{StaticResource PrimaryButtonStyle}"

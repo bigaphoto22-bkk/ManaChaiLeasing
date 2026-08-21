@@ -10,6 +10,8 @@ public partial class InterestRenewalWindow : Window
     private readonly AutomaticBackupService _automaticBackupService = new();
     private readonly InterestRenewalPreview _preview;
 
+    private bool _isSaving;
+
     public InterestRenewalResult? SavedResult { get; private set; }
 
     public InterestRenewalWindow(
@@ -25,31 +27,42 @@ public partial class InterestRenewalWindow : Window
         object sender,
         RoutedEventArgs e)
     {
-        string paymentMethod =
-            (PaymentMethodComboBox.SelectedItem as ComboBoxItem)
-                ?.Content
-                ?.ToString()
-            ?? string.Empty;
-
-        MessageBoxResult confirm = MessageBox.Show(
-            $"ยืนยันต่อดอก {_preview.InterestSequenceText}\n\n" +
-            $"รับเงิน {_preview.InterestAmount:N2} บาท\n" +
-            $"ครบกำหนดใหม่ {_preview.NewDueDate:dd/MM/yyyy}",
-            "ยืนยันต่อดอก",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question);
-
-        if (confirm != MessageBoxResult.Yes)
+        if (_isSaving)
         {
+            AppLog.Warning(
+                "Duplicate interest-renewal save action blocked at UI.");
+
             return;
         }
 
+        _isSaving = true;
         SaveInterestButton.IsEnabled = false;
+        SaveInterestButton.Content = "กำลังบันทึก...";
 
         try
         {
+            string paymentMethod =
+                (PaymentMethodComboBox.SelectedItem as ComboBoxItem)
+                    ?.Content
+                    ?.ToString()
+                ?? string.Empty;
+
+            MessageBoxResult confirm = MessageBox.Show(
+                $"ยืนยันต่อดอก {_preview.InterestSequenceText}\n\n" +
+                $"รับเงิน {_preview.InterestAmount:N2} บาท\n" +
+                $"ครบกำหนดใหม่ {_preview.NewDueDate:dd/MM/yyyy}",
+                "ยืนยันต่อดอก",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (confirm != MessageBoxResult.Yes)
+            {
+                return;
+            }
+
             SavedResult = _service.SaveRenewal(
                 _preview.PawnTicketId,
+                _preview.InterestSequence,
                 paymentMethod,
                 RenewalNoteTextBox.Text);
 
@@ -79,13 +92,24 @@ public partial class InterestRenewalWindow : Window
         }
         catch (Exception ex)
         {
+            AppLog.Error(
+                "Interest renewal save failed.",
+                ex);
+
             MessageBox.Show(
                 $"ไม่สามารถบันทึกการต่อดอกได้\n\n{ex.Message}",
-                ManaChaiLeasing.AppInfo.StoreName,
+                AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
-
-            SaveInterestButton.IsEnabled = true;
+        }
+        finally
+        {
+            if (DialogResult != true)
+            {
+                _isSaving = false;
+                SaveInterestButton.IsEnabled = true;
+                SaveInterestButton.Content = "ยืนยันต่อดอก";
+            }
         }
     }
 

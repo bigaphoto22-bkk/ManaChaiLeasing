@@ -46,6 +46,10 @@ public partial class PawnTicketDetailWindow : Window
         }
         catch (Exception ex)
         {
+            AppLog.Error(
+                "Could not open interest renewal action.",
+                ex);
+
             MessageBox.Show(
                 $"ไม่สามารถเปิดหน้าต่อดอกได้\n\n{ex.Message}",
                 ManaChaiLeasing.AppInfo.StoreName,
@@ -82,6 +86,10 @@ public partial class PawnTicketDetailWindow : Window
         }
         catch (Exception ex)
         {
+            AppLog.Error(
+                "Could not open redemption action.",
+                ex);
+
             MessageBox.Show(
                 $"ไม่สามารถเปิดหน้าไถ่ถอนได้\n\n{ex.Message}",
                 ManaChaiLeasing.AppInfo.StoreName,

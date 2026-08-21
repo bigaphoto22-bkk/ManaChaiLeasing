@@ -25,6 +25,7 @@ public partial class MainWindow : Window
     }
 
     private bool _isInitializing = true;
+    private bool _isSavingPawnTicket;
     private readonly CustomerService _customerService = new();
     private readonly PawnTicketService _pawnTicketService = new();
     private readonly PawnTicketSearchService _pawnTicketSearchService = new();
@@ -1839,10 +1840,17 @@ public partial class MainWindow : Window
         object sender,
         RoutedEventArgs e)
     {
-        if (sender is Button saveButton)
+        if (_isSavingPawnTicket)
         {
-            saveButton.IsEnabled = false;
+            AppLog.Warning(
+                "Duplicate pawn-ticket save action blocked at UI.");
+
+            return;
         }
+
+        _isSavingPawnTicket = true;
+        SavePawnTicketButton.IsEnabled = false;
+        SavePawnTicketButton.Content = "กำลังบันทึก...";
 
         try
         {
@@ -1952,10 +1960,9 @@ public partial class MainWindow : Window
         }
         finally
         {
-            if (sender is Button saveButtonToEnable)
-            {
-                saveButtonToEnable.IsEnabled = true;
-            }
+            _isSavingPawnTicket = false;
+            SavePawnTicketButton.IsEnabled = true;
+            SavePawnTicketButton.Content = "บันทึกข้อมูล";
         }
     }
 

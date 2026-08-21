@@ -1,0 +1,55 @@
+ManaChaiLeasing - Phase 2M.5
+Transaction Safety & Duplicate Action Protection
+
+Version:
+0.2.7
+
+Protected financial actions:
+- Pawn ticket save
+- Interest renewal
+- Redemption
+
+Layer 1 - UI busy guard:
+- First action sets a busy flag immediately
+- Save button is disabled
+- Button text changes to "กำลังบันทึก..."
+- Repeated click/Enter events during the same operation are ignored
+- If validation/cancel/error occurs, button is restored
+
+Layer 2 - Shared in-process financial write gate:
+BusinessTransactionGate.SyncRoot is shared by:
+- PawnTicketService
+- InterestRenewalService
+- RedemptionService
+
+This serializes financial writes inside the running application process.
+
+Layer 3 - Current database state recheck:
+Pawn:
+- Existing unique TicketNumber database index remains the final duplicate barrier
+- Service also checks TicketNumber before insert
+
+Interest:
+- Preview's expected InterestSequence is sent to SaveRenewal
+- Service reloads the current ticket from database
+- If current next sequence differs from the preview -> reject stale/duplicate action
+- If a Redemption transaction already exists -> reject
+
+Redemption:
+- Preview's expected InterestRenewalCount is sent to SaveRedemption
+- Service reloads current ticket and transactions
+- If renewal count changed -> reject stale action
+- Ticket must still be Active
+- Existing Redemption transaction -> reject duplicate redemption
+
+Support diagnostics:
+Duplicate Action Protection: Enabled
+
+No migration.
+No database schema change.
+No interest calculation change.
+No redemption calculation change.
+No license / clock rollback change.
+No Auto Backup policy change.
+No dashboard change.
+VendorPublicKey.cs intentionally not included.
