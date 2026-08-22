@@ -32,6 +32,10 @@ public sealed class HomeDashboardSummary
 
     public decimal RedemptionIncome { get; init; }
 
+    // กำไรจากรายการไถ่ถอน คือเฉพาะส่วนที่เกินเงินต้น
+    // (ดอกเบี้ยและค่าธรรมเนียมที่รับจริง)
+    public decimal RedemptionProfit { get; init; }
+
     public decimal TotalIncome =>
         InterestIncome + RedemptionIncome;
 
@@ -39,6 +43,10 @@ public sealed class HomeDashboardSummary
 
     public decimal NetCash =>
         TotalIncome - TotalExpense;
+
+    // เงินต้นที่ปล่อยจำนำและเงินต้นที่รับคืนไม่ใช่กำไร/ขาดทุน
+    public decimal Profit =>
+        InterestIncome + RedemptionProfit;
 }
 
 public sealed class HomeDashboardService
@@ -121,6 +129,7 @@ public sealed class HomeDashboardService
 
         List<PawnTransaction> periodTransactions = db.PawnTransactions
             .AsNoTracking()
+            .Include(transaction => transaction.PawnTicket)
             .Where(transaction =>
                 !transaction.IsVoided &&
                 transaction.TransactionDate >= start &&
@@ -163,6 +172,17 @@ public sealed class HomeDashboardService
                     CashFlowType.Income)
             .Sum(transaction => transaction.Amount);
 
+        decimal redemptionProfit = periodTransactions
+            .Where(transaction =>
+                transaction.TransactionType ==
+                    PawnTransactionType.Redemption &&
+                transaction.CashFlowType ==
+                    CashFlowType.Income)
+            .Sum(transaction => Math.Max(
+                0m,
+                transaction.Amount -
+                transaction.PawnTicket.PrincipalAmount));
+
         return new HomeDashboardSummary
         {
             StartDate = start,
@@ -176,7 +196,8 @@ public sealed class HomeDashboardService
             RedemptionCount = redemptionCount,
             PawnExpense = pawnExpense,
             InterestIncome = interestIncome,
-            RedemptionIncome = redemptionIncome
+            RedemptionIncome = redemptionIncome,
+            RedemptionProfit = redemptionProfit
         };
     }
 }

@@ -496,6 +496,9 @@ public partial class MainWindow : Window
                 summary.NetCash < 0m
                     ? Brushes.Firebrick
                     : Brushes.ForestGreen;
+
+            HomeProfitText.Text =
+                $"{summary.Profit:N2} บาท";
         }
         catch (Exception ex)
         {

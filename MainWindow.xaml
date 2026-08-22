@@ -608,6 +608,8 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="1" />
                                     <ColumnDefinition Width="1.15*" />
+                                    <ColumnDefinition Width="1" />
+                                    <ColumnDefinition Width="1.15*" />
                                 </Grid.ColumnDefinitions>
 
                                 <StackPanel Grid.Column="0"
@@ -643,8 +645,7 @@
                                         Background="#E5E7EB" />
 
                                 <Border Grid.Column="4"
-                                        Background="#F8FAFC"
-                                        CornerRadius="0,9,9,0">
+                                        Background="#F8FAFC">
                                     <StackPanel Margin="22,16">
                                         <TextBlock Text="เงินสดสุทธิ"
                                                    FontSize="14"
@@ -654,6 +655,26 @@
                                                    Margin="0,5,0,0"
                                                    FontSize="26"
                                                    FontWeight="Bold" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Grid.Column="5"
+                                        Margin="0,12"
+                                        Background="#E5E7EB" />
+
+                                <Border Grid.Column="6"
+                                        Background="#F0FDF4"
+                                        CornerRadius="0,9,9,0">
+                                    <StackPanel Margin="22,16">
+                                        <TextBlock Text="กำไร"
+                                                   FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#166534" />
+                                        <TextBlock x:Name="HomeProfitText"
+                                                   Margin="0,5,0,0"
+                                                   FontSize="26"
+                                                   FontWeight="Bold"
+                                                   Foreground="#15803D" />
                                     </StackPanel>
                                 </Border>
                             </Grid>
