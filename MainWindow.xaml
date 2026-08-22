@@ -614,7 +614,7 @@
 
                                 <StackPanel Grid.Column="0"
                                             Margin="20,16">
-                                    <TextBlock Text="รายรับรวม"
+                                    <TextBlock Text="รับเข้า"
                                                FontSize="14"
                                                Foreground="#6B7280" />
                                     <TextBlock x:Name="HomeTotalIncomeText"
@@ -630,7 +630,7 @@
 
                                 <StackPanel Grid.Column="2"
                                             Margin="20,16">
-                                    <TextBlock Text="รายจ่ายรวม"
+                                    <TextBlock Text="จ่ายออก"
                                                FontSize="14"
                                                Foreground="#6B7280" />
                                     <TextBlock x:Name="HomeTotalExpenseText"
@@ -647,7 +647,7 @@
                                 <Border Grid.Column="4"
                                         Background="#F8FAFC">
                                     <StackPanel Margin="22,16">
-                                        <TextBlock Text="เงินสดสุทธิ"
+                                        <TextBlock Text="ยอดสุทธิ"
                                                    FontSize="14"
                                                    FontWeight="SemiBold"
                                                    Foreground="#475569" />
