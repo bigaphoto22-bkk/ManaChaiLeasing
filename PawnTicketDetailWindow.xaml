@@ -71,8 +71,26 @@
                             <TextBlock Text="{Binding StatusText}"
                                        HorizontalAlignment="Right"
                                        FontSize="18"
-                                       FontWeight="SemiBold"
-                                       Foreground="#15803D" />
+                                       FontWeight="SemiBold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground"
+                                                Value="#15803D" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding StatusText}"
+                                                         Value="ไถ่ถอนแล้ว (Redeemed)">
+                                                <Setter Property="Foreground"
+                                                        Value="#475569" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding StatusText}"
+                                                         Value="จำหน่ายแล้ว (Sold)">
+                                                <Setter Property="Foreground"
+                                                        Value="#B45309" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                             <TextBlock Margin="0,8,0,0"
                                        Text="{Binding PrincipalAmountText}"
                                        HorizontalAlignment="Right"
@@ -390,6 +408,12 @@
                                                                 <Setter Property="Foreground"
                                                                         Value="#047857" />
                                                             </DataTrigger>
+
+                                                            <DataTrigger Binding="{Binding TransactionTypeText}"
+                                                                         Value="จำหน่าย">
+                                                                <Setter Property="Foreground"
+                                                                        Value="#B45309" />
+                                                            </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
                                                 </TextBlock.Style>
@@ -427,11 +451,13 @@
             <Grid Margin="28,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="160" />
+                    <ColumnDefinition Width="145" />
                     <ColumnDefinition Width="12" />
-                    <ColumnDefinition Width="160" />
+                    <ColumnDefinition Width="145" />
                     <ColumnDefinition Width="12" />
-                    <ColumnDefinition Width="130" />
+                    <ColumnDefinition Width="155" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="120" />
                 </Grid.ColumnDefinitions>
 
                 <Button Grid.Column="1"
@@ -457,6 +483,18 @@
                         Click="RedeemButton_Click" />
 
                 <Button Grid.Column="5"
+                        Height="48"
+                        Content="จำหน่ายสินค้า"
+                        FontSize="16"
+                        FontWeight="SemiBold"
+                        Background="#B45309"
+                        Foreground="White"
+                        BorderBrush="#B45309"
+                        IsEnabled="{Binding CanSell}"
+                        ToolTip="จำหน่ายได้เฉพาะตั๋วที่เกินกำหนด"
+                        Click="SellButton_Click" />
+
+                <Button Grid.Column="7"
                         Height="48"
                         Content="ปิด"
                         FontSize="16"

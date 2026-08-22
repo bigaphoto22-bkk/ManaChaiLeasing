@@ -517,6 +517,8 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="14" />
                                 <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
 
                             <Border Grid.Column="0"
@@ -585,6 +587,29 @@
                                                Margin="0,3,0,0"
                                                FontSize="14"
                                                Foreground="#047857" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="6"
+                                    Padding="20,18"
+                                    Background="White"
+                                    BorderBrush="#E5E7EB"
+                                    BorderThickness="1"
+                                    CornerRadius="10">
+                                <StackPanel>
+                                    <TextBlock Text="จำหน่าย"
+                                               FontSize="15"
+                                               FontWeight="SemiBold"
+                                               Foreground="#374151" />
+                                    <TextBlock x:Name="HomeSaleCountText"
+                                               Margin="0,7,0,0"
+                                               FontSize="28"
+                                               FontWeight="Bold"
+                                               Foreground="#B45309" />
+                                    <TextBlock x:Name="HomeSaleIncomeText"
+                                               Margin="0,3,0,0"
+                                               FontSize="14"
+                                               Foreground="#92400E" />
                                 </StackPanel>
                             </Border>
                         </Grid>
@@ -1633,6 +1658,7 @@
                                     <ComboBoxItem Content="ครบกำหนดวันนี้" />
                                     <ComboBoxItem Content="เกินกำหนด" />
                                     <ComboBoxItem Content="ไถ่ถอนแล้ว" />
+                                    <ComboBoxItem Content="จำหน่ายแล้ว" />
                                 </ComboBox>
 
                                 <TextBlock x:Name="PawnTicketSearchResultCountText"
@@ -1839,6 +1865,12 @@
                                                                             Value="#6B7280" />
                                                                 </DataTrigger>
 
+                                                                <DataTrigger Binding="{Binding StatusText}"
+                                                                             Value="จำหน่ายแล้ว">
+                                                                    <Setter Property="Foreground"
+                                                                            Value="#B45309" />
+                                                                </DataTrigger>
+
                                                                 <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type DataGridRow}}}"
                                                                              Value="True">
                                                                     <Setter Property="Foreground"
@@ -1963,6 +1995,8 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="14" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
 
                         <Border Grid.Column="0"
@@ -2032,6 +2066,28 @@
                         </Border>
 
                         <Border Grid.Column="6"
+                                Padding="18"
+                                Background="White"
+                                BorderBrush="#E5E7EB"
+                                BorderThickness="1"
+                                CornerRadius="10">
+                            <StackPanel>
+                                <TextBlock Text="รับเข้า • จำหน่าย"
+                                           FontSize="14"
+                                           Foreground="#6B7280" />
+                                <TextBlock x:Name="TodaySaleIncomeText"
+                                           Margin="0,6,0,0"
+                                           FontSize="22"
+                                           FontWeight="Bold"
+                                           Foreground="#B45309" />
+                                <TextBlock x:Name="TodaySaleCountText"
+                                           Margin="0,5,0,0"
+                                           FontSize="12"
+                                           Foreground="#6B7280" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="8"
                                 Padding="18"
                                 Background="#F8FAFC"
                                 BorderBrush="#CBD5E1"
@@ -2121,6 +2177,9 @@
                                                                 </DataTrigger>
                                                                 <DataTrigger Binding="{Binding TransactionTypeText}" Value="ไถ่ถอน">
                                                                     <Setter Property="Foreground" Value="#047857" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding TransactionTypeText}" Value="จำหน่าย">
+                                                                    <Setter Property="Foreground" Value="#B45309" />
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>

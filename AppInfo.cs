@@ -54,4 +54,7 @@ public static class AppInfo
 
     public const string RedemptionSuccessWindowTitle =
         "ไถ่ถอนสำเร็จ - " + StoreName;
+
+    public const string SaleWindowTitle =
+        "จำหน่ายสินค้า - " + StoreName;
 }

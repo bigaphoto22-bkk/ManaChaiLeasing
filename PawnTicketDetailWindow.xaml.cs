@@ -8,6 +8,7 @@ public partial class PawnTicketDetailWindow : Window
     private readonly PawnTicketSearchService _searchService = new();
     private readonly InterestRenewalService _renewalService = new();
     private readonly RedemptionService _redemptionService = new();
+    private readonly SaleService _saleService = new();
     private readonly int _pawnTicketId;
 
     public PawnTicketDetailWindow(PawnTicketDetail detail)
@@ -92,6 +93,46 @@ public partial class PawnTicketDetailWindow : Window
 
             MessageBox.Show(
                 $"ไม่สามารถเปิดหน้าไถ่ถอนได้\n\n{ex.Message}",
+                ManaChaiLeasing.AppInfo.StoreName,
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
+    private void SellButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        try
+        {
+            SalePreview preview =
+                _saleService.GetPreview(
+                    _pawnTicketId);
+
+            SaleWindow saleWindow =
+                new(preview)
+                {
+                    Owner = this
+                };
+
+            bool? result =
+                saleWindow.ShowDialog();
+
+            if (result == true)
+            {
+                DataContext =
+                    _searchService.GetDetail(
+                        _pawnTicketId);
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error(
+                "Could not open sale action.",
+                ex);
+
+            MessageBox.Show(
+                $"ไม่สามารถเปิดหน้าจำหน่ายสินค้าได้\n\n{ex.Message}",
                 ManaChaiLeasing.AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);

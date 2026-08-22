@@ -26,18 +26,24 @@ public sealed class HomeDashboardSummary
 
     public int RedemptionCount { get; init; }
 
+    public int SaleCount { get; init; }
+
     public decimal PawnExpense { get; init; }
 
     public decimal InterestIncome { get; init; }
 
     public decimal RedemptionIncome { get; init; }
 
+    public decimal SaleIncome { get; init; }
+
     // กำไรจากรายการไถ่ถอน คือเฉพาะส่วนที่เกินเงินต้น
     // (ดอกเบี้ยและค่าธรรมเนียมที่รับจริง)
     public decimal RedemptionProfit { get; init; }
 
+    public decimal SaleProfit { get; init; }
+
     public decimal TotalIncome =>
-        InterestIncome + RedemptionIncome;
+        InterestIncome + RedemptionIncome + SaleIncome;
 
     public decimal TotalExpense => PawnExpense;
 
@@ -46,7 +52,7 @@ public sealed class HomeDashboardSummary
 
     // เงินต้นที่ปล่อยจำนำและเงินต้นที่รับคืนไม่ใช่กำไร/ขาดทุน
     public decimal Profit =>
-        InterestIncome + RedemptionProfit;
+        InterestIncome + RedemptionProfit + SaleProfit;
 }
 
 public sealed class HomeDashboardService
@@ -95,18 +101,19 @@ public sealed class HomeDashboardService
                         transaction.TransactionDate < endExclusive)
                     .ToList();
 
-            bool redeemedByEnd = transactionsThroughEnd.Any(transaction =>
+            bool closedByEnd = transactionsThroughEnd.Any(transaction =>
                 transaction.TransactionType ==
-                    PawnTransactionType.Redemption);
+                    PawnTransactionType.Redemption ||
+                transaction.TransactionType ==
+                    PawnTransactionType.Sale);
 
-            if (redeemedByEnd)
+            if (closedByEnd)
             {
                 continue;
             }
 
-            // ปัจจุบันระบบยังไม่มี workflow ที่เปลี่ยนสถานะเป็น Closed
-            // โดยไม่มี Transaction ประกอบ ดังนั้นประวัติย้อนหลังใช้ Pawn/Redemption
-            // เป็นหลักเพื่อให้ตั๋วที่มาไถ่ในอนาคตยังนับเป็น Active ในอดีตได้ถูกต้อง
+            // ประวัติย้อนหลังใช้ Transaction จริง เพื่อให้ตั๋วที่ถูกไถ่ถอน
+            // หรือจำหน่ายในอนาคตยังนับเป็น Active ในอดีตได้ถูกต้อง
             int renewalCount = transactionsThroughEnd.Count(transaction =>
                 transaction.TransactionType ==
                     PawnTransactionType.Interest);
@@ -148,6 +155,10 @@ public sealed class HomeDashboardService
             transaction.TransactionType ==
                 PawnTransactionType.Redemption);
 
+        int saleCount = periodTransactions.Count(transaction =>
+            transaction.TransactionType ==
+                PawnTransactionType.Sale);
+
         decimal pawnExpense = periodTransactions
             .Where(transaction =>
                 transaction.TransactionType ==
@@ -183,6 +194,24 @@ public sealed class HomeDashboardService
                 transaction.Amount -
                 transaction.PawnTicket.PrincipalAmount));
 
+        decimal saleIncome = periodTransactions
+            .Where(transaction =>
+                transaction.TransactionType ==
+                    PawnTransactionType.Sale &&
+                transaction.CashFlowType ==
+                    CashFlowType.Income)
+            .Sum(transaction => transaction.Amount);
+
+        decimal saleProfit = periodTransactions
+            .Where(transaction =>
+                transaction.TransactionType ==
+                    PawnTransactionType.Sale &&
+                transaction.CashFlowType ==
+                    CashFlowType.Income)
+            .Sum(transaction =>
+                transaction.Amount -
+                transaction.PawnTicket.PrincipalAmount);
+
         return new HomeDashboardSummary
         {
             StartDate = start,
@@ -194,10 +223,13 @@ public sealed class HomeDashboardService
             PawnCount = pawnCount,
             InterestCount = interestCount,
             RedemptionCount = redemptionCount,
+            SaleCount = saleCount,
             PawnExpense = pawnExpense,
             InterestIncome = interestIncome,
             RedemptionIncome = redemptionIncome,
-            RedemptionProfit = redemptionProfit
+            SaleIncome = saleIncome,
+            RedemptionProfit = redemptionProfit,
+            SaleProfit = saleProfit
         };
     }
 }

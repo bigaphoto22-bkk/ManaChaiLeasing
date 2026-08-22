@@ -11,7 +11,8 @@ public enum PawnTicketSearchFilter
     Active = 1,
     DueToday = 2,
     Overdue = 3,
-    Redeemed = 4
+    Redeemed = 4,
+    Sold = 5
 }
 
 public sealed class PawnTicketSearchResult
@@ -73,6 +74,7 @@ public sealed class PawnTicketSearchResult
         PawnTicketStatus.Active => "กำลังจำนำ",
         PawnTicketStatus.Redeemed => "ไถ่ถอนแล้ว",
         PawnTicketStatus.Closed => "ปิดรายการ",
+        PawnTicketStatus.Sold => "จำหน่ายแล้ว",
         _ => Status.ToString()
     };
 
@@ -116,6 +118,7 @@ public sealed class PawnTicketDetail
         PawnTicketStatus.Active => "กำลังจำนำ (Active)",
         PawnTicketStatus.Redeemed => "ไถ่ถอนแล้ว (Redeemed)",
         PawnTicketStatus.Closed => "ปิดรายการ (Closed)",
+        PawnTicketStatus.Sold => "จำหน่ายแล้ว (Sold)",
         _ => Status.ToString()
     };
 
@@ -146,6 +149,14 @@ public sealed class PawnTicketDetail
 
     public bool CanRedeem =>
         Status == PawnTicketStatus.Active;
+
+    public bool CanSell =>
+        Status == PawnTicketStatus.Active &&
+        PawnDate.Date
+            .AddDays(
+                InterestPeriodDays *
+                (InterestRenewalCount + 1)) <
+            DateTime.Today;
 
     public string CustomerName { get; init; } = string.Empty;
 
@@ -199,6 +210,7 @@ public sealed class PawnTransactionDetailRow
         PawnTransactionType.Pawn => "จำนำ",
         PawnTransactionType.Interest => "ต่อดอก",
         PawnTransactionType.Redemption => "ไถ่ถอน",
+        PawnTransactionType.Sale => "จำหน่าย",
         _ => TransactionType.ToString()
     };
 
@@ -314,6 +326,11 @@ public sealed class PawnTicketSearchService
             case PawnTicketSearchFilter.Redeemed:
                 query = query.Where(ticket =>
                     ticket.Status == PawnTicketStatus.Redeemed);
+                break;
+
+            case PawnTicketSearchFilter.Sold:
+                query = query.Where(ticket =>
+                    ticket.Status == PawnTicketStatus.Sold);
                 break;
         }
 

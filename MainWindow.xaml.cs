@@ -483,6 +483,12 @@ public partial class MainWindow : Window
             HomeRedemptionIncomeText.Text =
                 $"รับเข้า {summary.RedemptionIncome:N2} บาท";
 
+            HomeSaleCountText.Text =
+                $"{summary.SaleCount:N0} รายการ";
+
+            HomeSaleIncomeText.Text =
+                $"รับเข้า {summary.SaleIncome:N2} บาท";
+
             HomeTotalIncomeText.Text =
                 $"{summary.TotalIncome:N2} บาท";
 
@@ -499,6 +505,11 @@ public partial class MainWindow : Window
 
             HomeProfitText.Text =
                 $"{summary.Profit:N2} บาท";
+
+            HomeProfitText.Foreground =
+                summary.Profit < 0m
+                    ? Brushes.Firebrick
+                    : Brushes.ForestGreen;
         }
         catch (Exception ex)
         {
@@ -612,7 +623,7 @@ public partial class MainWindow : Window
             TodayContent,
             TodayButton,
             "รายการวันนี้",
-            "สรุปรายการรับจำนำ ต่อดอก ไถ่ถอน และเงินเข้าออกประจำวัน");
+            "สรุปรายการรับจำนำ ต่อดอก ไถ่ถอน จำหน่าย และเงินเข้าออกประจำวัน");
 
         LoadTodaySummary();
     }
@@ -648,6 +659,11 @@ public partial class MainWindow : Window
                 $"{summary.RedemptionIncome:N2} บาท";
             TodayRedemptionCountText.Text =
                 $"ไถ่ถอน {summary.RedemptionCount:N0} รายการ";
+
+            TodaySaleIncomeText.Text =
+                $"{summary.SaleIncome:N2} บาท";
+            TodaySaleCountText.Text =
+                $"จำหน่าย {summary.SaleCount:N0} รายการ";
 
             TodayNetCashText.Text =
                 $"{summary.NetCash:N2} บาท";
@@ -2954,6 +2970,7 @@ public partial class MainWindow : Window
             2 => PawnTicketSearchFilter.DueToday,
             3 => PawnTicketSearchFilter.Overdue,
             4 => PawnTicketSearchFilter.Redeemed,
+            5 => PawnTicketSearchFilter.Sold,
             _ => PawnTicketSearchFilter.All
         };
     }
@@ -3046,7 +3063,7 @@ public partial class MainWindow : Window
 
             detailWindow.ShowDialog();
 
-            // เมื่อมีการต่อดอก / ไถ่ถอนในหน้ารายละเอียด
+            // เมื่อมีการต่อดอก / ไถ่ถอน / จำหน่ายในหน้ารายละเอียด
             // กลับมาหน้า Search ให้ดึงสถานะล่าสุดจาก SQLite ทันที
             LoadPawnTicketSearchResults();
         }

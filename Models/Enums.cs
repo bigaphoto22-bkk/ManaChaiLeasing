@@ -4,14 +4,16 @@ public enum PawnTicketStatus
 {
     Active,
     Redeemed,
-    Closed
+    Closed,
+    Sold
 }
 
 public enum PawnTransactionType
 {
     Pawn,
     Interest,
-    Redemption
+    Redemption,
+    Sale
 }
 
 public enum CashFlowType
