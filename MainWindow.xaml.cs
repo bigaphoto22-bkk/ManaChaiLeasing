@@ -44,6 +44,7 @@ public partial class MainWindow : Window
     private readonly MachineIdentityService _machineIdentityService = new();
     private readonly LicenseValidationService _licenseValidationService = new();
     private int? _selectedCustomerId;
+    private int? _repawnSourcePawnTicketId;
     private HomeDashboardPeriodPreset _homeDashboardPeriod =
         HomeDashboardPeriodPreset.Today;
 
@@ -2139,12 +2140,15 @@ public partial class MainWindow : Window
                 Brushes.ForestGreen;
         }
 
-        ShowThaiIdCustomerHistory(customer.Id);
+        if (ShowThaiIdCustomerHistory(customer.Id))
+        {
+            return;
+        }
 
         FirstNameTextBox.Focus();
     }
 
-    private void ShowThaiIdCustomerHistory(
+    private bool ShowThaiIdCustomerHistory(
         int customerId)
     {
         try
@@ -2156,6 +2160,14 @@ public partial class MainWindow : Window
                 };
 
             historyWindow.ShowDialog();
+
+            if (historyWindow.RepawnDraftRequest is not null)
+            {
+                PrepareRepawnForm(
+                    historyWindow.RepawnDraftRequest);
+
+                return true;
+            }
         }
         catch (Exception ex)
         {
@@ -2169,6 +2181,8 @@ public partial class MainWindow : Window
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
         }
+
+        return false;
     }
 
     private void ApplyNewCustomerDataFromThaiId(
@@ -2360,6 +2374,7 @@ public partial class MainWindow : Window
                     new PawnTicketSaveRequest
                     {
                         SelectedCustomerId = _selectedCustomerId,
+                        SourcePawnTicketId = _repawnSourcePawnTicketId,
                         Customer = customer,
                         Ticket = ticket,
                         SmartLookupValues =
@@ -2918,6 +2933,17 @@ public partial class MainWindow : Window
     {
         _isInitializing = true;
 
+        _repawnSourcePawnTicketId = null;
+
+        if (RepawnSourceBanner is not null)
+        {
+            RepawnSourceBanner.Visibility =
+                Visibility.Collapsed;
+
+            RepawnSourceText.Text =
+                string.Empty;
+        }
+
         TicketNumberTextBox.Clear();
         PawnDatePicker.SelectedDate = DateTime.Today;
 
@@ -2983,6 +3009,153 @@ public partial class MainWindow : Window
         UpdateAssetPreview();
 
         TicketNumberTextBox.Focus();
+    }
+
+    private void CancelRepawnButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        ClearNewPawnForm();
+    }
+
+    private void PrepareRepawnForm(
+        RepawnDraft draft)
+    {
+        ClearNewPawnForm();
+
+        ShowPage(
+            NewPawnContent,
+            NewPawnButton,
+            "รับจำนำใหม่",
+            $"สร้างตั๋วใหม่จากตั๋วเดิม {draft.SourceTicketNumber}");
+
+        _isInitializing = true;
+        _thaiIdMockDataLoaded = false;
+        _pendingThaiIdCardData = null;
+        _repawnSourcePawnTicketId =
+            draft.SourcePawnTicketId;
+        _selectedCustomerId =
+            draft.CustomerId;
+
+        RepawnSourceBanner.Visibility =
+            Visibility.Visible;
+
+        RepawnSourceText.Text =
+            $"ต้นทาง: ตั๋ว {draft.SourceTicketNumber} • " +
+            "กรุณาออกเลขตั๋วใหม่ ระบุยอดเงินใหม่ และตรวจสภาพ อุปกรณ์ รวมถึง IMEI / Serial อีกครั้ง";
+
+        TicketNumberTextBox.Clear();
+        PawnDatePicker.SelectedDate =
+            DateTime.Today;
+        PawnAmountTextBox.Clear();
+
+        FirstNameTextBox.Text =
+            draft.FirstName;
+        LastNameTextBox.Text =
+            draft.LastName;
+        CitizenIdTextBox.Text =
+            draft.CitizenId;
+        AgeTextBox.Text =
+            draft.Age?.ToString() ?? string.Empty;
+        PhoneTextBox.Text =
+            draft.Phone;
+        AddressTextBox.Text =
+            draft.Address;
+
+        CustomerRecordStatusText.Text =
+            $"ลูกค้าเดิม • #{draft.CustomerId} • สินค้าจากตั๋ว {draft.SourceTicketNumber}";
+        CustomerRecordStatusText.Foreground =
+            Brushes.ForestGreen;
+
+        int categoryIndex =
+            GetRepawnCategoryIndex(
+                draft.AssetCategory);
+
+        AssetCategoryComboBox.SelectedIndex =
+            categoryIndex;
+
+        switch (categoryIndex)
+        {
+            case 0:
+                MobileBrandComboBox.Text = draft.Brand;
+                MobileModelComboBox.Text = draft.Model;
+                MobileCapacityComboBox.Text = draft.CapacityOrSize;
+                MobileColorComboBox.Text = draft.Color;
+                MobileImeiTextBox.Text = draft.ImeiOrSerial;
+                MobileAccessoriesTextBox.Text = draft.Accessories;
+                MobileConditionTextBox.Text = draft.Condition;
+                break;
+
+            case 1:
+                ItTypeComboBox.Text = draft.ProductType;
+                ItBrandComboBox.Text = draft.Brand;
+                ItModelComboBox.Text = draft.Model;
+                ItSpecificationTextBox.Text = draft.Specification;
+                ItSerialTextBox.Text = draft.ImeiOrSerial;
+                ItAccessoriesTextBox.Text = draft.Accessories;
+                ItConditionTextBox.Text = draft.Condition;
+                break;
+
+            case 2:
+                ElectricalTypeComboBox.Text = draft.ProductType;
+                ElectricalBrandComboBox.Text = draft.Brand;
+                ElectricalModelComboBox.Text = draft.Model;
+                ElectricalSizeTextBox.Text = draft.CapacityOrSize;
+                ElectricalSerialTextBox.Text = draft.ImeiOrSerial;
+                ElectricalAccessoriesTextBox.Text = draft.Accessories;
+                ElectricalConditionTextBox.Text = draft.Condition;
+                break;
+
+            default:
+                OtherTypeTextBox.Text = draft.ProductType;
+                OtherBrandTextBox.Text = draft.Brand;
+                OtherModelTextBox.Text = draft.Model;
+                OtherDetailsTextBox.Text = draft.OtherDetails;
+                OtherSerialTextBox.Text = draft.ImeiOrSerial;
+                OtherAccessoriesTextBox.Text = draft.Accessories;
+                OtherConditionTextBox.Text = draft.Condition;
+                break;
+        }
+
+        PawnNoteTextBox.Clear();
+
+        _isInitializing = false;
+
+        UpdateProductForm();
+        UpdateAssetPreview();
+        RefreshThaiIdReaderStatus();
+
+        TicketNumberTextBox.Focus();
+    }
+
+    private static int GetRepawnCategoryIndex(
+        string assetCategory)
+    {
+        if (assetCategory.Contains(
+                "โทรศัพท์",
+                StringComparison.OrdinalIgnoreCase) ||
+            assetCategory.Contains(
+                "Tablet",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return 0;
+        }
+
+        if (assetCategory.Contains(
+                "IT",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return 1;
+        }
+
+        if (assetCategory.Contains(
+                "เครื่องใช้ไฟฟ้า",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return 2;
+        }
+
+        return 3;
     }
 
     private void PawnTicketSearchFilterComboBox_SelectionChanged(
@@ -3094,6 +3267,14 @@ public partial class MainWindow : Window
 
             detailWindow.ShowDialog();
 
+            if (detailWindow.RepawnDraftRequest is not null)
+            {
+                PrepareRepawnForm(
+                    detailWindow.RepawnDraftRequest);
+
+                return;
+            }
+
             // ผู้ใช้อาจต่อดอก ไถ่ถอน หรือจำหน่ายจากหน้ารายละเอียด
             // เมื่อกลับมาให้รายการวันนี้แสดงข้อมูลล่าสุดทันที
             LoadTodaySummary();
@@ -3139,6 +3320,14 @@ public partial class MainWindow : Window
                 };
 
             detailWindow.ShowDialog();
+
+            if (detailWindow.RepawnDraftRequest is not null)
+            {
+                PrepareRepawnForm(
+                    detailWindow.RepawnDraftRequest);
+
+                return;
+            }
 
             // เมื่อมีการต่อดอก / ไถ่ถอน / จำหน่ายในหน้ารายละเอียด
             // กลับมาหน้า Search ให้ดึงสถานะล่าสุดจาก SQLite ทันที

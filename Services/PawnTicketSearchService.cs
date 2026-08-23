@@ -158,6 +158,54 @@ public sealed class PawnTicketDetail
                 (InterestRenewalCount + 1)) <
             DateTime.Today;
 
+    public string SourcePawnTicketNumber { get; init; } = string.Empty;
+
+    public string RepawnTicketNumber { get; init; } = string.Empty;
+
+    public bool HasSourcePawnTicket =>
+        !string.IsNullOrWhiteSpace(
+            SourcePawnTicketNumber);
+
+    public bool HasRepawnTicket =>
+        !string.IsNullOrWhiteSpace(
+            RepawnTicketNumber);
+
+    public bool CanRepawn =>
+        Status == PawnTicketStatus.Redeemed &&
+        !HasRepawnTicket;
+
+    public bool ShowRepawnSection =>
+        Status == PawnTicketStatus.Redeemed ||
+        HasSourcePawnTicket ||
+        HasRepawnTicket;
+
+    public string RepawnHistoryText
+    {
+        get
+        {
+            List<string> parts = [];
+
+            if (HasSourcePawnTicket)
+            {
+                parts.Add(
+                    $"ตั๋วนี้สร้างจากตั๋วเดิม {SourcePawnTicketNumber}");
+            }
+
+            if (HasRepawnTicket)
+            {
+                parts.Add(
+                    $"สินค้านี้ถูกนำกลับมาจำนำใหม่เป็นตั๋ว {RepawnTicketNumber} แล้ว");
+            }
+            else if (Status == PawnTicketStatus.Redeemed)
+            {
+                parts.Add(
+                    "สามารถใช้ข้อมูลสินค้าเดิมสร้างตั๋วจำนำใหม่ได้");
+            }
+
+            return string.Join(" • ", parts);
+        }
+    }
+
     public string CustomerName { get; init; } = string.Empty;
 
     public string CitizenId { get; init; } = "-";
@@ -443,6 +491,25 @@ public sealed class PawnTicketSearchService
                 "ไม่พบตั๋วจำนำที่เลือก");
         }
 
+        string sourcePawnTicketNumber =
+            ticket.SourcePawnTicketId.HasValue
+                ? db.PawnTickets
+                    .AsNoTracking()
+                    .Where(item =>
+                        item.Id == ticket.SourcePawnTicketId.Value)
+                    .Select(item => item.TicketNumber)
+                    .SingleOrDefault()
+                    ?? string.Empty
+                : string.Empty;
+
+        string repawnTicketNumber = db.PawnTickets
+            .AsNoTracking()
+            .Where(item =>
+                item.SourcePawnTicketId == ticket.Id)
+            .Select(item => item.TicketNumber)
+            .SingleOrDefault()
+            ?? string.Empty;
+
         return new PawnTicketDetail
         {
             Id = ticket.Id,
@@ -452,6 +519,10 @@ public sealed class PawnTicketSearchService
             Status = ticket.Status,
             InterestRatePercent = ticket.InterestRatePercent,
             InterestPeriodDays = ticket.InterestPeriodDays,
+            SourcePawnTicketNumber =
+                sourcePawnTicketNumber,
+            RepawnTicketNumber =
+                repawnTicketNumber,
             InterestRenewalCount = ticket.Transactions.Count(transaction =>
                 !transaction.IsVoided &&
                 transaction.TransactionType == PawnTransactionType.Interest),

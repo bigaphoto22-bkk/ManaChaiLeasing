@@ -10,6 +10,7 @@ public partial class PawnTicketDetailWindow : Window
     private readonly RedemptionService _redemptionService = new();
     private readonly SaleService _saleService = new();
     private readonly PawnTicketEditService _editService = new();
+    private readonly RepawnService _repawnService = new();
     private readonly int _pawnTicketId;
 
     public PawnTicketDetailWindow(PawnTicketDetail detail)
@@ -18,6 +19,48 @@ public partial class PawnTicketDetailWindow : Window
 
         _pawnTicketId = detail.Id;
         DataContext = detail;
+    }
+
+    public RepawnDraft? RepawnDraftRequest { get; private set; }
+
+    private void RepawnItemButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        try
+        {
+            MessageBoxResult confirmation =
+                MessageBox.Show(
+                    "สร้างตั๋วจำนำใหม่โดยคัดลอกข้อมูลลูกค้าและสินค้าเดิมหรือไม่\n\n" +
+                    "ตั๋วเดิมและประวัติการเงินเดิมจะไม่ถูกแก้ไข",
+                    "จำนำสินค้าเดิมอีกครั้ง",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question,
+                    MessageBoxResult.No);
+
+            if (confirmation != MessageBoxResult.Yes)
+            {
+                return;
+            }
+
+            RepawnDraftRequest =
+                _repawnService.CreateDraft(
+                    _pawnTicketId);
+
+            DialogResult = true;
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error(
+                "Could not prepare redeemed item for repawn.",
+                ex);
+
+            MessageBox.Show(
+                $"ไม่สามารถนำสินค้าเดิมมาสร้างตั๋วใหม่ได้\n\n{ex.Message}",
+                AppInfo.StoreName,
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+        }
     }
 
     private void EditTicketButton_Click(

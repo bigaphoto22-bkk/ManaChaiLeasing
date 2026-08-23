@@ -45,6 +45,9 @@ public class AppDbContext : DbContext
             entity.HasIndex(x => x.TicketNumber)
                 .IsUnique();
 
+            entity.HasIndex(x => x.SourcePawnTicketId)
+                .IsUnique();
+
             entity.Property(x => x.TicketNumber)
                 .IsRequired();
 

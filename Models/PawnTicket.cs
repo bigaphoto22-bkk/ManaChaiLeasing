@@ -21,6 +21,10 @@ public class PawnTicket
 
     public PawnTicketStatus Status { get; set; } = PawnTicketStatus.Active;
 
+    // ตั๋วเดิมที่ไถ่ถอนแล้วและถูกใช้เป็นต้นแบบสร้างตั๋วนี้
+    // เป็นเพียงการเชื่อมประวัติ ไม่ได้นำ Transaction เดิมกลับมาใช้
+    public int? SourcePawnTicketId { get; set; }
+
     public int CustomerId { get; set; }
 
     public Customer Customer { get; set; } = null!;

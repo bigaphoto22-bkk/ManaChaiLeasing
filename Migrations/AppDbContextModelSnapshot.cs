@@ -67,6 +67,7 @@ partial class AppDbContextModelSnapshot : ModelSnapshot
             b.Property<decimal>("PrincipalAmount").HasPrecision(18, 2).HasColumnType("TEXT");
             b.Property<string>("ProductSummary").IsRequired().HasMaxLength(2500).HasColumnType("TEXT");
             b.Property<string>("ProductType").HasMaxLength(100).HasColumnType("TEXT");
+            b.Property<int?>("SourcePawnTicketId").HasColumnType("INTEGER");
             b.Property<string>("Specification").HasMaxLength(1500).HasColumnType("TEXT");
             b.Property<string>("Status").IsRequired().HasColumnType("TEXT");
             b.Property<string>("TicketNumber").IsRequired().HasMaxLength(50).HasColumnType("TEXT");
@@ -74,6 +75,7 @@ partial class AppDbContextModelSnapshot : ModelSnapshot
 
             b.HasKey("Id");
             b.HasIndex("CustomerId");
+            b.HasIndex("SourcePawnTicketId").IsUnique();
             b.HasIndex("TicketNumber").IsUnique();
             b.ToTable("PawnTickets");
         });

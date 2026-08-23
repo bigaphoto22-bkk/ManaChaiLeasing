@@ -95,6 +95,12 @@ public sealed class ThaiIdCustomerHistoryRow
 
     public DateTime? CurrentDueDate { get; init; }
 
+    public bool HasRepawnTicket { get; init; }
+
+    public bool CanRepawn =>
+        Status == PawnTicketStatus.Redeemed &&
+        !HasRepawnTicket;
+
     public string PawnDateText =>
         PawnDate.ToString("dd/MM/yyyy");
 
@@ -124,6 +130,8 @@ public sealed class ThaiIdCustomerHistoryRow
         PawnTicketStatus.Active when IsOverdue => "เกินกำหนด",
         PawnTicketStatus.Active when IsDueToday => "ครบกำหนดวันนี้",
         PawnTicketStatus.Active => "กำลังจำนำ",
+        PawnTicketStatus.Redeemed when HasRepawnTicket =>
+            "ไถ่ถอนแล้ว • จำนำใหม่แล้ว",
         PawnTicketStatus.Redeemed => "ไถ่ถอนแล้ว",
         PawnTicketStatus.Sold => "จำหน่ายแล้ว",
         PawnTicketStatus.Closed => "ปิดรายการ",
@@ -149,8 +157,18 @@ public sealed class ThaiIdCustomerHistoryService
                 "ไม่พบข้อมูลลูกค้าที่ต้องการดูประวัติ");
         }
 
+        HashSet<int> repawnedSourceIds = customer.PawnTickets
+            .Where(ticket =>
+                ticket.SourcePawnTicketId.HasValue)
+            .Select(ticket =>
+                ticket.SourcePawnTicketId!.Value)
+            .ToHashSet();
+
         List<ThaiIdCustomerHistoryRow> rows = customer.PawnTickets
-            .Select(BuildRow)
+            .Select(ticket =>
+                BuildRow(
+                    ticket,
+                    repawnedSourceIds.Contains(ticket.Id)))
             .OrderByDescending(item => item.LastActivityDate)
             .ThenByDescending(item => item.PawnTicketId)
             .ToList();
@@ -183,7 +201,8 @@ public sealed class ThaiIdCustomerHistoryService
     }
 
     private static ThaiIdCustomerHistoryRow BuildRow(
-        PawnTicket ticket)
+        PawnTicket ticket,
+        bool hasRepawnTicket)
     {
         List<PawnTransaction> activeTransactions = ticket.Transactions
             .Where(transaction => !transaction.IsVoided)
@@ -214,7 +233,8 @@ public sealed class ThaiIdCustomerHistoryService
             ProductSummary = ticket.ProductSummary,
             PrincipalAmount = ticket.PrincipalAmount,
             Status = ticket.Status,
-            CurrentDueDate = currentDueDate
+            CurrentDueDate = currentDueDate,
+            HasRepawnTicket = hasRepawnTicket
         };
     }
 

@@ -272,7 +272,7 @@
                                                     Width="110" />
 
                                 <DataGridTemplateColumn Header="สถานะ"
-                                                        Width="135">
+                                                        Width="180">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding StatusText}"
@@ -300,6 +300,11 @@
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding StatusText}"
                                                                          Value="ไถ่ถอนแล้ว">
+                                                                <Setter Property="Foreground"
+                                                                        Value="#047857" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding StatusText}"
+                                                                         Value="ไถ่ถอนแล้ว • จำนำใหม่แล้ว">
                                                                 <Setter Property="Foreground"
                                                                         Value="#047857" />
                                                             </DataTrigger>
@@ -341,7 +346,9 @@
             <Grid Margin="28,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="190" />
+                    <ColumnDefinition Width="175" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="225" />
                     <ColumnDefinition Width="12" />
                     <ColumnDefinition Width="245" />
                 </Grid.ColumnDefinitions>
@@ -361,7 +368,19 @@
                         IsEnabled="False"
                         Click="OpenSelectedTicketButton_Click" />
 
-                <Button Grid.Column="3"
+                <Button x:Name="RepawnSelectedTicketButton"
+                        Grid.Column="3"
+                        Height="48"
+                        Content="จำนำสินค้าเดิมอีกครั้ง"
+                        FontSize="15"
+                        FontWeight="SemiBold"
+                        Background="#15803D"
+                        Foreground="White"
+                        BorderBrush="#15803D"
+                        IsEnabled="False"
+                        Click="RepawnSelectedTicketButton_Click" />
+
+                <Button Grid.Column="5"
                         Height="48"
                         Content="ใช้ข้อมูลนี้รับจำนำใหม่"
                         FontSize="16"

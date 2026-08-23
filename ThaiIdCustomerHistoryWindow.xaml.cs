@@ -11,6 +11,7 @@ public partial class ThaiIdCustomerHistoryWindow : Window
     private readonly int _customerId;
     private readonly ThaiIdCustomerHistoryService _historyService = new();
     private readonly PawnTicketSearchService _ticketSearchService = new();
+    private readonly RepawnService _repawnService = new();
 
     public ThaiIdCustomerHistoryWindow(int customerId)
     {
@@ -47,7 +48,10 @@ public partial class ThaiIdCustomerHistoryWindow : Window
         ConfigureAlert(summary.AlertLevel);
 
         OpenSelectedTicketButton.IsEnabled = false;
+        RepawnSelectedTicketButton.IsEnabled = false;
     }
+
+    public RepawnDraft? RepawnDraftRequest { get; private set; }
 
     private void ConfigureAlert(
         ThaiIdCustomerHistoryAlertLevel level)
@@ -99,6 +103,11 @@ public partial class ThaiIdCustomerHistoryWindow : Window
         OpenSelectedTicketButton.IsEnabled =
             HistoryDataGrid.SelectedItem is
                 ThaiIdCustomerHistoryRow;
+
+        RepawnSelectedTicketButton.IsEnabled =
+            HistoryDataGrid.SelectedItem is
+                ThaiIdCustomerHistoryRow selected &&
+            selected.CanRepawn;
     }
 
     private void HistoryDataGrid_MouseDoubleClick(
@@ -137,6 +146,15 @@ public partial class ThaiIdCustomerHistoryWindow : Window
 
             detailWindow.ShowDialog();
 
+            if (detailWindow.RepawnDraftRequest is not null)
+            {
+                RepawnDraftRequest =
+                    detailWindow.RepawnDraftRequest;
+
+                DialogResult = true;
+                return;
+            }
+
             // ต่อดอก ไถ่ถอน หรือจำหน่ายจากหน้ารายละเอียดได้
             // เมื่อกลับมาให้แสดงสถานะและประวัติล่าสุดทันที
             LoadHistory();
@@ -152,6 +170,53 @@ public partial class ThaiIdCustomerHistoryWindow : Window
                 AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
+        }
+    }
+
+    private void RepawnSelectedTicketButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        if (HistoryDataGrid.SelectedItem is not
+            ThaiIdCustomerHistoryRow selected ||
+            !selected.CanRepawn)
+        {
+            return;
+        }
+
+        try
+        {
+            MessageBoxResult confirmation =
+                MessageBox.Show(
+                    $"สร้างตั๋วจำนำใหม่จากตั๋ว {selected.TicketNumber} หรือไม่\n\n" +
+                    "ระบบจะคัดลอกเฉพาะข้อมูลลูกค้าและสินค้า",
+                    "จำนำสินค้าเดิมอีกครั้ง",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question,
+                    MessageBoxResult.No);
+
+            if (confirmation != MessageBoxResult.Yes)
+            {
+                return;
+            }
+
+            RepawnDraftRequest =
+                _repawnService.CreateDraft(
+                    selected.PawnTicketId);
+
+            DialogResult = true;
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error(
+                "Could not prepare repawn from Thai ID customer history.",
+                ex);
+
+            MessageBox.Show(
+                $"ไม่สามารถนำสินค้าเดิมมาสร้างตั๋วใหม่ได้\n\n{ex.Message}",
+                AppInfo.StoreName,
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
         }
     }
 

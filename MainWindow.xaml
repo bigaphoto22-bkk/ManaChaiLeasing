@@ -750,6 +750,41 @@
 
                         </Border>
 
+                        <Border x:Name="RepawnSourceBanner"
+                                Margin="0,18,0,0"
+                                Padding="18"
+                                Background="#F0FDF4"
+                                BorderBrush="#86EFAC"
+                                BorderThickness="1"
+                                CornerRadius="12"
+                                Visibility="Collapsed">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="18" />
+                                    <ColumnDefinition Width="135" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="กำลังสร้างตั๋วใหม่จากสินค้าที่ไถ่ถอนแล้ว"
+                                               FontSize="16"
+                                               FontWeight="SemiBold"
+                                               Foreground="#166534" />
+                                    <TextBlock x:Name="RepawnSourceText"
+                                               Margin="0,5,0,0"
+                                               FontSize="13"
+                                               Foreground="#374151"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+
+                                <Button Grid.Column="2"
+                                        Height="42"
+                                        Content="ยกเลิก"
+                                        Style="{StaticResource SecondaryButtonStyle}"
+                                        Click="CancelRepawnButton_Click" />
+                            </Grid>
+                        </Border>
+
                         <!-- Ticket -->
                         <Border Margin="0,18,0,0"
                                 Background="White"

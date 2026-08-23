@@ -102,6 +102,58 @@
                 </Border>
 
                 <Border Margin="0,18,0,0"
+                        Padding="18"
+                        Background="#F0FDF4"
+                        BorderBrush="#BBF7D0"
+                        BorderThickness="1"
+                        CornerRadius="10">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Visibility"
+                                    Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowRepawnSection}"
+                                             Value="True">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="18" />
+                            <ColumnDefinition Width="235" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="ประวัติการนำสินค้ากลับมาจำนำ"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       Foreground="#166534" />
+                            <TextBlock Margin="0,5,0,0"
+                                       Text="{Binding RepawnHistoryText}"
+                                       FontSize="13"
+                                       Foreground="#374151"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <Button Grid.Column="2"
+                                Height="48"
+                                Content="จำนำสินค้าเดิมอีกครั้ง"
+                                FontSize="15"
+                                FontWeight="SemiBold"
+                                Background="#15803D"
+                                Foreground="White"
+                                BorderBrush="#15803D"
+                                IsEnabled="{Binding CanRepawn}"
+                                Click="RepawnItemButton_Click" />
+                    </Grid>
+                </Border>
+
+                <Border Margin="0,18,0,0"
                         Padding="24"
                         Background="White"
                         BorderBrush="#E5E7EB"
