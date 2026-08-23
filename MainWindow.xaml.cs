@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -1719,6 +1720,167 @@ public partial class MainWindow : Window
 
         UpdateProductForm();
         UpdateAssetPreview();
+    }
+
+    private void PawnDatePicker_PreviewMouseLeftButtonUp(
+        object sender,
+        MouseButtonEventArgs e)
+    {
+        if (sender is not DatePicker datePicker)
+        {
+            return;
+        }
+
+        DatePickerTextBox? textBox =
+            GetDatePickerTextBox(datePicker);
+
+        // Do not interfere with the calendar drop-down button.
+        if (textBox is null || !textBox.IsMouseOver)
+        {
+            return;
+        }
+
+        // Let WPF finish placing the caret at the clicked position first,
+        // then select the complete day, month, or year segment.
+        Dispatcher.BeginInvoke(
+            DispatcherPriority.Background,
+            new Action(() =>
+                SelectDatePartAtCaret(
+                    textBox,
+                    textBox.CaretIndex)));
+    }
+
+    private void PawnDatePicker_PreviewKeyDown(
+        object sender,
+        KeyEventArgs e)
+    {
+        if (sender is not DatePicker datePicker ||
+            (e.Key != Key.Left && e.Key != Key.Right) ||
+            Keyboard.Modifiers != ModifierKeys.None)
+        {
+            return;
+        }
+
+        DatePickerTextBox? textBox =
+            GetDatePickerTextBox(datePicker);
+
+        if (textBox is null)
+        {
+            return;
+        }
+
+        List<(int Start, int Length)> parts =
+            GetDatePartRanges(textBox.Text);
+
+        int currentPartIndex =
+            FindDatePartIndex(
+                parts,
+                textBox.SelectionStart);
+
+        if (currentPartIndex < 0)
+        {
+            return;
+        }
+
+        int nextPartIndex = e.Key == Key.Right
+            ? currentPartIndex + 1
+            : currentPartIndex - 1;
+
+        if (nextPartIndex < 0 ||
+            nextPartIndex >= parts.Count)
+        {
+            return;
+        }
+
+        (int start, int length) =
+            parts[nextPartIndex];
+
+        e.Handled = true;
+        textBox.Focus();
+        textBox.Select(start, length);
+    }
+
+    private static DatePickerTextBox? GetDatePickerTextBox(
+        DatePicker datePicker)
+    {
+        datePicker.ApplyTemplate();
+
+        return datePicker.Template.FindName(
+            "PART_TextBox",
+            datePicker) as DatePickerTextBox;
+    }
+
+    private static void SelectDatePartAtCaret(
+        DatePickerTextBox textBox,
+        int caretIndex)
+    {
+        List<(int Start, int Length)> parts =
+            GetDatePartRanges(textBox.Text);
+
+        int partIndex =
+            FindDatePartIndex(
+                parts,
+                caretIndex);
+
+        if (partIndex < 0)
+        {
+            return;
+        }
+
+        (int start, int length) =
+            parts[partIndex];
+
+        textBox.Focus();
+        textBox.Select(start, length);
+    }
+
+    private static int FindDatePartIndex(
+        IReadOnlyList<(int Start, int Length)> parts,
+        int textPosition)
+    {
+        for (int index = 0;
+             index < parts.Count;
+             index++)
+        {
+            (int start, int length) = parts[index];
+
+            if (textPosition >= start &&
+                textPosition <= start + length)
+            {
+                return index;
+            }
+        }
+
+        return -1;
+    }
+
+    private static List<(int Start, int Length)> GetDatePartRanges(
+        string? text)
+    {
+        List<(int Start, int Length)> parts = [];
+        string value = text ?? string.Empty;
+        int index = 0;
+
+        while (index < value.Length)
+        {
+            if (!char.IsDigit(value[index]))
+            {
+                index++;
+                continue;
+            }
+
+            int start = index;
+
+            while (index < value.Length &&
+                   char.IsDigit(value[index]))
+            {
+                index++;
+            }
+
+            parts.Add((start, index - start));
+        }
+
+        return parts;
     }
 
     private void FormComboBox_PreviewMouseLeftButtonUp(

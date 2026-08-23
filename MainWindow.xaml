@@ -819,7 +819,9 @@
                                                     Height="40"
                                                     FontSize="14"
                                                     BorderBrush="#D1D5DB"
-                                                    BorderThickness="1" />
+                                                    BorderThickness="1"
+                                                    PreviewMouseLeftButtonUp="PawnDatePicker_PreviewMouseLeftButtonUp"
+                                                    PreviewKeyDown="PawnDatePicker_PreviewKeyDown" />
                                     </StackPanel>
                                 </Grid>
 

@@ -679,6 +679,7 @@
                         FontSize="16"
                         FontWeight="SemiBold"
                         IsDefault="True"
+                        IsCancel="True"
                         Click="CloseButton_Click" />
             </Grid>
         </Border>
