@@ -78,6 +78,21 @@ partial class AppDbContextModelSnapshot : ModelSnapshot
             b.ToTable("PawnTickets");
         });
 
+        modelBuilder.Entity("ManaChaiLeasing.Models.PawnTicketEditAudit", b =>
+        {
+            b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("INTEGER");
+            b.Property<string>("ChangeSummary").IsRequired().HasMaxLength(12000).HasColumnType("TEXT");
+            b.Property<DateTime>("EditedAt").HasColumnType("TEXT");
+            b.Property<string>("EditorMachine").IsRequired().HasMaxLength(100).HasColumnType("TEXT");
+            b.Property<string>("EditorUser").IsRequired().HasMaxLength(200).HasColumnType("TEXT");
+            b.Property<int>("PawnTicketId").HasColumnType("INTEGER");
+            b.Property<string>("Reason").IsRequired().HasMaxLength(1000).HasColumnType("TEXT");
+
+            b.HasKey("Id");
+            b.HasIndex("PawnTicketId");
+            b.ToTable("PawnTicketEditAudits");
+        });
+
         modelBuilder.Entity("ManaChaiLeasing.Models.PawnTransaction", b =>
         {
             b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("INTEGER");
@@ -135,6 +150,17 @@ partial class AppDbContextModelSnapshot : ModelSnapshot
             b.Navigation("PawnTicket");
         });
 
+        modelBuilder.Entity("ManaChaiLeasing.Models.PawnTicketEditAudit", b =>
+        {
+            b.HasOne("ManaChaiLeasing.Models.PawnTicket", "PawnTicket")
+                .WithMany("EditAudits")
+                .HasForeignKey("PawnTicketId")
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+
+            b.Navigation("PawnTicket");
+        });
+
         modelBuilder.Entity("ManaChaiLeasing.Models.Customer", b =>
         {
             b.Navigation("PawnTickets");
@@ -142,6 +168,8 @@ partial class AppDbContextModelSnapshot : ModelSnapshot
 
         modelBuilder.Entity("ManaChaiLeasing.Models.PawnTicket", b =>
         {
+            b.Navigation("EditAudits");
+
             b.Navigation("Transactions");
         });
 #pragma warning restore 612, 618

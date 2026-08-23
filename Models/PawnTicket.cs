@@ -69,4 +69,6 @@ public class PawnTicket
     public DateTime UpdatedAt { get; set; } = DateTime.Now;
 
     public ICollection<PawnTransaction> Transactions { get; set; } = new List<PawnTransaction>();
+
+    public ICollection<PawnTicketEditAudit> EditAudits { get; set; } = new List<PawnTicketEditAudit>();
 }

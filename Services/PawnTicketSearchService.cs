@@ -195,6 +195,35 @@ public sealed class PawnTicketDetail
     public string Note { get; init; } = "-";
 
     public List<PawnTransactionDetailRow> Transactions { get; init; } = new();
+
+    public List<PawnTicketEditAuditRow> EditAudits { get; init; } = new();
+
+    public bool HasEditAudits =>
+        EditAudits.Count > 0;
+
+    public string EditAuditCountText =>
+        HasEditAudits
+            ? $"ทั้งหมด {EditAudits.Count:N0} ครั้ง"
+            : "ยังไม่มีการแก้ไขข้อมูล";
+}
+
+public sealed class PawnTicketEditAuditRow
+{
+    public DateTime EditedAt { get; init; }
+
+    public string EditedAtText =>
+        EditedAt.ToString("dd/MM/yyyy HH:mm");
+
+    public string EditorUser { get; init; } = "-";
+
+    public string EditorMachine { get; init; } = "-";
+
+    public string EditorText =>
+        $"{EditorUser} • เครื่อง {EditorMachine}";
+
+    public string Reason { get; init; } = "-";
+
+    public string ChangeSummary { get; init; } = "-";
 }
 
 public sealed class PawnTransactionDetailRow
@@ -405,6 +434,7 @@ public sealed class PawnTicketSearchService
             .AsNoTracking()
             .Include(item => item.Customer)
             .Include(item => item.Transactions)
+            .Include(item => item.EditAudits)
             .SingleOrDefault(item => item.Id == pawnTicketId);
 
         if (ticket is null)
@@ -457,6 +487,18 @@ public sealed class PawnTicketSearchService
                     InterestSequence = transaction.InterestSequence,
                     PaymentMethod = Display(transaction.PaymentMethod),
                     Note = Display(transaction.Note)
+                })
+                .ToList(),
+            EditAudits = ticket.EditAudits
+                .OrderByDescending(audit => audit.EditedAt)
+                .ThenByDescending(audit => audit.Id)
+                .Select(audit => new PawnTicketEditAuditRow
+                {
+                    EditedAt = audit.EditedAt,
+                    EditorUser = Display(audit.EditorUser),
+                    EditorMachine = Display(audit.EditorMachine),
+                    Reason = Display(audit.Reason),
+                    ChangeSummary = Display(audit.ChangeSummary)
                 })
                 .ToList()
         };

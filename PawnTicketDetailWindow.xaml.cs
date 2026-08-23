@@ -9,6 +9,7 @@ public partial class PawnTicketDetailWindow : Window
     private readonly InterestRenewalService _renewalService = new();
     private readonly RedemptionService _redemptionService = new();
     private readonly SaleService _saleService = new();
+    private readonly PawnTicketEditService _editService = new();
     private readonly int _pawnTicketId;
 
     public PawnTicketDetailWindow(PawnTicketDetail detail)
@@ -17,6 +18,46 @@ public partial class PawnTicketDetailWindow : Window
 
         _pawnTicketId = detail.Id;
         DataContext = detail;
+    }
+
+    private void EditTicketButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        try
+        {
+            PawnTicketEditData editData =
+                _editService.GetEditData(
+                    _pawnTicketId);
+
+            PawnTicketEditWindow editWindow =
+                new(editData)
+                {
+                    Owner = this
+                };
+
+            bool? result =
+                editWindow.ShowDialog();
+
+            if (result == true)
+            {
+                DataContext =
+                    _searchService.GetDetail(
+                        _pawnTicketId);
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error(
+                "Could not open controlled pawn ticket edit.",
+                ex);
+
+            MessageBox.Show(
+                $"ไม่สามารถเปิดหน้าแก้ไขข้อมูลได้\n\n{ex.Message}",
+                AppInfo.StoreName,
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
     }
 
     private void RenewInterestButton_Click(
