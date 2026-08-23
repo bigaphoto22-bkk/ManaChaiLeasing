@@ -27,6 +27,8 @@ public sealed class TodaySummary
 
 public sealed class TodayTransactionRow
 {
+    public int PawnTicketId { get; init; }
+
     public DateTime TransactionDate { get; init; }
     public string TransactionTimeText => TransactionDate.ToString("HH:mm");
 
@@ -131,6 +133,7 @@ public sealed class TodaySummaryService
             SaleIncome = saleIncome,
             Transactions = transactions.Select(transaction => new TodayTransactionRow
             {
+                PawnTicketId = transaction.PawnTicketId,
                 TransactionDate = transaction.TransactionDate,
                 TicketNumber = transaction.PawnTicket.TicketNumber,
                 CustomerName =

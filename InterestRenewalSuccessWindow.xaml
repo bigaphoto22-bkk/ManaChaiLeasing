@@ -5,7 +5,8 @@
         Title="{x:Static local:AppInfo.InterestRenewalSuccessWindowTitle}"
         Icon="Resources/ManaChaiLeasing.ico"
         Width="590"
-        Height="490"
+        MinHeight="540"
+        SizeToContent="Height"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
         ShowInTaskbar="False"
@@ -16,7 +17,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="18" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="20" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>

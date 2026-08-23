@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using Microsoft.Win32;
 using ManaChaiLeasing.Data;
 using ManaChaiLeasing.Models;
@@ -1762,7 +1763,12 @@ public partial class MainWindow : Window
             return;
         }
 
-        UpdateAssetPreview();
+        // Editable ComboBox จะส่ง SelectionChanged ก่อนค่า Text ถูกอัปเดต
+        // ในบางกรณีที่เลือกด้วยเมาส์ จึงรอให้ WPF ปิดรอบ event นี้ก่อน
+        // แล้วค่อยอ่านค่า เพื่อให้สรุปสินค้าแสดงค่าที่เพิ่งเลือกจริง ๆ
+        Dispatcher.BeginInvoke(
+            DispatcherPriority.Background,
+            new Action(UpdateAssetPreview));
     }
 
     private void SmartField_KeyUp(
@@ -2133,7 +2139,36 @@ public partial class MainWindow : Window
                 Brushes.ForestGreen;
         }
 
+        ShowThaiIdCustomerHistory(customer.Id);
+
         FirstNameTextBox.Focus();
+    }
+
+    private void ShowThaiIdCustomerHistory(
+        int customerId)
+    {
+        try
+        {
+            ThaiIdCustomerHistoryWindow historyWindow =
+                new(customerId)
+                {
+                    Owner = this
+                };
+
+            historyWindow.ShowDialog();
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error(
+                "Could not open Thai ID customer history.",
+                ex);
+
+            MessageBox.Show(
+                $"พบลูกค้าเดิม แต่ไม่สามารถเปิดประวัติได้\n\n{ex.Message}",
+                AppInfo.StoreName,
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+        }
     }
 
     private void ApplyNewCustomerDataFromThaiId(
@@ -3033,6 +3068,48 @@ public partial class MainWindow : Window
         MouseButtonEventArgs e)
     {
         OpenSelectedPawnTicket();
+    }
+
+    private void TodayTransactionsDataGrid_MouseDoubleClick(
+        object sender,
+        MouseButtonEventArgs e)
+    {
+        if (TodayTransactionsDataGrid.SelectedItem
+            is not TodayTransactionRow selected)
+        {
+            return;
+        }
+
+        try
+        {
+            PawnTicketDetail detail =
+                _pawnTicketSearchService.GetDetail(
+                    selected.PawnTicketId);
+
+            PawnTicketDetailWindow detailWindow =
+                new(detail)
+                {
+                    Owner = this
+                };
+
+            detailWindow.ShowDialog();
+
+            // ผู้ใช้อาจต่อดอก ไถ่ถอน หรือจำหน่ายจากหน้ารายละเอียด
+            // เมื่อกลับมาให้รายการวันนี้แสดงข้อมูลล่าสุดทันที
+            LoadTodaySummary();
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error(
+                "Could not open ticket from today's transactions.",
+                ex);
+
+            MessageBox.Show(
+                $"ไม่สามารถเปิดรายละเอียดตั๋วได้\n\n{ex.Message}",
+                ManaChaiLeasing.AppInfo.StoreName,
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
     }
 
     private void OpenSelectedPawnTicket()

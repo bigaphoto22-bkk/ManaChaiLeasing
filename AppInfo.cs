@@ -57,4 +57,7 @@ public static class AppInfo
 
     public const string SaleWindowTitle =
         "จำหน่ายสินค้า - " + StoreName;
+
+    public const string ThaiIdCustomerHistoryWindowTitle =
+        "ประวัติลูกค้าจากบัตรประชาชน - " + StoreName;
 }
