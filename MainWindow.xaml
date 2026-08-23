@@ -2253,6 +2253,11 @@
                                                         Binding="{Binding CustomerName}"
                                                         ElementStyle="{StaticResource TodayTransactionTextCellStyle}"
                                                         Width="180" />
+                                    <DataGridTextColumn Header="สินค้า"
+                                                        Binding="{Binding ProductSummary}"
+                                                        ElementStyle="{StaticResource TodayTransactionTextCellStyle}"
+                                                        MinWidth="180"
+                                                        Width="*" />
 
                                     <DataGridTemplateColumn Header="รายการ"
                                                             Width="110">
@@ -2332,7 +2337,7 @@
                                     <DataGridTextColumn Header="ช่องทาง"
                                                         Binding="{Binding PaymentMethod}"
                                                         ElementStyle="{StaticResource TodayTransactionTextCellStyle}"
-                                                        Width="*" />
+                                                        Width="150" />
                                 </DataGrid.Columns>
                             </DataGrid>
                         </Grid>

@@ -34,6 +34,7 @@ public sealed class TodayTransactionRow
 
     public string TicketNumber { get; init; } = string.Empty;
     public string CustomerName { get; init; } = string.Empty;
+    public string ProductSummary { get; init; } = "-";
 
     public PawnTransactionType TransactionType { get; init; }
     public string TransactionTypeText => TransactionType switch
@@ -139,6 +140,9 @@ public sealed class TodaySummaryService
                 CustomerName =
                     $"{transaction.PawnTicket.Customer.FirstName} " +
                     $"{transaction.PawnTicket.Customer.LastName}".Trim(),
+                ProductSummary =
+                    Display(
+                        transaction.PawnTicket.ProductSummary),
                 TransactionType = transaction.TransactionType,
                 CashFlowType = transaction.CashFlowType,
                 Amount = transaction.Amount,
