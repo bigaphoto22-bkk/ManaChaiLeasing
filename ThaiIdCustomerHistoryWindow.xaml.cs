@@ -49,6 +49,8 @@ public partial class ThaiIdCustomerHistoryWindow : Window
 
         OpenSelectedTicketButton.IsEnabled = false;
         RepawnSelectedTicketButton.IsEnabled = false;
+        HistoryActionHintText.Text =
+            "เลือกตั๋วเพื่อเปิดดูรายละเอียด";
     }
 
     public RepawnDraft? RepawnDraftRequest { get; private set; }
@@ -100,14 +102,44 @@ public partial class ThaiIdCustomerHistoryWindow : Window
         object sender,
         SelectionChangedEventArgs e)
     {
-        OpenSelectedTicketButton.IsEnabled =
-            HistoryDataGrid.SelectedItem is
-                ThaiIdCustomerHistoryRow;
+        if (HistoryDataGrid.SelectedItem is not
+            ThaiIdCustomerHistoryRow selected)
+        {
+            OpenSelectedTicketButton.IsEnabled = false;
+            RepawnSelectedTicketButton.IsEnabled = false;
+            HistoryActionHintText.Text =
+                "เลือกตั๋วเพื่อเปิดดูรายละเอียด";
+            return;
+        }
 
+        OpenSelectedTicketButton.IsEnabled = true;
         RepawnSelectedTicketButton.IsEnabled =
-            HistoryDataGrid.SelectedItem is
-                ThaiIdCustomerHistoryRow selected &&
             selected.CanRepawn;
+
+        if (selected.CanRepawn)
+        {
+            HistoryActionHintText.Text =
+                "ตั๋วนี้ไถ่ถอนแล้ว สามารถนำสินค้าเดิมมาสร้างตั๋วใหม่ได้";
+
+            RepawnSelectedTicketButton.ToolTip =
+                "พร้อมสร้างตั๋วจำนำใหม่จากข้อมูลสินค้าเดิม";
+        }
+        else if (selected.HasRepawnTicket)
+        {
+            HistoryActionHintText.Text =
+                "สินค้าจากตั๋วนี้ถูกนำกลับมาจำนำใหม่แล้ว";
+
+            RepawnSelectedTicketButton.ToolTip =
+                "ตั๋วเดิมหนึ่งใบใช้สร้างตั๋วใหม่ได้เพียงครั้งเดียว";
+        }
+        else
+        {
+            HistoryActionHintText.Text =
+                "จำนำสินค้าเดิมได้เมื่อตั๋วอยู่ในสถานะไถ่ถอนแล้วเท่านั้น";
+
+            RepawnSelectedTicketButton.ToolTip =
+                "ตั๋วนี้ยังไม่อยู่ในสถานะไถ่ถอนแล้ว";
+        }
     }
 
     private void HistoryDataGrid_MouseDoubleClick(

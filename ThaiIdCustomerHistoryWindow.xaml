@@ -12,6 +12,18 @@
         Background="#F5F6F8"
         FontFamily="Segoe UI">
 
+    <Window.Resources>
+        <Style x:Key="HistoryTextCellStyle"
+               TargetType="TextBlock">
+            <Setter Property="VerticalAlignment"
+                    Value="Center" />
+            <Setter Property="Padding"
+                    Value="4,0,4,0" />
+            <Setter Property="TextTrimming"
+                    Value="CharacterEllipsis" />
+        </Style>
+    </Window.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
@@ -254,21 +266,75 @@
                                   FontSize="13"
                                   SelectionChanged="HistoryDataGrid_SelectionChanged"
                                   MouseDoubleClick="HistoryDataGrid_MouseDoubleClick">
+                            <DataGrid.ColumnHeaderStyle>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="VerticalContentAlignment"
+                                            Value="Center" />
+                                </Style>
+                            </DataGrid.ColumnHeaderStyle>
+
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow">
+                                    <Setter Property="Background"
+                                            Value="White" />
+                                    <Setter Property="Foreground"
+                                            Value="#111827" />
+                                    <Setter Property="VerticalContentAlignment"
+                                            Value="Center" />
+
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected"
+                                                 Value="True">
+                                            <Setter Property="Background"
+                                                    Value="#0B82D6" />
+                                            <Setter Property="Foreground"
+                                                    Value="White" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.RowStyle>
+
+                            <DataGrid.CellStyle>
+                                <Style TargetType="DataGridCell">
+                                    <Setter Property="Background"
+                                            Value="Transparent" />
+                                    <Setter Property="BorderThickness"
+                                            Value="0" />
+                                    <Setter Property="VerticalContentAlignment"
+                                            Value="Center" />
+
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected"
+                                                 Value="True">
+                                            <Setter Property="Background"
+                                                    Value="#0B82D6" />
+                                            <Setter Property="Foreground"
+                                                    Value="White" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.CellStyle>
+
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="เลขตั๋ว"
                                                     Binding="{Binding TicketNumber}"
+                                                    ElementStyle="{StaticResource HistoryTextCellStyle}"
                                                     Width="125" />
                                 <DataGridTextColumn Header="วันที่รับจำนำ"
                                                     Binding="{Binding PawnDateText}"
+                                                    ElementStyle="{StaticResource HistoryTextCellStyle}"
                                                     Width="105" />
                                 <DataGridTextColumn Header="สินค้า"
                                                     Binding="{Binding ProductSummary}"
+                                                    ElementStyle="{StaticResource HistoryTextCellStyle}"
                                                     Width="*" />
                                 <DataGridTextColumn Header="เงินต้น"
                                                     Binding="{Binding PrincipalAmountText}"
+                                                    ElementStyle="{StaticResource HistoryTextCellStyle}"
                                                     Width="105" />
                                 <DataGridTextColumn Header="ครบกำหนด"
                                                     Binding="{Binding CurrentDueDateText}"
+                                                    ElementStyle="{StaticResource HistoryTextCellStyle}"
                                                     Width="110" />
 
                                 <DataGridTemplateColumn Header="สถานะ"
@@ -277,6 +343,7 @@
                                         <DataTemplate>
                                             <TextBlock Text="{Binding StatusText}"
                                                        VerticalAlignment="Center"
+                                                       Padding="4,0,4,0"
                                                        FontWeight="SemiBold">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
@@ -313,6 +380,11 @@
                                                                 <Setter Property="Foreground"
                                                                         Value="#B45309" />
                                                             </DataTrigger>
+                                                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type DataGridRow}}}"
+                                                                         Value="True">
+                                                                <Setter Property="Foreground"
+                                                                        Value="White" />
+                                                            </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
                                                 </TextBlock.Style>
@@ -323,6 +395,7 @@
 
                                 <DataGridTextColumn Header="เคลื่อนไหวล่าสุด"
                                                     Binding="{Binding LastActivityDateText}"
+                                                    ElementStyle="{StaticResource HistoryTextCellStyle}"
                                                     Width="140" />
                             </DataGrid.Columns>
                         </DataGrid>
@@ -353,11 +426,13 @@
                     <ColumnDefinition Width="245" />
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Column="0"
+                <TextBlock x:Name="HistoryActionHintText"
+                           Grid.Column="0"
                            VerticalAlignment="Center"
-                           Text="ดับเบิลคลิกตั๋วเพื่อเปิดรายละเอียดได้"
+                           Text="เลือกตั๋วเพื่อเปิดดูรายละเอียด"
                            FontSize="12"
-                           Foreground="#6B7280" />
+                           Foreground="#6B7280"
+                           TextWrapping="Wrap" />
 
                 <Button x:Name="OpenSelectedTicketButton"
                         Grid.Column="1"
@@ -378,6 +453,8 @@
                         Foreground="White"
                         BorderBrush="#15803D"
                         IsEnabled="False"
+                        ToolTip="ใช้ได้เฉพาะตั๋วที่ไถ่ถอนแล้ว และยังไม่เคยนำไปสร้างตั๋วใหม่"
+                        ToolTipService.ShowOnDisabled="True"
                         Click="RepawnSelectedTicketButton_Click" />
 
                 <Button Grid.Column="5"

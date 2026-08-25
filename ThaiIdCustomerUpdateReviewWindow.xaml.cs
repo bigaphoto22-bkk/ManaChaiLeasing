@@ -87,7 +87,7 @@ public partial class ThaiIdCustomerUpdateReviewWindow : Window
                 : Visibility.Collapsed;
 
         CustomerIdentityText.Text =
-            $"ลูกค้า #{_customer.Id} • {_customer.FirstName} {_customer.LastName} • เลขบัตร {_cardData.CitizenId}";
+            $"{_customer.FirstName} {_customer.LastName} • มีข้อมูลอยู่ในระบบแล้ว";
 
         int differenceCount =
             (_firstNameDifferent ? 1 : 0) +
@@ -97,8 +97,16 @@ public partial class ThaiIdCustomerUpdateReviewWindow : Window
 
         MatchSummaryText.Text =
             differenceCount == 0
-                ? "ข้อมูลตรงกัน • ไม่พบช่องที่ต้องอัปเดต"
-                : $"พบข้อมูลที่แตกต่าง {differenceCount} ช่อง • ระบบยังไม่ได้เปลี่ยนข้อมูลใด ๆ";
+                ? "เป็นลูกค้าเก่า • ข้อมูลตรงกับบัตร"
+                : $"เป็นลูกค้าเก่า • พบข้อมูลจากบัตรที่ต่างจากระบบ {differenceCount} รายการ";
+
+        UpdateInstructionBorder.Visibility =
+            VisibilityFor(
+                differenceCount > 0);
+
+        PhoneNoteBorder.Visibility =
+            VisibilityFor(
+                differenceCount > 0);
 
         FirstNameChangeRow.Visibility =
             VisibilityFor(
@@ -128,6 +136,24 @@ public partial class ThaiIdCustomerUpdateReviewWindow : Window
 
         SelectAllButton.IsEnabled =
             differenceCount > 0;
+
+        SelectAllButton.Visibility =
+            VisibilityFor(
+                differenceCount > 0);
+
+        ApplySelectedButton.Visibility =
+            VisibilityFor(
+                differenceCount > 0);
+
+        ReviewFooterHintText.Text =
+            differenceCount == 0
+                ? "กด “ใช้ข้อมูลเดิม” เพื่อดูประวัติการใช้บริการ"
+                : "เลือกเฉพาะข้อมูลจากบัตรที่ต้องการนำไปใช้";
+
+        Height =
+            differenceCount == 0
+                ? 390
+                : 650;
 
         OldFirstNameText.Text =
             Display(
