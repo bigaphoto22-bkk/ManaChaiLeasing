@@ -1553,8 +1553,19 @@ public partial class MainWindow : Window
 
         bool? result = lookupWindow.ShowDialog();
 
-        if (result == true &&
-            lookupWindow.SelectedCustomer is not null)
+        if (result != true)
+        {
+            return;
+        }
+
+        if (lookupWindow.RepawnDraftRequest is not null)
+        {
+            PrepareRepawnForm(
+                lookupWindow.RepawnDraftRequest);
+            return;
+        }
+
+        if (lookupWindow.SelectedCustomer is not null)
         {
             _pendingThaiIdCardData = null;
             FillCustomerForm(lookupWindow.SelectedCustomer);
@@ -2055,33 +2066,37 @@ public partial class MainWindow : Window
         if (detection.Status ==
             ThaiIdReaderStatus.Ready)
         {
+            ThaiIdCardReadResult readResult;
+
             Mouse.OverrideCursor = Cursors.Wait;
 
             try
             {
-                ThaiIdCardReadResult readResult =
+                readResult =
                     _thaiIdCardReaderService.ReadCard();
-
-                if (!readResult.Success ||
-                    readResult.Data is null)
-                {
-                    MessageBox.Show(
-                        $"{readResult.UserMessage}\n\n" +
-                        "หาก Reader ใช้งานไม่ได้ สามารถกรอกข้อมูลลูกค้าด้วยตนเองได้ตามปกติ",
-                        "อ่านบัตรประชาชนไม่สำเร็จ",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
-                    return;
-                }
-
-                ShowThaiIdCardPreview(
-                    readResult.Data);
             }
             finally
             {
+                // แสดง Wait Cursor เฉพาะช่วงที่กำลังอ่าน Hardware เท่านั้น
+                // หน้าตรวจสอบและหน้าประวัติต้องใช้ Cursor ปกติ
                 Mouse.OverrideCursor = null;
                 RefreshThaiIdReaderStatus();
             }
+
+            if (!readResult.Success ||
+                readResult.Data is null)
+            {
+                MessageBox.Show(
+                    $"{readResult.UserMessage}\n\n" +
+                    "หาก Reader ใช้งานไม่ได้ สามารถกรอกข้อมูลลูกค้าด้วยตนเองได้ตามปกติ",
+                    "อ่านบัตรประชาชนไม่สำเร็จ",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            ShowThaiIdCardPreview(
+                readResult.Data);
 
             return;
         }
@@ -2302,7 +2317,7 @@ public partial class MainWindow : Window
                 Brushes.ForestGreen;
         }
 
-        if (ShowThaiIdCustomerHistory(customer.Id))
+        if (ShowCustomerHistory(customer.Id))
         {
             return;
         }
@@ -2310,7 +2325,7 @@ public partial class MainWindow : Window
         FirstNameTextBox.Focus();
     }
 
-    private bool ShowThaiIdCustomerHistory(
+    private bool ShowCustomerHistory(
         int customerId)
     {
         try
@@ -2334,11 +2349,11 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             AppLog.Error(
-                "Could not open Thai ID customer history.",
+                "Could not open customer history.",
                 ex);
 
             MessageBox.Show(
-                $"พบลูกค้าเดิม แต่ไม่สามารถเปิดประวัติได้\n\n{ex.Message}",
+                $"ไม่สามารถเปิดประวัติลูกค้าได้\n\n{ex.Message}",
                 AppInfo.StoreName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
