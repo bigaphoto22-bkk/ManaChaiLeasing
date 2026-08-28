@@ -31,6 +31,11 @@ public partial class PawnTicketEditWindow : Window
         LockedTicketSummaryText.Text =
             data.LockedTicketSummary;
 
+        EditableTicketNumberTextBox.Text =
+            data.TicketNumber;
+        EditablePawnDatePicker.SelectedDate =
+            data.PawnDate.Date;
+
         FirstNameTextBox.Text = data.FirstName;
         LastNameTextBox.Text = data.LastName;
         CitizenIdTextBox.Text = data.CitizenId;
@@ -54,8 +59,8 @@ public partial class PawnTicketEditWindow : Window
         _isLoading = false;
         UpdateProductSummaryFromFields();
 
-        FirstNameTextBox.Focus();
-        FirstNameTextBox.SelectAll();
+        EditableTicketNumberTextBox.Focus();
+        EditableTicketNumberTextBox.SelectAll();
     }
 
     private void ProductField_TextChanged(
@@ -180,6 +185,7 @@ public partial class PawnTicketEditWindow : Window
         MessageBoxResult confirmation =
             MessageBox.Show(
                 "ยืนยันบันทึกการแก้ไขข้อมูลตั๋วนี้หรือไม่\n\n" +
+                "เลขตั๋วหรือวันที่จำนำที่แก้ไขจะมีผลกับหน้าค้นหาและประวัติตั๋ว\n" +
                 "ระบบจะเก็บเหตุผลและค่าก่อน–หลังไว้ในประวัติการแก้ไข",
                 AppInfo.StoreName,
                 MessageBoxButton.YesNo,
@@ -249,12 +255,44 @@ public partial class PawnTicketEditWindow : Window
     {
         request = new PawnTicketEditRequest();
 
+        string ticketNumber =
+            EditableTicketNumberTextBox.Text.Trim();
         string firstName = FirstNameTextBox.Text.Trim();
         string lastName = LastNameTextBox.Text.Trim();
         string citizenId = CitizenIdTextBox.Text.Trim();
         string ageText = AgeTextBox.Text.Trim();
         string assetCategory = AssetCategoryTextBox.Text.Trim();
         string productSummary = ProductSummaryTextBox.Text.Trim();
+
+        if (string.IsNullOrWhiteSpace(ticketNumber))
+        {
+            ShowValidation(
+                "กรุณากรอกเลขตั๋ว");
+
+            EditableTicketNumberTextBox.Focus();
+            return false;
+        }
+
+        if (!EditablePawnDatePicker.SelectedDate.HasValue)
+        {
+            ShowValidation(
+                "กรุณาเลือกวันที่จำนำ");
+
+            EditablePawnDatePicker.Focus();
+            return false;
+        }
+
+        DateTime pawnDate =
+            EditablePawnDatePicker.SelectedDate.Value.Date;
+
+        if (pawnDate > DateTime.Today)
+        {
+            ShowValidation(
+                "วันที่จำนำต้องไม่เกินวันนี้");
+
+            EditablePawnDatePicker.Focus();
+            return false;
+        }
 
         if (string.IsNullOrWhiteSpace(firstName) ||
             string.IsNullOrWhiteSpace(lastName))
@@ -318,6 +356,8 @@ public partial class PawnTicketEditWindow : Window
         request = new PawnTicketEditRequest
         {
             PawnTicketId = _pawnTicketId,
+            TicketNumber = ticketNumber,
+            PawnDate = pawnDate,
             FirstName = firstName,
             LastName = lastName,
             CitizenId = citizenId,

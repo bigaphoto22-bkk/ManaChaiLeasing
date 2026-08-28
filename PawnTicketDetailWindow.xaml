@@ -550,6 +550,44 @@
                                                     Binding="{Binding AmountText}"
                                                     ElementStyle="{StaticResource DetailTransactionTextCellStyle}"
                                                     Width="125" />
+                                <DataGridTemplateColumn Header="กำไร"
+                                                        Width="110">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding ProfitText}"
+                                                       VerticalAlignment="Center"
+                                                       Padding="4,0,4,0"
+                                                       FontWeight="SemiBold">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Foreground"
+                                                                Value="#6B7280" />
+
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsProfit}"
+                                                                         Value="True">
+                                                                <Setter Property="Foreground"
+                                                                        Value="#047857" />
+                                                            </DataTrigger>
+
+                                                            <DataTrigger Binding="{Binding IsLoss}"
+                                                                         Value="True">
+                                                                <Setter Property="Foreground"
+                                                                        Value="#B91C1C" />
+                                                            </DataTrigger>
+
+                                                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type DataGridRow}}}"
+                                                                         Value="True">
+                                                                <Setter Property="Foreground"
+                                                                        Value="White" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                                 <DataGridTextColumn Header="ครั้งที่"
                                                     Binding="{Binding InterestSequenceText}"
                                                     ElementStyle="{StaticResource DetailTransactionTextCellStyle}"

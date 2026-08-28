@@ -214,9 +214,9 @@ public sealed class ThaiIdCustomerHistoryService
 
         DateTime? currentDueDate =
             ticket.Status == PawnTicketStatus.Active
-                ? ticket.PawnDate.Date.AddDays(
-                    ticket.InterestPeriodDays *
-                    (renewalCount + 1))
+                ? PawnTicketDueDateCalculator.Calculate(
+                    ticket,
+                    renewalCount)
                 : null;
 
         DateTime lastActivityDate = activeTransactions

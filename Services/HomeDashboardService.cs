@@ -118,9 +118,10 @@ public sealed class HomeDashboardService
                 transaction.TransactionType ==
                     PawnTransactionType.Interest);
 
-            DateTime dueDate = ticket.PawnDate.Date.AddDays(
-                ticket.InterestPeriodDays *
-                (renewalCount + 1));
+            DateTime dueDate =
+                PawnTicketDueDateCalculator.Calculate(
+                    ticket,
+                    renewalCount);
 
             activeTicketCount++;
 

@@ -190,9 +190,9 @@ public sealed class RedemptionService
             finalInterest;
 
         DateTime currentDueDate =
-            ticket.PawnDate.Date.AddDays(
-                ticket.InterestPeriodDays *
-                (renewalCount + 1));
+            PawnTicketDueDateCalculator.Calculate(
+                ticket,
+                renewalCount);
 
         return new RedemptionPreview
         {

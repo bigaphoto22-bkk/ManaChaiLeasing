@@ -33,6 +33,18 @@
             <Setter Property="BorderThickness" Value="1" />
         </Style>
 
+        <Style x:Key="EditDatePickerStyle"
+               TargetType="DatePicker">
+            <Setter Property="Height" Value="42" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="#111827" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#D1D5DB" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="SelectedDateFormat" Value="Short" />
+        </Style>
+
         <Style x:Key="SectionTitleStyle"
                TargetType="TextBlock">
             <Setter Property="Margin" Value="0,0,0,18" />
@@ -87,8 +99,49 @@
                                TextWrapping="Wrap">
                         <Run FontWeight="Bold"
                              Text="ข้อควรทราบ: " />
-                        <Run Text="ข้อมูลลูกค้าใช้ร่วมกันทุกตั๋วของลูกค้ารายนี้ การแก้ชื่อ เลขบัตร โทรศัพท์ หรือที่อยู่ จะมีผลกับทุกตั๋ว ส่วนเลขตั๋ว วันรับจำนำ เงินต้น ดอกเบี้ย สถานะ และประวัติรับ–จ่ายถูกล็อกไว้" />
+                        <Run Text="ข้อมูลลูกค้าใช้ร่วมกันทุกตั๋วของลูกค้ารายนี้ การแก้ชื่อ เลขบัตร โทรศัพท์ หรือที่อยู่ จะมีผลกับทุกตั๋ว ส่วนเงินต้น ดอกเบี้ย สถานะ และประวัติรับ–จ่ายยังคงถูกล็อกไว้" />
                     </TextBlock>
+                </Border>
+
+                <Border Margin="0,18,0,0"
+                        Padding="22"
+                        Background="White"
+                        BorderBrush="#E5E7EB"
+                        BorderThickness="1"
+                        CornerRadius="12">
+                    <StackPanel>
+                        <TextBlock Text="ข้อมูลตั๋ว"
+                                   Style="{StaticResource SectionTitleStyle}" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="18" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="เลขตั๋ว *"
+                                           Style="{StaticResource EditLabelStyle}" />
+                                <TextBox x:Name="EditableTicketNumberTextBox"
+                                         MaxLength="50"
+                                         Style="{StaticResource EditTextBoxStyle}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="วันที่จำนำ *"
+                                           Style="{StaticResource EditLabelStyle}" />
+                                <DatePicker x:Name="EditablePawnDatePicker"
+                                            Style="{StaticResource EditDatePickerStyle}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Margin="0,12,0,0"
+                                   Text="หากตั๋วเคยต่อดอกแล้ว ระบบจะรักษาวันครบกำหนดล่าสุดไว้ ไม่เลื่อนตามวันที่จำนำที่แก้ไข"
+                                   FontSize="12"
+                                   Foreground="#6B7280"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
                 </Border>
 
                 <Border Margin="0,18,0,0"
@@ -393,7 +446,7 @@
 
                 <TextBlock Grid.Column="0"
                            VerticalAlignment="Center"
-                           Text="ช่องข้อมูลทางการเงินถูกล็อกและจะไม่ถูกเปลี่ยน"
+                           Text="เงินต้น ดอกเบี้ย สถานะ และประวัติรับ–จ่ายถูกล็อกและจะไม่ถูกเปลี่ยน"
                            FontSize="12"
                            Foreground="#6B7280" />
 

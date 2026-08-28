@@ -10,6 +10,8 @@ public sealed class PawnTicketEditData
 
     public string TicketNumber { get; init; } = string.Empty;
 
+    public DateTime PawnDate { get; init; }
+
     public string LockedTicketSummary { get; init; } = string.Empty;
 
     public string FirstName { get; init; } = string.Empty;
@@ -54,6 +56,10 @@ public sealed class PawnTicketEditData
 public sealed class PawnTicketEditRequest
 {
     public int PawnTicketId { get; init; }
+
+    public string TicketNumber { get; init; } = string.Empty;
+
+    public DateTime PawnDate { get; init; }
 
     public string FirstName { get; init; } = string.Empty;
 
@@ -116,6 +122,7 @@ public sealed class PawnTicketEditService
         PawnTicket? ticket = db.PawnTickets
             .AsNoTracking()
             .Include(item => item.Customer)
+            .Include(item => item.Transactions)
             .SingleOrDefault(item =>
                 item.Id == pawnTicketId);
 
@@ -129,8 +136,8 @@ public sealed class PawnTicketEditService
         {
             PawnTicketId = ticket.Id,
             TicketNumber = ticket.TicketNumber,
+            PawnDate = ticket.PawnDate,
             LockedTicketSummary =
-                $"วันที่ {ticket.PawnDate:dd/MM/yyyy} • " +
                 $"เงินต้น {ticket.PrincipalAmount:N2} บาท • " +
                 $"ดอกเบี้ย {ticket.InterestRatePercent:0.##}% / " +
                 $"{ticket.InterestPeriodDays:N0} วัน • " +
@@ -168,6 +175,7 @@ public sealed class PawnTicketEditService
 
             PawnTicket? ticket = db.PawnTickets
                 .Include(item => item.Customer)
+                .Include(item => item.Transactions)
                 .SingleOrDefault(item =>
                     item.Id == request.PawnTicketId);
 
@@ -175,6 +183,20 @@ public sealed class PawnTicketEditService
             {
                 throw new InvalidOperationException(
                     "ไม่พบตั๋วจำนำที่ต้องการแก้ไข");
+            }
+
+            string ticketNumber =
+                CleanRequired(
+                    request.TicketNumber,
+                    "เลขตั๋ว");
+
+            DateTime pawnDate =
+                request.PawnDate.Date;
+
+            if (pawnDate > DateTime.Today)
+            {
+                throw new InvalidOperationException(
+                    "วันที่จำนำต้องไม่เกินวันนี้");
             }
 
             string firstName =
@@ -207,6 +229,7 @@ public sealed class PawnTicketEditService
             ValidateCitizenId(citizenId);
             ValidateAge(request.Age);
 
+            EnsureMaxLength(ticketNumber, 50, "เลขตั๋ว");
             EnsureMaxLength(firstName, 100, "ชื่อ");
             EnsureMaxLength(lastName, 100, "นามสกุล");
             EnsureMaxLength(citizenId, 13, "เลขบัตรประชาชน");
@@ -226,6 +249,37 @@ public sealed class PawnTicketEditService
             EnsureMaxLength(productSummary, 2500, "รายละเอียดสินค้า");
             EnsureMaxLength(request.Note, 1500, "หมายเหตุตั๋ว");
             EnsureMaxLength(reason, 1000, "เหตุผลการแก้ไข");
+
+            bool duplicateTicketNumber = db.PawnTickets
+                .AsNoTracking()
+                .Any(item =>
+                    item.Id != ticket.Id &&
+                    item.TicketNumber.ToUpper() ==
+                        ticketNumber.ToUpper());
+
+            if (duplicateTicketNumber)
+            {
+                throw new InvalidOperationException(
+                    $"เลขตั๋ว {ticketNumber} มีอยู่ในระบบแล้ว");
+            }
+
+            DateTime? firstLaterTransactionDate =
+                ticket.Transactions
+                    .Where(transaction =>
+                        !transaction.IsVoided &&
+                        transaction.TransactionType !=
+                            PawnTransactionType.Pawn)
+                    .Select(transaction =>
+                        (DateTime?)transaction.TransactionDate)
+                    .Min();
+
+            if (firstLaterTransactionDate.HasValue &&
+                pawnDate >
+                    firstLaterTransactionDate.Value.Date)
+            {
+                throw new InvalidOperationException(
+                    "วันที่จำนำต้องไม่อยู่หลังรายการต่อดอก ไถ่ถอน หรือจำหน่ายที่บันทึกไว้แล้ว");
+            }
 
             if (!string.IsNullOrWhiteSpace(citizenId))
             {
@@ -258,6 +312,23 @@ public sealed class PawnTicketEditService
 
             List<FieldChange> changes = [];
 
+            bool pawnDateChanged =
+                pawnDate != ticket.PawnDate.Date;
+
+            TrackChange(
+                changes,
+                "เลขตั๋ว",
+                ticket.TicketNumber,
+                ticketNumber);
+            TrackChange(
+                changes,
+                "วันที่จำนำ",
+                ticket.PawnDate.ToString("dd/MM/yyyy"),
+                pawnDate.ToString("dd/MM/yyyy"));
+
+            int customerChangeStart =
+                changes.Count;
+
             TrackChange(changes, "ชื่อลูกค้า", ticket.Customer.FirstName, firstName);
             TrackChange(changes, "นามสกุลลูกค้า", ticket.Customer.LastName, lastName);
             TrackChange(changes, "เลขบัตรประชาชน", ticket.Customer.CitizenId, citizenId);
@@ -266,7 +337,8 @@ public sealed class PawnTicketEditService
             TrackChange(changes, "ที่อยู่", ticket.Customer.Address, address);
 
             int customerChangeCount =
-                changes.Count;
+                changes.Count -
+                customerChangeStart;
 
             TrackChange(changes, "ประเภทหลัก", ticket.AssetCategory, assetCategory);
             TrackChange(changes, "ประเภทสินค้า", ticket.ProductType, productType);
@@ -289,6 +361,51 @@ public sealed class PawnTicketEditService
             }
 
             DateTime now = DateTime.Now;
+
+            int renewalCount = ticket.Transactions.Count(transaction =>
+                !transaction.IsVoided &&
+                transaction.TransactionType ==
+                    PawnTransactionType.Interest);
+
+            if (pawnDateChanged &&
+                renewalCount > 0)
+            {
+                ticket.DueDateOverride =
+                    PawnTicketDueDateCalculator.Calculate(
+                        ticket,
+                        renewalCount);
+                ticket.DueDateOverrideRenewalCount =
+                    renewalCount;
+            }
+            else if (pawnDateChanged)
+            {
+                ticket.DueDateOverride = null;
+                ticket.DueDateOverrideRenewalCount = null;
+            }
+
+            ticket.TicketNumber = ticketNumber;
+
+            if (pawnDateChanged)
+            {
+                ticket.PawnDate = pawnDate.Add(
+                    ticket.PawnDate.TimeOfDay);
+
+                PawnTransaction? pawnTransaction =
+                    ticket.Transactions
+                        .Where(transaction =>
+                            !transaction.IsVoided &&
+                            transaction.TransactionType ==
+                                PawnTransactionType.Pawn)
+                        .OrderBy(transaction => transaction.Id)
+                        .FirstOrDefault();
+
+                if (pawnTransaction is not null)
+                {
+                    pawnTransaction.TransactionDate =
+                        pawnDate.Add(
+                            pawnTransaction.TransactionDate.TimeOfDay);
+                }
+            }
 
             if (customerChangeCount > 0)
             {

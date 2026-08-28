@@ -19,6 +19,12 @@ public class PawnTicket
 
     public int InterestPeriodDays { get; set; } = 15;
 
+    // ใช้รักษาวันครบกำหนดปัจจุบัน เมื่อมีการแก้วันที่จำนำของตั๋ว
+    // ที่เคยต่อดอกแล้ว โดยการต่อดอกครั้งถัดไปจะนับต่อจากจุดยึดนี้
+    public DateTime? DueDateOverride { get; set; }
+
+    public int? DueDateOverrideRenewalCount { get; set; }
+
     public PawnTicketStatus Status { get; set; } = PawnTicketStatus.Active;
 
     // ตั๋วเดิมที่ไถ่ถอนแล้วและถูกใช้เป็นต้นแบบสร้างตั๋วนี้

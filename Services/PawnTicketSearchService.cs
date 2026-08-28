@@ -37,6 +37,17 @@ public sealed class PawnTicketSearchResult
 
     public string PrincipalAmountText => $"{PrincipalAmount:N2}";
 
+    public decimal Profit { get; init; }
+
+    public string ProfitText =>
+        Profit == 0m
+            ? "-"
+            : $"{Profit:N2}";
+
+    public bool IsProfit => Profit > 0m;
+
+    public bool IsLoss => Profit < 0m;
+
     public PawnTicketStatus Status { get; init; }
 
     public int InterestRenewalCount { get; init; }
@@ -128,6 +139,8 @@ public sealed class PawnTicketDetail
 
     public int InterestRenewalCount { get; init; }
 
+    public DateTime CurrentDueDate { get; init; }
+
     public string InterestRateText =>
         $"{InterestRatePercent:0.##}%";
 
@@ -138,11 +151,7 @@ public sealed class PawnTicketDetail
         $"{InterestRenewalCount:N0} ครั้ง";
 
     public string CurrentDueDateText =>
-        PawnDate.Date
-            .AddDays(
-                InterestPeriodDays *
-                (InterestRenewalCount + 1))
-            .ToString("dd/MM/yyyy");
+        CurrentDueDate.ToString("dd/MM/yyyy");
 
     public bool CanRenew =>
         Status == PawnTicketStatus.Active;
@@ -152,11 +161,7 @@ public sealed class PawnTicketDetail
 
     public bool CanSell =>
         Status == PawnTicketStatus.Active &&
-        PawnDate.Date
-            .AddDays(
-                InterestPeriodDays *
-                (InterestRenewalCount + 1)) <
-            DateTime.Today;
+        CurrentDueDate.Date < DateTime.Today;
 
     public string SourcePawnTicketNumber { get; init; } = string.Empty;
 
@@ -303,6 +308,21 @@ public sealed class PawnTransactionDetailRow
     public decimal Amount { get; init; }
 
     public string AmountText => $"{Amount:N2}";
+
+    public decimal? Profit { get; init; }
+
+    public string ProfitText =>
+        Profit.HasValue
+            ? $"{Profit.Value:N2}"
+            : "-";
+
+    public bool IsProfit =>
+        Profit.HasValue &&
+        Profit.Value > 0m;
+
+    public bool IsLoss =>
+        Profit.HasValue &&
+        Profit.Value < 0m;
 
     public int? InterestSequence { get; init; }
 
@@ -452,9 +472,9 @@ public sealed class PawnTicketSearchService
 
         DateTime? currentDueDate =
             ticket.Status == PawnTicketStatus.Active
-                ? ticket.PawnDate.Date.AddDays(
-                    ticket.InterestPeriodDays *
-                    (renewalCount + 1))
+                ? PawnTicketDueDateCalculator.Calculate(
+                    ticket,
+                    renewalCount)
                 : null;
 
         return new PawnTicketSearchResult
@@ -468,6 +488,7 @@ public sealed class PawnTicketSearchService
             Phone = ticket.Customer.Phone,
             ProductSummary = ticket.ProductSummary,
             PrincipalAmount = ticket.PrincipalAmount,
+            Profit = CalculateTicketProfit(ticket),
             Status = ticket.Status,
             InterestRenewalCount = renewalCount,
             CurrentDueDate = currentDueDate
@@ -510,6 +531,11 @@ public sealed class PawnTicketSearchService
             .SingleOrDefault()
             ?? string.Empty;
 
+        int renewalCount = ticket.Transactions.Count(transaction =>
+            !transaction.IsVoided &&
+            transaction.TransactionType ==
+                PawnTransactionType.Interest);
+
         return new PawnTicketDetail
         {
             Id = ticket.Id,
@@ -523,9 +549,11 @@ public sealed class PawnTicketSearchService
                 sourcePawnTicketNumber,
             RepawnTicketNumber =
                 repawnTicketNumber,
-            InterestRenewalCount = ticket.Transactions.Count(transaction =>
-                !transaction.IsVoided &&
-                transaction.TransactionType == PawnTransactionType.Interest),
+            InterestRenewalCount = renewalCount,
+            CurrentDueDate =
+                PawnTicketDueDateCalculator.Calculate(
+                    ticket,
+                    renewalCount),
             CustomerName =
                 $"{ticket.Customer.FirstName} {ticket.Customer.LastName}".Trim(),
             CitizenId = Display(ticket.Customer.CitizenId),
@@ -555,6 +583,9 @@ public sealed class PawnTicketSearchService
                     TransactionType = transaction.TransactionType,
                     CashFlowType = transaction.CashFlowType,
                     Amount = transaction.Amount,
+                    Profit = CalculateTransactionProfit(
+                        transaction,
+                        ticket.PrincipalAmount),
                     InterestSequence = transaction.InterestSequence,
                     PaymentMethod = Display(transaction.PaymentMethod),
                     Note = Display(transaction.Note)
@@ -572,6 +603,72 @@ public sealed class PawnTicketSearchService
                     ChangeSummary = Display(audit.ChangeSummary)
                 })
                 .ToList()
+        };
+    }
+
+    private static decimal CalculateTicketProfit(
+        PawnTicket ticket)
+    {
+        IEnumerable<PawnTransaction> transactions =
+            ticket.Transactions.Where(transaction =>
+                !transaction.IsVoided &&
+                transaction.CashFlowType ==
+                    CashFlowType.Income);
+
+        decimal interestIncome = transactions
+            .Where(transaction =>
+                transaction.TransactionType ==
+                    PawnTransactionType.Interest)
+            .Sum(transaction => transaction.Amount);
+
+        decimal redemptionProfit = transactions
+            .Where(transaction =>
+                transaction.TransactionType ==
+                    PawnTransactionType.Redemption)
+            .Sum(transaction => Math.Max(
+                0m,
+                transaction.Amount -
+                    ticket.PrincipalAmount));
+
+        decimal saleProfit = transactions
+            .Where(transaction =>
+                transaction.TransactionType ==
+                    PawnTransactionType.Sale)
+            .Sum(transaction =>
+                transaction.Amount -
+                    ticket.PrincipalAmount);
+
+        return interestIncome +
+            redemptionProfit +
+            saleProfit;
+    }
+
+    private static decimal? CalculateTransactionProfit(
+        PawnTransaction transaction,
+        decimal principalAmount)
+    {
+        if (transaction.CashFlowType !=
+            CashFlowType.Income)
+        {
+            return null;
+        }
+
+        return transaction.TransactionType switch
+        {
+            PawnTransactionType.Interest =>
+                transaction.Amount,
+
+            PawnTransactionType.Redemption =>
+                Math.Max(
+                    0m,
+                    transaction.Amount -
+                        principalAmount),
+
+            PawnTransactionType.Sale =>
+                transaction.Amount -
+                principalAmount,
+
+            _ => null
         };
     }
 
