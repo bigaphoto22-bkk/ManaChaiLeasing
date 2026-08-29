@@ -8,6 +8,8 @@ public sealed class PawnTicketSaveRequest
 {
     public int? SelectedCustomerId { get; init; }
 
+    public int? SourcePawnTicketId { get; init; }
+
     public Customer Customer { get; init; } = new();
 
     public PawnTicket Ticket { get; init; } = new();
@@ -43,11 +45,24 @@ public sealed class PawnTicketService
 
             DateTime now = DateTime.Now;
 
+            PawnTicket? repawnSource =
+                ValidateRepawnSource(
+                    db,
+                    request.SourcePawnTicketId,
+                    request.Ticket);
+
             Customer customer = ResolveCustomer(
                 db,
                 request.Customer,
                 request.SelectedCustomerId,
                 now);
+
+            if (repawnSource is not null &&
+                customer.Id != repawnSource.CustomerId)
+            {
+                throw new InvalidOperationException(
+                    "ลูกค้าในตั๋วใหม่ไม่ตรงกับเจ้าของตั๋วเดิม");
+            }
 
             AppSetting settings = db.AppSettings
                 .AsNoTracking()
@@ -59,10 +74,17 @@ public sealed class PawnTicketService
             PawnTicket ticket = request.Ticket;
 
             ticket.TicketNumber = ticketNumber;
+            // DatePicker provides a date-only value at 00:00. Keep the
+            // selected business date, but record the actual save time so
+            // Today's Transactions does not display every pawn as 00:00.
+            ticket.PawnDate =
+                ticket.PawnDate.Date.Add(now.TimeOfDay);
             ticket.Customer = customer;
             ticket.InterestRatePercent = settings.InterestRatePercent;
             ticket.InterestPeriodDays = settings.InterestPeriodDays;
             ticket.Status = PawnTicketStatus.Active;
+            ticket.SourcePawnTicketId =
+                repawnSource?.Id;
             ticket.CreatedAt = now;
             ticket.UpdatedAt = now;
 
@@ -166,6 +188,72 @@ public sealed class PawnTicketService
         customer.UpdatedAt = now;
 
         return customer;
+    }
+
+    private static PawnTicket? ValidateRepawnSource(
+        AppDbContext db,
+        int? sourcePawnTicketId,
+        PawnTicket newTicket)
+    {
+        if (!sourcePawnTicketId.HasValue)
+        {
+            return null;
+        }
+
+        PawnTicket? source = db.PawnTickets
+            .SingleOrDefault(ticket =>
+                ticket.Id == sourcePawnTicketId.Value);
+
+        if (source is null)
+        {
+            throw new InvalidOperationException(
+                "ไม่พบตั๋วเดิมที่ใช้สร้างรายการจำนำใหม่");
+        }
+
+        if (source.Status != PawnTicketStatus.Redeemed)
+        {
+            throw new InvalidOperationException(
+                "ตั๋วเดิมต้องอยู่ในสถานะไถ่ถอนแล้วเท่านั้น");
+        }
+
+        PawnTicket? existingRepawn = db.PawnTickets
+            .AsNoTracking()
+            .FirstOrDefault(ticket =>
+                ticket.SourcePawnTicketId == source.Id);
+
+        if (existingRepawn is not null)
+        {
+            throw new InvalidOperationException(
+                $"ตั๋วเดิมถูกนำไปสร้างตั๋วใหม่ " +
+                $"{existingRepawn.TicketNumber} แล้ว");
+        }
+
+        string normalizedSerial =
+            RepawnService.NormalizeSerial(
+                newTicket.ImeiOrSerial);
+
+        if (!string.IsNullOrWhiteSpace(normalizedSerial))
+        {
+            PawnTicket? activeDuplicate = db.PawnTickets
+                .AsNoTracking()
+                .Where(ticket =>
+                    ticket.Status == PawnTicketStatus.Active &&
+                    ticket.ImeiOrSerial != null)
+                .AsEnumerable()
+                .FirstOrDefault(ticket =>
+                    RepawnService.NormalizeSerial(
+                        ticket.ImeiOrSerial) ==
+                    normalizedSerial);
+
+            if (activeDuplicate is not null)
+            {
+                throw new InvalidOperationException(
+                    $"IMEI / Serial นี้ยังอยู่ในตั๋วที่กำลังจำนำ " +
+                    $"{activeDuplicate.TicketNumber}");
+            }
+        }
+
+        return source;
     }
 
     private static void LearnSmartLookupValues(

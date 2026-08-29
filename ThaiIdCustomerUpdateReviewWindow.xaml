@@ -2,10 +2,10 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Icon="Resources/ManaChaiLeasing.ico"
-        Width="900"
-        Height="720"
-        MinWidth="820"
-        MinHeight="650"
+        Width="860"
+        Height="650"
+        MinWidth="780"
+        MinHeight="360"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
         Background="#F3F4F6"
@@ -63,7 +63,7 @@
                 BorderThickness="1"
                 CornerRadius="10">
             <StackPanel>
-                <TextBlock Text="ตรวจสอบข้อมูลลูกค้าเดิมกับข้อมูลจากบัตร"
+                <TextBlock Text="พบข้อมูลลูกค้าเก่า"
                            FontSize="21"
                            FontWeight="Bold"
                            Foreground="#111827" />
@@ -95,7 +95,8 @@
         <ScrollViewer Grid.Row="2"
                       VerticalScrollBarVisibility="Auto">
             <StackPanel>
-                <Border Padding="12"
+                <Border x:Name="UpdateInstructionBorder"
+                        Padding="12"
                         Margin="0,0,0,12"
                         Background="#EFF6FF"
                         BorderBrush="#BFDBFE"
@@ -104,7 +105,7 @@
                     <TextBlock FontSize="13"
                                Foreground="#1D4ED8"
                                TextWrapping="Wrap"
-                               Text="ระบบจะไม่เขียนทับข้อมูลลูกค้าอัตโนมัติ • ทำเครื่องหมายเฉพาะช่องที่ต้องการใช้ข้อมูลล่าสุดจากบัตร แล้วตรวจสอบฟอร์มอีกครั้งก่อนบันทึก" />
+                               Text="พบข้อมูลจากบัตรที่ต่างจากระบบ เลือกเฉพาะรายการที่ต้องการนำไปใช้" />
                 </Border>
 
                 <Border x:Name="NoChangesBorder"
@@ -115,7 +116,7 @@
                         BorderThickness="1"
                         CornerRadius="8"
                         Visibility="Collapsed">
-                    <TextBlock Text="ข้อมูลที่ระบบใช้ในฟอร์มตรงกับข้อมูลจากบัตรแล้ว ไม่พบรายการที่ต้องอัปเดต"
+                    <TextBlock Text="ข้อมูลในระบบตรงกับข้อมูลจากบัตรแล้ว กด “ใช้ข้อมูลเดิม” เพื่อดำเนินการต่อ"
                                FontSize="14"
                                FontWeight="SemiBold"
                                Foreground="#047857"
@@ -286,7 +287,8 @@
                     </Grid>
                 </Border>
 
-                <Border Padding="12"
+                <Border x:Name="PhoneNoteBorder"
+                        Padding="12"
                         Margin="0,4,0,0"
                         Background="#F9FAFB"
                         BorderBrush="#E5E7EB"
@@ -295,7 +297,7 @@
                     <TextBlock FontSize="12"
                                Foreground="#6B7280"
                                TextWrapping="Wrap"
-                               Text="เบอร์โทรศัพท์จะคงข้อมูลเดิมเสมอ เพราะบัตรประชาชนไม่มีข้อมูลเบอร์โทรศัพท์ • ช่องที่บัตรอ่านไม่ได้หรือเป็นค่าว่างจะไม่ถูกเสนอให้เขียนทับข้อมูลเดิม" />
+                               Text="บัตรประชาชนไม่มีเบอร์โทรศัพท์ ระบบจึงใช้เบอร์เดิมที่บันทึกไว้" />
                 </Border>
             </StackPanel>
         </ScrollViewer>
@@ -310,10 +312,11 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <TextBlock VerticalAlignment="Center"
+            <TextBlock x:Name="ReviewFooterHintText"
+                       VerticalAlignment="Center"
                        Foreground="#6B7280"
                        FontSize="12"
-                       Text="2N.4 • Review ก่อนเปลี่ยนข้อมูลในฟอร์ม" />
+                       Text="ข้อมูลเดิมจะยังไม่ถูกเปลี่ยนจนกว่าจะบันทึกตั๋ว" />
 
             <Button x:Name="SelectAllButton"
                     Grid.Column="1"

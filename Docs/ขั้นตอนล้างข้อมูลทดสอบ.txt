@@ -1,0 +1,47 @@
+ขั้นตอนล้างข้อมูลทดสอบ
+
+1.วิธีที่แรก ลบเองแบบ Manual
+-ปกติโปรแกรมจะเก็บ Database ไว้ที่
+C:\Users\<ชื่อผู้ใช้ Windows>\AppData\Local\ManaChaiLeasing\Data\ManaChaiLeasing.db
+
+-เปิดโฟลเดอร์ได้ง่าย ๆ โดยกด Win + R แล้ววาง:
+%LOCALAPPDATA%\ManaChaiLeasing\Data
+
+-ลบไฟล์ : ManaChaiLeasing.db
+
+--------------------------------------------------------------
+2.ลบด้วยคำสั่ง PowerShell
+
+1.ปิดโปรแกรมมานะชัย ลิสซิ่งให้สนิท
+2.เปิด PowerShell ด้วย User ที่ใช้งานโปรแกรม
+3.ตรวจว่าโปรแกรมปิดแล้ว:
+
+Get-Process ManaChaiLeasing -ErrorAction SilentlyContinue
+
+4.รันคำสั่ง :
+
+$dbFolder = "$env:LOCALAPPDATA\ManaChaiLeasing\Data"
+$dbFile = Join-Path $dbFolder "ManaChaiLeasing.db"
+$stamp = Get-Date -Format "yyyyMMdd-HHmmss"
+$archiveFolder = Join-Path $dbFolder "TestData_$stamp"
+
+New-Item -ItemType Directory -Path $archiveFolder
+
+$databaseFiles = @(
+    $dbFile,
+    "$dbFile-wal",
+    "$dbFile-shm"
+)
+
+foreach ($file in $databaseFiles) {
+    if (Test-Path -LiteralPath $file) {
+        Move-Item -LiteralPath $file -Destination $archiveFolder
+    }
+}
+
+Get-ChildItem $archiveFolder
+
+--------------------------------------------------------------
+คำสั่งนี้ยังไม่ลบถาวร แต่ย้ายฐานข้อมูลทดสอบไปเก็บในโฟลเดอร์ประมาณ:
+
+%LOCALAPPDATA%\ManaChaiLeasing\Data\TestData_20260823-xxxxxx

@@ -1,0 +1,21 @@
+ManaChaiLeasing Phase 2O.5.3.1
+DatePickerTextBox Namespace Build Hotfix
+Version 0.3.9
+
+ปัญหาที่แก้
+- Build Error CS0246: ไม่พบ DatePickerTextBox
+
+สาเหตุ
+- DatePickerTextBox อยู่ใน namespace System.Windows.Controls.Primitives
+- MainWindow.xaml.cs ยังไม่ได้ประกาศ using namespace ดังกล่าว
+
+การแก้ไข
+- เพิ่ม using System.Windows.Controls.Primitives;
+- ไม่มีการเปลี่ยน Logic และไม่มี Database Migration
+
+UAT
+1. แตก Hotfix ทับ Project
+2. รัน dotnet clean
+3. รัน dotnet build ต้องสำเร็จโดยไม่มี CS0246
+4. รันโปรแกรมและทดสอบเลือกวัน เดือน ปีด้วยเมาส์และลูกศร
+5. เปิดรายละเอียดตั๋วและทดสอบปิดด้วย ESC

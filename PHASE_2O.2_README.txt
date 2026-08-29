@@ -1,0 +1,48 @@
+ManaChaiLeasing - Phase 2O.2
+Overdue Item Sale Workflow
+
+Version:
+0.3.6
+
+What changed:
+- Adds Sale as a financial transaction type.
+- Adds Sold as a final pawn-ticket status.
+- Sale is available only for an Active ticket whose current due date has passed.
+- The operator records sale date, actual sale amount, payment method, and optional note.
+- Saving a sale creates an Income transaction and changes the ticket to Sold.
+- A sold ticket cannot be renewed, redeemed, or sold again.
+- Automatic Backup runs after a successful sale.
+
+Dashboard:
+- Adds Sale count and Sale income for Today / This Week / This Month / Custom.
+- Total Income and Net Cash include Sale income.
+- Profit includes Sale profit or loss.
+
+Profit formula:
+- Interest-renewal income.
+- Plus final interest from Redemption.
+- Plus Sale amount minus original pawn principal.
+
+Example:
+- Principal: 10,000.00
+- Sale amount: 13,000.00
+- Sale profit: 3,000.00
+
+Search and history:
+- Adds the Sold search filter.
+- Search results show Sold status.
+- Ticket history and Today's Transactions show Sale transactions.
+
+Database:
+- No migration and no schema change.
+- Enum values are stored as text in the existing columns.
+
+Core UAT:
+1. Create an overdue Active pawn ticket.
+2. Open ticket detail; Sale Item must be enabled.
+3. Enter sale date, amount, payment method, and save.
+4. Confirm status becomes Sold and history shows Sale / Income.
+5. Confirm Renew, Redeem, and Sale buttons are disabled afterward.
+6. Confirm Search > Sold finds the ticket.
+7. Confirm Dashboard Sale, Total Income, Net Cash, and Profit are correct.
+8. Confirm Today's Transactions shows the Sale when sale date is today.

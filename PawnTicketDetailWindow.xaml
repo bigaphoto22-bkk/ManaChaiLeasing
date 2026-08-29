@@ -31,6 +31,16 @@
             <Setter Property="Foreground" Value="#111827" />
             <Setter Property="Margin" Value="0,0,0,16" />
         </Style>
+
+        <Style x:Key="DetailTransactionTextCellStyle"
+               TargetType="TextBlock">
+            <Setter Property="VerticalAlignment"
+                    Value="Center" />
+            <Setter Property="Padding"
+                    Value="4,0,4,0" />
+            <Setter Property="TextTrimming"
+                    Value="CharacterEllipsis" />
+        </Style>
     </Window.Resources>
 
     <Grid>
@@ -71,8 +81,26 @@
                             <TextBlock Text="{Binding StatusText}"
                                        HorizontalAlignment="Right"
                                        FontSize="18"
-                                       FontWeight="SemiBold"
-                                       Foreground="#15803D" />
+                                       FontWeight="SemiBold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground"
+                                                Value="#15803D" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding StatusText}"
+                                                         Value="ไถ่ถอนแล้ว (Redeemed)">
+                                                <Setter Property="Foreground"
+                                                        Value="#475569" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding StatusText}"
+                                                         Value="จำหน่ายแล้ว (Sold)">
+                                                <Setter Property="Foreground"
+                                                        Value="#B45309" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                             <TextBlock Margin="0,8,0,0"
                                        Text="{Binding PrincipalAmountText}"
                                        HorizontalAlignment="Right"
@@ -80,6 +108,58 @@
                                        FontWeight="Bold"
                                        Foreground="#111827" />
                         </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Border Margin="0,18,0,0"
+                        Padding="18"
+                        Background="#F0FDF4"
+                        BorderBrush="#BBF7D0"
+                        BorderThickness="1"
+                        CornerRadius="10">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Visibility"
+                                    Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowRepawnSection}"
+                                             Value="True">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="18" />
+                            <ColumnDefinition Width="235" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="ประวัติการนำสินค้ากลับมาจำนำ"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       Foreground="#166534" />
+                            <TextBlock Margin="0,5,0,0"
+                                       Text="{Binding RepawnHistoryText}"
+                                       FontSize="13"
+                                       Foreground="#374151"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <Button Grid.Column="2"
+                                Height="48"
+                                Content="จำนำสินค้าเดิมอีกครั้ง"
+                                FontSize="15"
+                                FontWeight="SemiBold"
+                                Background="#15803D"
+                                Foreground="White"
+                                BorderBrush="#15803D"
+                                IsEnabled="{Binding CanRepawn}"
+                                Click="RepawnItemButton_Click" />
                     </Grid>
                 </Border>
 
@@ -350,15 +430,67 @@
                         <DataGrid ItemsSource="{Binding Transactions}"
                                   AutoGenerateColumns="False"
                                   IsReadOnly="True"
+                                  SelectionMode="Single"
+                                  SelectionUnit="FullRow"
                                   HeadersVisibility="Column"
                                   GridLinesVisibility="Horizontal"
                                   RowHeight="44"
                                   FontSize="14"
                                   BorderBrush="#E5E7EB"
                                   BorderThickness="1">
+                            <DataGrid.ColumnHeaderStyle>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="VerticalContentAlignment"
+                                            Value="Center" />
+                                </Style>
+                            </DataGrid.ColumnHeaderStyle>
+
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow">
+                                    <Setter Property="Background"
+                                            Value="White" />
+                                    <Setter Property="Foreground"
+                                            Value="#111827" />
+                                    <Setter Property="VerticalContentAlignment"
+                                            Value="Center" />
+
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected"
+                                                 Value="True">
+                                            <Setter Property="Background"
+                                                    Value="#0B82D6" />
+                                            <Setter Property="Foreground"
+                                                    Value="White" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.RowStyle>
+
+                            <DataGrid.CellStyle>
+                                <Style TargetType="DataGridCell">
+                                    <Setter Property="Background"
+                                            Value="Transparent" />
+                                    <Setter Property="BorderThickness"
+                                            Value="0" />
+                                    <Setter Property="VerticalContentAlignment"
+                                            Value="Center" />
+
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected"
+                                                 Value="True">
+                                            <Setter Property="Background"
+                                                    Value="#0B82D6" />
+                                            <Setter Property="Foreground"
+                                                    Value="White" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.CellStyle>
+
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="วันที่"
                                                     Binding="{Binding TransactionDateText}"
+                                                    ElementStyle="{StaticResource DetailTransactionTextCellStyle}"
                                                     Width="145" />
                                 <DataGridTemplateColumn Header="รายการ"
                                                         Width="110">
@@ -366,6 +498,7 @@
                                         <DataTemplate>
                                             <TextBlock Text="{Binding TransactionTypeText}"
                                                        VerticalAlignment="Center"
+                                                       Padding="4,0,4,0"
                                                        FontWeight="SemiBold">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
@@ -390,6 +523,18 @@
                                                                 <Setter Property="Foreground"
                                                                         Value="#047857" />
                                                             </DataTrigger>
+
+                                                            <DataTrigger Binding="{Binding TransactionTypeText}"
+                                                                         Value="จำหน่าย">
+                                                                <Setter Property="Foreground"
+                                                                        Value="#B45309" />
+                                                            </DataTrigger>
+
+                                                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type DataGridRow}}}"
+                                                                         Value="True">
+                                                                <Setter Property="Foreground"
+                                                                        Value="White" />
+                                                            </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
                                                 </TextBlock.Style>
@@ -399,22 +544,180 @@
                                 </DataGridTemplateColumn>
                                 <DataGridTextColumn Header="เงินเข้า/ออก"
                                                     Binding="{Binding CashFlowText}"
+                                                    ElementStyle="{StaticResource DetailTransactionTextCellStyle}"
                                                     Width="110" />
                                 <DataGridTextColumn Header="จำนวนเงิน"
                                                     Binding="{Binding AmountText}"
+                                                    ElementStyle="{StaticResource DetailTransactionTextCellStyle}"
                                                     Width="125" />
+                                <DataGridTemplateColumn Header="กำไร"
+                                                        Width="110">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding ProfitText}"
+                                                       VerticalAlignment="Center"
+                                                       Padding="4,0,4,0"
+                                                       FontWeight="SemiBold">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Foreground"
+                                                                Value="#6B7280" />
+
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsProfit}"
+                                                                         Value="True">
+                                                                <Setter Property="Foreground"
+                                                                        Value="#047857" />
+                                                            </DataTrigger>
+
+                                                            <DataTrigger Binding="{Binding IsLoss}"
+                                                                         Value="True">
+                                                                <Setter Property="Foreground"
+                                                                        Value="#B91C1C" />
+                                                            </DataTrigger>
+
+                                                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type DataGridRow}}}"
+                                                                         Value="True">
+                                                                <Setter Property="Foreground"
+                                                                        Value="White" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                                 <DataGridTextColumn Header="ครั้งที่"
                                                     Binding="{Binding InterestSequenceText}"
+                                                    ElementStyle="{StaticResource DetailTransactionTextCellStyle}"
                                                     Width="75" />
                                 <DataGridTextColumn Header="ช่องทาง"
                                                     Binding="{Binding PaymentMethod}"
+                                                    ElementStyle="{StaticResource DetailTransactionTextCellStyle}"
                                                     Width="110" />
                                 <DataGridTextColumn Header="หมายเหตุ"
                                                     Binding="{Binding Note}"
+                                                    ElementStyle="{StaticResource DetailTransactionTextCellStyle}"
                                                     Width="*" />
                             </DataGrid.Columns>
                         </DataGrid>
                     </StackPanel>
+                </Border>
+
+                <Border Margin="0,0,0,28"
+                        Padding="24"
+                        Background="#F8FAFC"
+                        BorderBrush="#CBD5E1"
+                        BorderThickness="1"
+                        CornerRadius="12">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="14" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Text="ประวัติการแก้ไขข้อมูล"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"
+                                       Foreground="#111827" />
+
+                            <TextBlock Grid.Column="1"
+                                       VerticalAlignment="Center"
+                                       Text="{Binding EditAuditCountText}"
+                                       FontSize="13"
+                                       Foreground="#6B7280" />
+                        </Grid>
+
+                        <TextBlock Grid.Row="2"
+                                   Text="ยังไม่มีการแก้ไขข้อมูลตั๋วนี้"
+                                   FontSize="14"
+                                   Foreground="#6B7280">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility"
+                                            Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasEditAudits}"
+                                                     Value="False">
+                                            <Setter Property="Visibility"
+                                                    Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+
+                        <ItemsControl Grid.Row="2"
+                                      ItemsSource="{Binding EditAudits}">
+                            <ItemsControl.Style>
+                                <Style TargetType="ItemsControl">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasEditAudits}"
+                                                     Value="False">
+                                            <Setter Property="Visibility"
+                                                    Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ItemsControl.Style>
+
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="0,0,0,12"
+                                            Padding="16"
+                                            Background="White"
+                                            BorderBrush="#E5E7EB"
+                                            BorderThickness="1"
+                                            CornerRadius="8">
+                                        <StackPanel>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="18" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Text="{Binding EditedAtText}"
+                                                           FontSize="14"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="#1D4ED8" />
+                                                <TextBlock Grid.Column="2"
+                                                           Text="{Binding EditorText}"
+                                                           FontSize="13"
+                                                           Foreground="#6B7280"
+                                                           TextWrapping="Wrap" />
+                                            </Grid>
+
+                                            <TextBlock Margin="0,9,0,0"
+                                                       FontSize="14"
+                                                       Foreground="#111827"
+                                                       TextWrapping="Wrap">
+                                                <Run FontWeight="SemiBold"
+                                                     Text="เหตุผล: " />
+                                                <Run Text="{Binding Reason}" />
+                                            </TextBlock>
+
+                                            <TextBlock Margin="0,8,0,0"
+                                                       Text="{Binding ChangeSummary}"
+                                                       FontSize="13"
+                                                       Foreground="#374151"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
                 </Border>
 
             </StackPanel>
@@ -427,12 +730,26 @@
             <Grid Margin="28,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="160" />
+                    <ColumnDefinition Width="145" />
                     <ColumnDefinition Width="12" />
-                    <ColumnDefinition Width="160" />
+                    <ColumnDefinition Width="145" />
                     <ColumnDefinition Width="12" />
-                    <ColumnDefinition Width="130" />
+                    <ColumnDefinition Width="155" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="120" />
                 </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="0"
+                        Width="175"
+                        Height="48"
+                        HorizontalAlignment="Left"
+                        Content="แก้ไขข้อมูล"
+                        FontSize="16"
+                        FontWeight="SemiBold"
+                        Background="White"
+                        Foreground="#1D4ED8"
+                        BorderBrush="#1D4ED8"
+                        Click="EditTicketButton_Click" />
 
                 <Button Grid.Column="1"
                         Height="48"
@@ -458,10 +775,23 @@
 
                 <Button Grid.Column="5"
                         Height="48"
+                        Content="จำหน่ายสินค้า"
+                        FontSize="16"
+                        FontWeight="SemiBold"
+                        Background="#B45309"
+                        Foreground="White"
+                        BorderBrush="#B45309"
+                        IsEnabled="{Binding CanSell}"
+                        ToolTip="จำหน่ายได้เฉพาะตั๋วที่เกินกำหนด"
+                        Click="SellButton_Click" />
+
+                <Button Grid.Column="7"
+                        Height="48"
                         Content="ปิด"
                         FontSize="16"
                         FontWeight="SemiBold"
                         IsDefault="True"
+                        IsCancel="True"
                         Click="CloseButton_Click" />
             </Grid>
         </Border>

@@ -11,7 +11,8 @@ public enum PawnTicketSearchFilter
     Active = 1,
     DueToday = 2,
     Overdue = 3,
-    Redeemed = 4
+    Redeemed = 4,
+    Sold = 5
 }
 
 public sealed class PawnTicketSearchResult
@@ -35,6 +36,17 @@ public sealed class PawnTicketSearchResult
     public decimal PrincipalAmount { get; init; }
 
     public string PrincipalAmountText => $"{PrincipalAmount:N2}";
+
+    public decimal Profit { get; init; }
+
+    public string ProfitText =>
+        Profit == 0m
+            ? "-"
+            : $"{Profit:N2}";
+
+    public bool IsProfit => Profit > 0m;
+
+    public bool IsLoss => Profit < 0m;
 
     public PawnTicketStatus Status { get; init; }
 
@@ -73,6 +85,7 @@ public sealed class PawnTicketSearchResult
         PawnTicketStatus.Active => "กำลังจำนำ",
         PawnTicketStatus.Redeemed => "ไถ่ถอนแล้ว",
         PawnTicketStatus.Closed => "ปิดรายการ",
+        PawnTicketStatus.Sold => "จำหน่ายแล้ว",
         _ => Status.ToString()
     };
 
@@ -116,6 +129,7 @@ public sealed class PawnTicketDetail
         PawnTicketStatus.Active => "กำลังจำนำ (Active)",
         PawnTicketStatus.Redeemed => "ไถ่ถอนแล้ว (Redeemed)",
         PawnTicketStatus.Closed => "ปิดรายการ (Closed)",
+        PawnTicketStatus.Sold => "จำหน่ายแล้ว (Sold)",
         _ => Status.ToString()
     };
 
@@ -124,6 +138,8 @@ public sealed class PawnTicketDetail
     public int InterestPeriodDays { get; init; }
 
     public int InterestRenewalCount { get; init; }
+
+    public DateTime CurrentDueDate { get; init; }
 
     public string InterestRateText =>
         $"{InterestRatePercent:0.##}%";
@@ -135,17 +151,65 @@ public sealed class PawnTicketDetail
         $"{InterestRenewalCount:N0} ครั้ง";
 
     public string CurrentDueDateText =>
-        PawnDate.Date
-            .AddDays(
-                InterestPeriodDays *
-                (InterestRenewalCount + 1))
-            .ToString("dd/MM/yyyy");
+        CurrentDueDate.ToString("dd/MM/yyyy");
 
     public bool CanRenew =>
         Status == PawnTicketStatus.Active;
 
     public bool CanRedeem =>
         Status == PawnTicketStatus.Active;
+
+    public bool CanSell =>
+        Status == PawnTicketStatus.Active &&
+        CurrentDueDate.Date < DateTime.Today;
+
+    public string SourcePawnTicketNumber { get; init; } = string.Empty;
+
+    public string RepawnTicketNumber { get; init; } = string.Empty;
+
+    public bool HasSourcePawnTicket =>
+        !string.IsNullOrWhiteSpace(
+            SourcePawnTicketNumber);
+
+    public bool HasRepawnTicket =>
+        !string.IsNullOrWhiteSpace(
+            RepawnTicketNumber);
+
+    public bool CanRepawn =>
+        Status == PawnTicketStatus.Redeemed &&
+        !HasRepawnTicket;
+
+    public bool ShowRepawnSection =>
+        Status == PawnTicketStatus.Redeemed ||
+        HasSourcePawnTicket ||
+        HasRepawnTicket;
+
+    public string RepawnHistoryText
+    {
+        get
+        {
+            List<string> parts = [];
+
+            if (HasSourcePawnTicket)
+            {
+                parts.Add(
+                    $"ตั๋วนี้สร้างจากตั๋วเดิม {SourcePawnTicketNumber}");
+            }
+
+            if (HasRepawnTicket)
+            {
+                parts.Add(
+                    $"สินค้านี้ถูกนำกลับมาจำนำใหม่เป็นตั๋ว {RepawnTicketNumber} แล้ว");
+            }
+            else if (Status == PawnTicketStatus.Redeemed)
+            {
+                parts.Add(
+                    "สามารถใช้ข้อมูลสินค้าเดิมสร้างตั๋วจำนำใหม่ได้");
+            }
+
+            return string.Join(" • ", parts);
+        }
+    }
 
     public string CustomerName { get; init; } = string.Empty;
 
@@ -184,6 +248,35 @@ public sealed class PawnTicketDetail
     public string Note { get; init; } = "-";
 
     public List<PawnTransactionDetailRow> Transactions { get; init; } = new();
+
+    public List<PawnTicketEditAuditRow> EditAudits { get; init; } = new();
+
+    public bool HasEditAudits =>
+        EditAudits.Count > 0;
+
+    public string EditAuditCountText =>
+        HasEditAudits
+            ? $"ทั้งหมด {EditAudits.Count:N0} ครั้ง"
+            : "ยังไม่มีการแก้ไขข้อมูล";
+}
+
+public sealed class PawnTicketEditAuditRow
+{
+    public DateTime EditedAt { get; init; }
+
+    public string EditedAtText =>
+        EditedAt.ToString("dd/MM/yyyy HH:mm");
+
+    public string EditorUser { get; init; } = "-";
+
+    public string EditorMachine { get; init; } = "-";
+
+    public string EditorText =>
+        $"{EditorUser} • เครื่อง {EditorMachine}";
+
+    public string Reason { get; init; } = "-";
+
+    public string ChangeSummary { get; init; } = "-";
 }
 
 public sealed class PawnTransactionDetailRow
@@ -199,6 +292,7 @@ public sealed class PawnTransactionDetailRow
         PawnTransactionType.Pawn => "จำนำ",
         PawnTransactionType.Interest => "ต่อดอก",
         PawnTransactionType.Redemption => "ไถ่ถอน",
+        PawnTransactionType.Sale => "จำหน่าย",
         _ => TransactionType.ToString()
     };
 
@@ -214,6 +308,21 @@ public sealed class PawnTransactionDetailRow
     public decimal Amount { get; init; }
 
     public string AmountText => $"{Amount:N2}";
+
+    public decimal? Profit { get; init; }
+
+    public string ProfitText =>
+        Profit.HasValue
+            ? $"{Profit.Value:N2}"
+            : "-";
+
+    public bool IsProfit =>
+        Profit.HasValue &&
+        Profit.Value > 0m;
+
+    public bool IsLoss =>
+        Profit.HasValue &&
+        Profit.Value < 0m;
 
     public int? InterestSequence { get; init; }
 
@@ -315,6 +424,11 @@ public sealed class PawnTicketSearchService
                 query = query.Where(ticket =>
                     ticket.Status == PawnTicketStatus.Redeemed);
                 break;
+
+            case PawnTicketSearchFilter.Sold:
+                query = query.Where(ticket =>
+                    ticket.Status == PawnTicketStatus.Sold);
+                break;
         }
 
         IOrderedQueryable<PawnTicket> orderedQuery = query
@@ -358,9 +472,9 @@ public sealed class PawnTicketSearchService
 
         DateTime? currentDueDate =
             ticket.Status == PawnTicketStatus.Active
-                ? ticket.PawnDate.Date.AddDays(
-                    ticket.InterestPeriodDays *
-                    (renewalCount + 1))
+                ? PawnTicketDueDateCalculator.Calculate(
+                    ticket,
+                    renewalCount)
                 : null;
 
         return new PawnTicketSearchResult
@@ -374,6 +488,7 @@ public sealed class PawnTicketSearchService
             Phone = ticket.Customer.Phone,
             ProductSummary = ticket.ProductSummary,
             PrincipalAmount = ticket.PrincipalAmount,
+            Profit = CalculateTicketProfit(ticket),
             Status = ticket.Status,
             InterestRenewalCount = renewalCount,
             CurrentDueDate = currentDueDate
@@ -388,6 +503,7 @@ public sealed class PawnTicketSearchService
             .AsNoTracking()
             .Include(item => item.Customer)
             .Include(item => item.Transactions)
+            .Include(item => item.EditAudits)
             .SingleOrDefault(item => item.Id == pawnTicketId);
 
         if (ticket is null)
@@ -395,6 +511,30 @@ public sealed class PawnTicketSearchService
             throw new InvalidOperationException(
                 "ไม่พบตั๋วจำนำที่เลือก");
         }
+
+        string sourcePawnTicketNumber =
+            ticket.SourcePawnTicketId.HasValue
+                ? db.PawnTickets
+                    .AsNoTracking()
+                    .Where(item =>
+                        item.Id == ticket.SourcePawnTicketId.Value)
+                    .Select(item => item.TicketNumber)
+                    .SingleOrDefault()
+                    ?? string.Empty
+                : string.Empty;
+
+        string repawnTicketNumber = db.PawnTickets
+            .AsNoTracking()
+            .Where(item =>
+                item.SourcePawnTicketId == ticket.Id)
+            .Select(item => item.TicketNumber)
+            .SingleOrDefault()
+            ?? string.Empty;
+
+        int renewalCount = ticket.Transactions.Count(transaction =>
+            !transaction.IsVoided &&
+            transaction.TransactionType ==
+                PawnTransactionType.Interest);
 
         return new PawnTicketDetail
         {
@@ -405,9 +545,15 @@ public sealed class PawnTicketSearchService
             Status = ticket.Status,
             InterestRatePercent = ticket.InterestRatePercent,
             InterestPeriodDays = ticket.InterestPeriodDays,
-            InterestRenewalCount = ticket.Transactions.Count(transaction =>
-                !transaction.IsVoided &&
-                transaction.TransactionType == PawnTransactionType.Interest),
+            SourcePawnTicketNumber =
+                sourcePawnTicketNumber,
+            RepawnTicketNumber =
+                repawnTicketNumber,
+            InterestRenewalCount = renewalCount,
+            CurrentDueDate =
+                PawnTicketDueDateCalculator.Calculate(
+                    ticket,
+                    renewalCount),
             CustomerName =
                 $"{ticket.Customer.FirstName} {ticket.Customer.LastName}".Trim(),
             CitizenId = Display(ticket.Customer.CitizenId),
@@ -437,11 +583,92 @@ public sealed class PawnTicketSearchService
                     TransactionType = transaction.TransactionType,
                     CashFlowType = transaction.CashFlowType,
                     Amount = transaction.Amount,
+                    Profit = CalculateTransactionProfit(
+                        transaction,
+                        ticket.PrincipalAmount),
                     InterestSequence = transaction.InterestSequence,
                     PaymentMethod = Display(transaction.PaymentMethod),
                     Note = Display(transaction.Note)
                 })
+                .ToList(),
+            EditAudits = ticket.EditAudits
+                .OrderByDescending(audit => audit.EditedAt)
+                .ThenByDescending(audit => audit.Id)
+                .Select(audit => new PawnTicketEditAuditRow
+                {
+                    EditedAt = audit.EditedAt,
+                    EditorUser = Display(audit.EditorUser),
+                    EditorMachine = Display(audit.EditorMachine),
+                    Reason = Display(audit.Reason),
+                    ChangeSummary = Display(audit.ChangeSummary)
+                })
                 .ToList()
+        };
+    }
+
+    private static decimal CalculateTicketProfit(
+        PawnTicket ticket)
+    {
+        IEnumerable<PawnTransaction> transactions =
+            ticket.Transactions.Where(transaction =>
+                !transaction.IsVoided &&
+                transaction.CashFlowType ==
+                    CashFlowType.Income);
+
+        decimal interestIncome = transactions
+            .Where(transaction =>
+                transaction.TransactionType ==
+                    PawnTransactionType.Interest)
+            .Sum(transaction => transaction.Amount);
+
+        decimal redemptionProfit = transactions
+            .Where(transaction =>
+                transaction.TransactionType ==
+                    PawnTransactionType.Redemption)
+            .Sum(transaction => Math.Max(
+                0m,
+                transaction.Amount -
+                    ticket.PrincipalAmount));
+
+        decimal saleProfit = transactions
+            .Where(transaction =>
+                transaction.TransactionType ==
+                    PawnTransactionType.Sale)
+            .Sum(transaction =>
+                transaction.Amount -
+                    ticket.PrincipalAmount);
+
+        return interestIncome +
+            redemptionProfit +
+            saleProfit;
+    }
+
+    private static decimal? CalculateTransactionProfit(
+        PawnTransaction transaction,
+        decimal principalAmount)
+    {
+        if (transaction.CashFlowType !=
+            CashFlowType.Income)
+        {
+            return null;
+        }
+
+        return transaction.TransactionType switch
+        {
+            PawnTransactionType.Interest =>
+                transaction.Amount,
+
+            PawnTransactionType.Redemption =>
+                Math.Max(
+                    0m,
+                    transaction.Amount -
+                        principalAmount),
+
+            PawnTransactionType.Sale =>
+                transaction.Amount -
+                principalAmount,
+
+            _ => null
         };
     }
 

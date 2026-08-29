@@ -9,6 +9,7 @@ public class AppDbContext : DbContext
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<PawnTicket> PawnTickets => Set<PawnTicket>();
     public DbSet<PawnTransaction> PawnTransactions => Set<PawnTransaction>();
+    public DbSet<PawnTicketEditAudit> PawnTicketEditAudits => Set<PawnTicketEditAudit>();
     public DbSet<SmartLookupValue> SmartLookupValues => Set<SmartLookupValue>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -44,6 +45,9 @@ public class AppDbContext : DbContext
             entity.HasIndex(x => x.TicketNumber)
                 .IsUnique();
 
+            entity.HasIndex(x => x.SourcePawnTicketId)
+                .IsUnique();
+
             entity.Property(x => x.TicketNumber)
                 .IsRequired();
 
@@ -75,6 +79,26 @@ public class AppDbContext : DbContext
 
             entity.HasOne(x => x.PawnTicket)
                 .WithMany(x => x.Transactions)
+                .HasForeignKey(x => x.PawnTicketId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<PawnTicketEditAudit>(entity =>
+        {
+            entity.Property(x => x.EditorUser)
+                .IsRequired();
+
+            entity.Property(x => x.EditorMachine)
+                .IsRequired();
+
+            entity.Property(x => x.Reason)
+                .IsRequired();
+
+            entity.Property(x => x.ChangeSummary)
+                .IsRequired();
+
+            entity.HasOne(x => x.PawnTicket)
+                .WithMany(x => x.EditAudits)
                 .HasForeignKey(x => x.PawnTicketId)
                 .OnDelete(DeleteBehavior.Cascade);
         });

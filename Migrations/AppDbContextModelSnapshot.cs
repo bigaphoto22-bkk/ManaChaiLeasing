@@ -57,6 +57,8 @@ partial class AppDbContextModelSnapshot : ModelSnapshot
             b.Property<string>("Condition").HasMaxLength(1000).HasColumnType("TEXT");
             b.Property<DateTime>("CreatedAt").HasColumnType("TEXT");
             b.Property<int>("CustomerId").HasColumnType("INTEGER");
+            b.Property<DateTime?>("DueDateOverride").HasColumnType("TEXT");
+            b.Property<int?>("DueDateOverrideRenewalCount").HasColumnType("INTEGER");
             b.Property<string>("ImeiOrSerial").HasMaxLength(150).HasColumnType("TEXT");
             b.Property<int>("InterestPeriodDays").HasColumnType("INTEGER");
             b.Property<decimal>("InterestRatePercent").HasPrecision(8, 2).HasColumnType("TEXT");
@@ -67,6 +69,7 @@ partial class AppDbContextModelSnapshot : ModelSnapshot
             b.Property<decimal>("PrincipalAmount").HasPrecision(18, 2).HasColumnType("TEXT");
             b.Property<string>("ProductSummary").IsRequired().HasMaxLength(2500).HasColumnType("TEXT");
             b.Property<string>("ProductType").HasMaxLength(100).HasColumnType("TEXT");
+            b.Property<int?>("SourcePawnTicketId").HasColumnType("INTEGER");
             b.Property<string>("Specification").HasMaxLength(1500).HasColumnType("TEXT");
             b.Property<string>("Status").IsRequired().HasColumnType("TEXT");
             b.Property<string>("TicketNumber").IsRequired().HasMaxLength(50).HasColumnType("TEXT");
@@ -74,8 +77,24 @@ partial class AppDbContextModelSnapshot : ModelSnapshot
 
             b.HasKey("Id");
             b.HasIndex("CustomerId");
+            b.HasIndex("SourcePawnTicketId").IsUnique();
             b.HasIndex("TicketNumber").IsUnique();
             b.ToTable("PawnTickets");
+        });
+
+        modelBuilder.Entity("ManaChaiLeasing.Models.PawnTicketEditAudit", b =>
+        {
+            b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("INTEGER");
+            b.Property<string>("ChangeSummary").IsRequired().HasMaxLength(12000).HasColumnType("TEXT");
+            b.Property<DateTime>("EditedAt").HasColumnType("TEXT");
+            b.Property<string>("EditorMachine").IsRequired().HasMaxLength(100).HasColumnType("TEXT");
+            b.Property<string>("EditorUser").IsRequired().HasMaxLength(200).HasColumnType("TEXT");
+            b.Property<int>("PawnTicketId").HasColumnType("INTEGER");
+            b.Property<string>("Reason").IsRequired().HasMaxLength(1000).HasColumnType("TEXT");
+
+            b.HasKey("Id");
+            b.HasIndex("PawnTicketId");
+            b.ToTable("PawnTicketEditAudits");
         });
 
         modelBuilder.Entity("ManaChaiLeasing.Models.PawnTransaction", b =>
@@ -135,6 +154,17 @@ partial class AppDbContextModelSnapshot : ModelSnapshot
             b.Navigation("PawnTicket");
         });
 
+        modelBuilder.Entity("ManaChaiLeasing.Models.PawnTicketEditAudit", b =>
+        {
+            b.HasOne("ManaChaiLeasing.Models.PawnTicket", "PawnTicket")
+                .WithMany("EditAudits")
+                .HasForeignKey("PawnTicketId")
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+
+            b.Navigation("PawnTicket");
+        });
+
         modelBuilder.Entity("ManaChaiLeasing.Models.Customer", b =>
         {
             b.Navigation("PawnTickets");
@@ -142,6 +172,8 @@ partial class AppDbContextModelSnapshot : ModelSnapshot
 
         modelBuilder.Entity("ManaChaiLeasing.Models.PawnTicket", b =>
         {
+            b.Navigation("EditAudits");
+
             b.Navigation("Transactions");
         });
 #pragma warning restore 612, 618

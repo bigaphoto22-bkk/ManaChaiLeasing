@@ -1,0 +1,39 @@
+ManaChaiLeasing - Phase 2O.1
+Home Dashboard Profit Summary
+
+Version:
+0.3.5
+
+What changed:
+- Adds a Profit value to the Home dashboard cash summary.
+- Profit follows the selected dashboard period:
+  Today / This Week / This Month / Custom.
+- Existing transactions are calculated immediately; no data migration is required.
+
+Profit formula:
+- All active Interest transaction income.
+- Plus only the interest/fee portion of each Redemption transaction.
+- Redemption interest/fee portion = redemption amount - ticket principal.
+
+Not counted as profit:
+- Principal paid out for a new pawn ticket.
+- Principal returned during redemption.
+- Voided transactions.
+- Sale profit from forfeited items (there is no sale workflow yet).
+
+Files changed:
+- Services/HomeDashboardService.cs
+- MainWindow.xaml.cs
+- MainWindow.xaml
+
+Database:
+- No migration.
+- No schema change.
+
+UAT:
+1. Select Today, This Week, This Month, and Custom on the Home dashboard.
+2. Confirm Profit changes with the selected date range.
+3. For an Interest transaction, the full received amount is added to Profit.
+4. For a Redemption transaction, only the amount above principal is added.
+5. New pawn principal does not reduce Profit.
+6. Confirm Total Income, Total Expense, and Net Cash remain unchanged.

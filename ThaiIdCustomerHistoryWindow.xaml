@@ -1,0 +1,641 @@
+<Window x:Class="ManaChaiLeasing.ThaiIdCustomerHistoryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:ManaChaiLeasing"
+        Title="{x:Static local:AppInfo.CustomerHistoryWindowTitle}"
+        Icon="Resources/ManaChaiLeasing.ico"
+        Width="1120"
+        Height="760"
+        MinWidth="960"
+        MinHeight="650"
+        WindowStartupLocation="CenterOwner"
+        Background="#F5F6F8"
+        FontFamily="Segoe UI">
+
+    <Window.Resources>
+        <Style x:Key="HistoryTextCellStyle"
+               TargetType="TextBlock">
+            <Setter Property="VerticalAlignment"
+                    Value="Center" />
+            <Setter Property="Padding"
+                    Value="4,0,4,0" />
+            <Setter Property="TextTrimming"
+                    Value="CharacterEllipsis" />
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="82" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0"
+              Margin="28,24,28,20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="14" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="14" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="14" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="14" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0"
+                    Padding="22"
+                    Background="White"
+                    BorderBrush="#E5E7EB"
+                    BorderThickness="1"
+                    CornerRadius="12">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.35*" />
+                        <ColumnDefinition Width="0.95*" />
+                        <ColumnDefinition Width="0.75*" />
+                        <ColumnDefinition Width="0.85*" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="ข้อมูลลูกค้าและประวัติการใช้บริการ"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   Foreground="#2563EB" />
+                        <TextBlock Margin="0,6,0,0"
+                                   Text="{Binding CustomerName}"
+                                   FontSize="25"
+                                   FontWeight="Bold"
+                                   Foreground="#111827"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1"
+                                Margin="22,0,0,0">
+                        <TextBlock Text="เลขบัตรประชาชน"
+                                   FontSize="13"
+                                   Foreground="#6B7280" />
+                        <TextBlock Margin="0,6,0,0"
+                                   Text="{Binding CitizenIdText}"
+                                   FontSize="17"
+                                   FontWeight="SemiBold"
+                                   Foreground="#111827" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2"
+                                Margin="22,0,0,0">
+                        <TextBlock Text="โทรศัพท์"
+                                   FontSize="13"
+                                   Foreground="#6B7280" />
+                        <TextBlock Margin="0,6,0,0"
+                                   Text="{Binding Phone}"
+                                   FontSize="17"
+                                   FontWeight="SemiBold"
+                                   Foreground="#111827" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="3"
+                                Margin="22,0,0,0">
+                        <TextBlock Text="ใช้บริการล่าสุด"
+                                   FontSize="13"
+                                   Foreground="#6B7280" />
+                        <TextBlock Margin="0,6,0,0"
+                                   Text="{Binding LastServiceDateText}"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="#111827"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Border x:Name="HistoryAlertBorder"
+                    Grid.Row="2"
+                    Padding="14,12"
+                    BorderThickness="1"
+                    CornerRadius="9">
+                <TextBlock x:Name="HistoryAlertText"
+                           Text="{Binding AlertText}"
+                           FontSize="14"
+                           FontWeight="SemiBold"
+                           TextWrapping="Wrap" />
+            </Border>
+
+            <Grid Grid.Row="4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0"
+                        Padding="16,13"
+                        Background="#EFF6FF"
+                        BorderBrush="#BFDBFE"
+                        BorderThickness="1"
+                        CornerRadius="9">
+                    <StackPanel>
+                        <TextBlock Text="กำลังจำนำ"
+                                   FontSize="13"
+                                   Foreground="#1E40AF" />
+                        <TextBlock Margin="0,4,0,0"
+                                   Text="{Binding ActiveCount, StringFormat={}{0:N0} ตั๋ว}"
+                                   FontSize="22"
+                                   FontWeight="Bold"
+                                   Foreground="#1D4ED8" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2"
+                        Padding="16,13"
+                        Background="#FFFBEB"
+                        BorderBrush="#FDE68A"
+                        BorderThickness="1"
+                        CornerRadius="9">
+                    <StackPanel>
+                        <TextBlock Text="ครบกำหนดวันนี้"
+                                   FontSize="13"
+                                   Foreground="#92400E" />
+                        <TextBlock Margin="0,4,0,0"
+                                   Text="{Binding DueTodayCount, StringFormat={}{0:N0} ตั๋ว}"
+                                   FontSize="22"
+                                   FontWeight="Bold"
+                                   Foreground="#B45309" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="4"
+                        Padding="16,13"
+                        Background="#FEF2F2"
+                        BorderBrush="#FECACA"
+                        BorderThickness="1"
+                        CornerRadius="9">
+                    <StackPanel>
+                        <TextBlock Text="เกินกำหนด"
+                                   FontSize="13"
+                                   Foreground="#991B1B" />
+                        <TextBlock Margin="0,4,0,0"
+                                   Text="{Binding OverdueCount, StringFormat={}{0:N0} ตั๋ว}"
+                                   FontSize="22"
+                                   FontWeight="Bold"
+                                   Foreground="#B91C1C" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="6"
+                        Padding="16,13"
+                        Background="#ECFDF5"
+                        BorderBrush="#A7F3D0"
+                        BorderThickness="1"
+                        CornerRadius="9">
+                    <StackPanel>
+                        <TextBlock Text="ไถ่ถอนแล้ว"
+                                   FontSize="13"
+                                   Foreground="#065F46" />
+                        <TextBlock Margin="0,4,0,0"
+                                   Text="{Binding RedeemedCount, StringFormat={}{0:N0} ตั๋ว}"
+                                   FontSize="22"
+                                   FontWeight="Bold"
+                                   Foreground="#047857" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="8"
+                        Padding="16,13"
+                        Background="#FFF7ED"
+                        BorderBrush="#FED7AA"
+                        BorderThickness="1"
+                        CornerRadius="9">
+                    <StackPanel>
+                        <TextBlock Text="จำหน่ายแล้ว"
+                                   FontSize="13"
+                                   Foreground="#92400E" />
+                        <TextBlock Margin="0,4,0,0"
+                                   Text="{Binding SoldCount, StringFormat={}{0:N0} ตั๋ว}"
+                                   FontSize="22"
+                                   FontWeight="Bold"
+                                   Foreground="#B45309" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <Border Grid.Row="6"
+                    Padding="16"
+                    Background="#F0FDF4"
+                    BorderBrush="#86EFAC"
+                    BorderThickness="1"
+                    CornerRadius="12">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="12" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel>
+                            <TextBlock Text="สรุปกำไรจากลูกค้ารายนี้"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="#166534" />
+                            <TextBlock x:Name="CustomerProfitPeriodText"
+                                       Margin="0,3,0,0"
+                                       Text="ช่วงเวลา: ทั้งหมด"
+                                       FontSize="12"
+                                       Foreground="#4B5563" />
+                        </StackPanel>
+
+                        <ComboBox x:Name="CustomerProfitPeriodComboBox"
+                                  Grid.Column="1"
+                                  Width="145"
+                                  Height="36"
+                                  VerticalContentAlignment="Center"
+                                  SelectionChanged="CustomerProfitPeriodComboBox_SelectionChanged">
+                            <ComboBoxItem Content="ทั้งหมด" />
+                            <ComboBoxItem Content="วันนี้" />
+                            <ComboBoxItem Content="เดือนนี้" />
+                            <ComboBoxItem Content="ปีนี้" />
+                            <ComboBoxItem Content="กำหนดเอง" />
+                        </ComboBox>
+                    </Grid>
+
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0"
+                                Padding="12,9"
+                                Background="White"
+                                BorderBrush="#D1FAE5"
+                                BorderThickness="1"
+                                CornerRadius="8">
+                            <StackPanel>
+                                <TextBlock Text="ดอกเบี้ยรับ"
+                                           FontSize="12"
+                                           Foreground="#6B7280" />
+                                <TextBlock x:Name="CustomerInterestIncomeText"
+                                           Margin="0,3,0,0"
+                                           Text="0.00 บาท"
+                                           FontSize="18"
+                                           FontWeight="Bold"
+                                           Foreground="#047857" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="2"
+                                Padding="12,9"
+                                Background="White"
+                                BorderBrush="#D1FAE5"
+                                BorderThickness="1"
+                                CornerRadius="8">
+                            <StackPanel>
+                                <TextBlock Text="กำไรจากไถ่ถอน"
+                                           FontSize="12"
+                                           Foreground="#6B7280" />
+                                <TextBlock x:Name="CustomerRedemptionProfitText"
+                                           Margin="0,3,0,0"
+                                           Text="0.00 บาท"
+                                           FontSize="18"
+                                           FontWeight="Bold"
+                                           Foreground="#047857" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="4"
+                                Padding="12,9"
+                                Background="White"
+                                BorderBrush="#D1FAE5"
+                                BorderThickness="1"
+                                CornerRadius="8">
+                            <StackPanel>
+                                <TextBlock Text="กำไร/ขาดทุนจำหน่าย"
+                                           FontSize="12"
+                                           Foreground="#6B7280" />
+                                <TextBlock x:Name="CustomerSaleProfitText"
+                                           Margin="0,3,0,0"
+                                           Text="0.00 บาท"
+                                           FontSize="18"
+                                           FontWeight="Bold"
+                                           Foreground="#047857" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="6"
+                                Padding="12,9"
+                                Background="#DCFCE7"
+                                BorderBrush="#86EFAC"
+                                BorderThickness="1"
+                                CornerRadius="8">
+                            <StackPanel>
+                                <TextBlock Text="กำไรรวม"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="#166534" />
+                                <TextBlock x:Name="CustomerTotalProfitText"
+                                           Margin="0,3,0,0"
+                                           Text="0.00 บาท"
+                                           FontSize="20"
+                                           FontWeight="Bold"
+                                           Foreground="#15803D" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <StackPanel x:Name="CustomerProfitCustomPeriodPanel"
+                                Grid.Row="3"
+                                Margin="0,12,0,0"
+                                HorizontalAlignment="Right"
+                                Orientation="Horizontal"
+                                Visibility="Collapsed">
+                        <TextBlock Margin="0,0,8,0"
+                                   VerticalAlignment="Center"
+                                   Text="ตั้งแต่"
+                                   FontSize="13"
+                                   Foreground="#4B5563" />
+                        <DatePicker x:Name="CustomerProfitCustomStartDatePicker"
+                                    Width="135"
+                                    Height="34" />
+                        <TextBlock Margin="10,0,8,0"
+                                   VerticalAlignment="Center"
+                                   Text="ถึง"
+                                   FontSize="13"
+                                   Foreground="#4B5563" />
+                        <DatePicker x:Name="CustomerProfitCustomEndDatePicker"
+                                    Width="135"
+                                    Height="34" />
+                        <Button Margin="10,0,0,0"
+                                Width="95"
+                                Height="34"
+                                Content="แสดงผล"
+                                Click="ApplyCustomerProfitCustomPeriodButton_Click" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Border Grid.Row="8"
+                    Background="White"
+                    BorderBrush="#E5E7EB"
+                    BorderThickness="1"
+                    CornerRadius="12">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Grid Margin="18,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Text="ประวัติการใช้บริการ"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="#111827" />
+
+                        <TextBlock x:Name="HistoryCountText"
+                                   Grid.Column="1"
+                                   VerticalAlignment="Center"
+                                   FontSize="13"
+                                   Foreground="#6B7280" />
+                    </Grid>
+
+                    <Grid Grid.Row="1">
+                        <DataGrid x:Name="HistoryDataGrid"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  SelectionMode="Single"
+                                  SelectionUnit="FullRow"
+                                  HeadersVisibility="Column"
+                                  GridLinesVisibility="Horizontal"
+                                  BorderThickness="0"
+                                  RowHeight="50"
+                                  FontSize="13"
+                                  SelectionChanged="HistoryDataGrid_SelectionChanged"
+                                  MouseDoubleClick="HistoryDataGrid_MouseDoubleClick">
+                            <DataGrid.ColumnHeaderStyle>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="VerticalContentAlignment"
+                                            Value="Center" />
+                                </Style>
+                            </DataGrid.ColumnHeaderStyle>
+
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow">
+                                    <Setter Property="Background"
+                                            Value="White" />
+                                    <Setter Property="Foreground"
+                                            Value="#111827" />
+                                    <Setter Property="VerticalContentAlignment"
+                                            Value="Center" />
+
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected"
+                                                 Value="True">
+                                            <Setter Property="Background"
+                                                    Value="#0B82D6" />
+                                            <Setter Property="Foreground"
+                                                    Value="White" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.RowStyle>
+
+                            <DataGrid.CellStyle>
+                                <Style TargetType="DataGridCell">
+                                    <Setter Property="Background"
+                                            Value="Transparent" />
+                                    <Setter Property="BorderThickness"
+                                            Value="0" />
+                                    <Setter Property="VerticalContentAlignment"
+                                            Value="Center" />
+
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected"
+                                                 Value="True">
+                                            <Setter Property="Background"
+                                                    Value="#0B82D6" />
+                                            <Setter Property="Foreground"
+                                                    Value="White" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.CellStyle>
+
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="เลขตั๋ว"
+                                                    Binding="{Binding TicketNumber}"
+                                                    ElementStyle="{StaticResource HistoryTextCellStyle}"
+                                                    Width="125" />
+                                <DataGridTextColumn Header="วันที่รับจำนำ"
+                                                    Binding="{Binding PawnDateText}"
+                                                    ElementStyle="{StaticResource HistoryTextCellStyle}"
+                                                    Width="105" />
+                                <DataGridTextColumn Header="สินค้า"
+                                                    Binding="{Binding ProductSummary}"
+                                                    ElementStyle="{StaticResource HistoryTextCellStyle}"
+                                                    Width="*" />
+                                <DataGridTextColumn Header="เงินต้น"
+                                                    Binding="{Binding PrincipalAmountText}"
+                                                    ElementStyle="{StaticResource HistoryTextCellStyle}"
+                                                    Width="105" />
+                                <DataGridTextColumn Header="ครบกำหนด"
+                                                    Binding="{Binding CurrentDueDateText}"
+                                                    ElementStyle="{StaticResource HistoryTextCellStyle}"
+                                                    Width="110" />
+
+                                <DataGridTemplateColumn Header="สถานะ"
+                                                        Width="180">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding StatusText}"
+                                                       VerticalAlignment="Center"
+                                                       Padding="4,0,4,0"
+                                                       FontWeight="SemiBold">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Foreground"
+                                                                Value="#475569" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding StatusText}"
+                                                                         Value="กำลังจำนำ">
+                                                                <Setter Property="Foreground"
+                                                                        Value="#1D4ED8" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding StatusText}"
+                                                                         Value="ครบกำหนดวันนี้">
+                                                                <Setter Property="Foreground"
+                                                                        Value="#B45309" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding StatusText}"
+                                                                         Value="เกินกำหนด">
+                                                                <Setter Property="Foreground"
+                                                                        Value="#B91C1C" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding StatusText}"
+                                                                         Value="ไถ่ถอนแล้ว">
+                                                                <Setter Property="Foreground"
+                                                                        Value="#047857" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding StatusText}"
+                                                                         Value="ไถ่ถอนแล้ว • จำนำใหม่แล้ว">
+                                                                <Setter Property="Foreground"
+                                                                        Value="#047857" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding StatusText}"
+                                                                         Value="จำหน่ายแล้ว">
+                                                                <Setter Property="Foreground"
+                                                                        Value="#B45309" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type DataGridRow}}}"
+                                                                         Value="True">
+                                                                <Setter Property="Foreground"
+                                                                        Value="White" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTextColumn Header="เคลื่อนไหวล่าสุด"
+                                                    Binding="{Binding LastActivityDateText}"
+                                                    ElementStyle="{StaticResource HistoryTextCellStyle}"
+                                                    Width="140" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <TextBlock x:Name="EmptyHistoryText"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontSize="15"
+                                   Foreground="#6B7280"
+                                   Text="ยังไม่มีประวัติตั๋วจำนำ"
+                                   Visibility="Collapsed" />
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Border Grid.Row="1"
+                Background="White"
+                BorderBrush="#E5E7EB"
+                BorderThickness="0,1,0,0">
+            <Grid Margin="28,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="175" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="225" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="245" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock x:Name="HistoryActionHintText"
+                           Grid.Column="0"
+                           VerticalAlignment="Center"
+                           Text="เลือกตั๋วเพื่อเปิดดูรายละเอียด"
+                           FontSize="12"
+                           Foreground="#6B7280"
+                           TextWrapping="Wrap" />
+
+                <Button x:Name="OpenSelectedTicketButton"
+                        Grid.Column="1"
+                        Height="48"
+                        Content="เปิดตั๋วที่เลือก"
+                        FontSize="16"
+                        FontWeight="SemiBold"
+                        IsEnabled="False"
+                        Click="OpenSelectedTicketButton_Click" />
+
+                <Button x:Name="RepawnSelectedTicketButton"
+                        Grid.Column="3"
+                        Height="48"
+                        Content="จำนำสินค้าเดิมอีกครั้ง"
+                        FontSize="15"
+                        FontWeight="SemiBold"
+                        Background="#15803D"
+                        Foreground="White"
+                        BorderBrush="#15803D"
+                        IsEnabled="False"
+                        ToolTip="ใช้ได้เฉพาะตั๋วที่ไถ่ถอนแล้ว และยังไม่เคยนำไปสร้างตั๋วใหม่"
+                        ToolTipService.ShowOnDisabled="True"
+                        Click="RepawnSelectedTicketButton_Click" />
+
+                <Button Grid.Column="5"
+                        Height="48"
+                        Content="ใช้ข้อมูลนี้รับจำนำใหม่"
+                        FontSize="16"
+                        FontWeight="SemiBold"
+                        Background="#2563EB"
+                        Foreground="White"
+                        BorderBrush="#2563EB"
+                        IsDefault="True"
+                        Click="UseCustomerButton_Click" />
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

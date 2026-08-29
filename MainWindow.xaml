@@ -118,6 +118,21 @@
                          Handler="FormComboBox_PreviewMouseLeftButtonUp" />
         </Style>
 
+        <!-- Keep the date field aligned with the form, but enlarge the
+             calendar popup so dates and month navigation are easier to use. -->
+        <Style x:Key="LargePawnCalendarStyle"
+               TargetType="{x:Type Calendar}">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="UseLayoutRounding" Value="True" />
+            <Setter Property="LayoutTransform">
+                <Setter.Value>
+                    <ScaleTransform ScaleX="1.55"
+                                    ScaleY="1.55" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="SecondaryButtonStyle" TargetType="Button">
             <Setter Property="Height" Value="40" />
             <Setter Property="Padding" Value="18,0" />
@@ -517,6 +532,8 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="14" />
                                 <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
 
                             <Border Grid.Column="0"
@@ -587,6 +604,29 @@
                                                Foreground="#047857" />
                                 </StackPanel>
                             </Border>
+
+                            <Border Grid.Column="6"
+                                    Padding="20,18"
+                                    Background="White"
+                                    BorderBrush="#E5E7EB"
+                                    BorderThickness="1"
+                                    CornerRadius="10">
+                                <StackPanel>
+                                    <TextBlock Text="จำหน่าย"
+                                               FontSize="15"
+                                               FontWeight="SemiBold"
+                                               Foreground="#374151" />
+                                    <TextBlock x:Name="HomeSaleCountText"
+                                               Margin="0,7,0,0"
+                                               FontSize="28"
+                                               FontWeight="Bold"
+                                               Foreground="#B45309" />
+                                    <TextBlock x:Name="HomeSaleIncomeText"
+                                               Margin="0,3,0,0"
+                                               FontSize="14"
+                                               Foreground="#92400E" />
+                                </StackPanel>
+                            </Border>
                         </Grid>
 
                         <!-- Cash summary: one compact row -->
@@ -608,11 +648,13 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="1" />
                                     <ColumnDefinition Width="1.15*" />
+                                    <ColumnDefinition Width="1" />
+                                    <ColumnDefinition Width="1.15*" />
                                 </Grid.ColumnDefinitions>
 
                                 <StackPanel Grid.Column="0"
                                             Margin="20,16">
-                                    <TextBlock Text="รายรับรวม"
+                                    <TextBlock Text="รับเข้า"
                                                FontSize="14"
                                                Foreground="#6B7280" />
                                     <TextBlock x:Name="HomeTotalIncomeText"
@@ -628,7 +670,7 @@
 
                                 <StackPanel Grid.Column="2"
                                             Margin="20,16">
-                                    <TextBlock Text="รายจ่ายรวม"
+                                    <TextBlock Text="จ่ายออก"
                                                FontSize="14"
                                                Foreground="#6B7280" />
                                     <TextBlock x:Name="HomeTotalExpenseText"
@@ -643,10 +685,9 @@
                                         Background="#E5E7EB" />
 
                                 <Border Grid.Column="4"
-                                        Background="#F8FAFC"
-                                        CornerRadius="0,9,9,0">
+                                        Background="#F8FAFC">
                                     <StackPanel Margin="22,16">
-                                        <TextBlock Text="เงินสดสุทธิ"
+                                        <TextBlock Text="ยอดสุทธิ"
                                                    FontSize="14"
                                                    FontWeight="SemiBold"
                                                    Foreground="#475569" />
@@ -654,6 +695,26 @@
                                                    Margin="0,5,0,0"
                                                    FontSize="26"
                                                    FontWeight="Bold" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Grid.Column="5"
+                                        Margin="0,12"
+                                        Background="#E5E7EB" />
+
+                                <Border Grid.Column="6"
+                                        Background="#F0FDF4"
+                                        CornerRadius="0,9,9,0">
+                                    <StackPanel Margin="22,16">
+                                        <TextBlock Text="กำไร"
+                                                   FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#166534" />
+                                        <TextBlock x:Name="HomeProfitText"
+                                                   Margin="0,5,0,0"
+                                                   FontSize="26"
+                                                   FontWeight="Bold"
+                                                   Foreground="#15803D" />
                                     </StackPanel>
                                 </Border>
                             </Grid>
@@ -704,6 +765,41 @@
 
                         </Border>
 
+                        <Border x:Name="RepawnSourceBanner"
+                                Margin="0,18,0,0"
+                                Padding="18"
+                                Background="#F0FDF4"
+                                BorderBrush="#86EFAC"
+                                BorderThickness="1"
+                                CornerRadius="12"
+                                Visibility="Collapsed">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="18" />
+                                    <ColumnDefinition Width="135" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="กำลังสร้างตั๋วใหม่จากสินค้าที่ไถ่ถอนแล้ว"
+                                               FontSize="16"
+                                               FontWeight="SemiBold"
+                                               Foreground="#166534" />
+                                    <TextBlock x:Name="RepawnSourceText"
+                                               Margin="0,5,0,0"
+                                               FontSize="13"
+                                               Foreground="#374151"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+
+                                <Button Grid.Column="2"
+                                        Height="42"
+                                        Content="ยกเลิก"
+                                        Style="{StaticResource SecondaryButtonStyle}"
+                                        Click="CancelRepawnButton_Click" />
+                            </Grid>
+                        </Border>
+
                         <!-- Ticket -->
                         <Border Margin="0,18,0,0"
                                 Background="White"
@@ -737,8 +833,11 @@
                                         <DatePicker x:Name="PawnDatePicker"
                                                     Height="40"
                                                     FontSize="14"
+                                                    CalendarStyle="{StaticResource LargePawnCalendarStyle}"
                                                     BorderBrush="#D1D5DB"
-                                                    BorderThickness="1" />
+                                                    BorderThickness="1"
+                                                    PreviewMouseLeftButtonUp="PawnDatePicker_PreviewMouseLeftButtonUp"
+                                                    PreviewKeyDown="PawnDatePicker_PreviewKeyDown" />
                                     </StackPanel>
                                 </Grid>
 
@@ -1612,6 +1711,7 @@
                                     <ComboBoxItem Content="ครบกำหนดวันนี้" />
                                     <ComboBoxItem Content="เกินกำหนด" />
                                     <ComboBoxItem Content="ไถ่ถอนแล้ว" />
+                                    <ComboBoxItem Content="จำหน่ายแล้ว" />
                                 </ComboBox>
 
                                 <TextBlock x:Name="PawnTicketSearchResultCountText"
@@ -1717,6 +1817,45 @@
                                                     Binding="{Binding PrincipalAmountText}"
                                                     ElementStyle="{StaticResource SearchResultTextCellStyle}"
                                                     Width="115" />
+                                <DataGridTemplateColumn Header="กำไร"
+                                                        Width="110">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding ProfitText}"
+                                                       VerticalAlignment="Center"
+                                                       Padding="4,0,4,0"
+                                                       FontSize="14"
+                                                       FontWeight="SemiBold">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Foreground"
+                                                                Value="#64748B" />
+
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsProfit}"
+                                                                         Value="True">
+                                                                <Setter Property="Foreground"
+                                                                        Value="#047857" />
+                                                            </DataTrigger>
+
+                                                            <DataTrigger Binding="{Binding IsLoss}"
+                                                                         Value="True">
+                                                                <Setter Property="Foreground"
+                                                                        Value="#B91C1C" />
+                                                            </DataTrigger>
+
+                                                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type DataGridRow}}}"
+                                                                         Value="True">
+                                                                <Setter Property="Foreground"
+                                                                        Value="White" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                                 <DataGridTemplateColumn Header="ครบกำหนด"
                                                         Width="125">
                                     <DataGridTemplateColumn.CellTemplate>
@@ -1816,6 +1955,12 @@
                                                                              Value="ปิดรายการ">
                                                                     <Setter Property="Foreground"
                                                                             Value="#6B7280" />
+                                                                </DataTrigger>
+
+                                                                <DataTrigger Binding="{Binding StatusText}"
+                                                                             Value="จำหน่ายแล้ว">
+                                                                    <Setter Property="Foreground"
+                                                                            Value="#B45309" />
                                                                 </DataTrigger>
 
                                                                 <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type DataGridRow}}}"
@@ -1942,6 +2087,8 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="14" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
 
                         <Border Grid.Column="0"
@@ -2012,6 +2159,28 @@
 
                         <Border Grid.Column="6"
                                 Padding="18"
+                                Background="White"
+                                BorderBrush="#E5E7EB"
+                                BorderThickness="1"
+                                CornerRadius="10">
+                            <StackPanel>
+                                <TextBlock Text="รับเข้า • จำหน่าย"
+                                           FontSize="14"
+                                           Foreground="#6B7280" />
+                                <TextBlock x:Name="TodaySaleIncomeText"
+                                           Margin="0,6,0,0"
+                                           FontSize="22"
+                                           FontWeight="Bold"
+                                           Foreground="#B45309" />
+                                <TextBlock x:Name="TodaySaleCountText"
+                                           Margin="0,5,0,0"
+                                           FontSize="12"
+                                           Foreground="#6B7280" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="8"
+                                Padding="18"
                                 Background="#F8FAFC"
                                 BorderBrush="#CBD5E1"
                                 BorderThickness="1"
@@ -2064,22 +2233,88 @@
                                       Grid.Row="1"
                                       AutoGenerateColumns="False"
                                       IsReadOnly="True"
+                                      SelectionMode="Single"
+                                      SelectionUnit="FullRow"
                                       HeadersVisibility="Column"
                                       GridLinesVisibility="Horizontal"
                                       BorderThickness="0"
                                       Background="White"
                                       RowHeight="48"
-                                      FontSize="14">
+                                      FontSize="14"
+                                      MouseDoubleClick="TodayTransactionsDataGrid_MouseDoubleClick">
+
+                                <DataGrid.Resources>
+                                    <Style x:Key="TodayTransactionTextCellStyle"
+                                           TargetType="TextBlock">
+                                        <Setter Property="VerticalAlignment"
+                                                Value="Center" />
+                                        <Setter Property="Padding"
+                                                Value="4,0,4,0" />
+                                        <Setter Property="TextTrimming"
+                                                Value="CharacterEllipsis" />
+                                    </Style>
+                                </DataGrid.Resources>
+
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow">
+                                        <Setter Property="Background"
+                                                Value="White" />
+                                        <Setter Property="Foreground"
+                                                Value="#111827" />
+                                        <Setter Property="VerticalContentAlignment"
+                                                Value="Center" />
+
+                                        <Style.Triggers>
+                                            <Trigger Property="IsSelected"
+                                                     Value="True">
+                                                <Setter Property="Background"
+                                                        Value="#0B82D6" />
+                                                <Setter Property="Foreground"
+                                                        Value="White" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.RowStyle>
+
+                                <DataGrid.CellStyle>
+                                    <Style TargetType="DataGridCell">
+                                        <Setter Property="Background"
+                                                Value="Transparent" />
+                                        <Setter Property="BorderThickness"
+                                                Value="0" />
+                                        <Setter Property="VerticalContentAlignment"
+                                                Value="Center" />
+
+                                        <Style.Triggers>
+                                            <Trigger Property="IsSelected"
+                                                     Value="True">
+                                                <Setter Property="Background"
+                                                        Value="#0B82D6" />
+                                                <Setter Property="Foreground"
+                                                        Value="White" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.CellStyle>
+
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="เวลา"
                                                         Binding="{Binding TransactionTimeText}"
+                                                        ElementStyle="{StaticResource TodayTransactionTextCellStyle}"
                                                         Width="75" />
                                     <DataGridTextColumn Header="เลขตั๋ว"
                                                         Binding="{Binding TicketNumber}"
+                                                        ElementStyle="{StaticResource TodayTransactionTextCellStyle}"
                                                         Width="125" />
                                     <DataGridTextColumn Header="ลูกค้า"
                                                         Binding="{Binding CustomerName}"
+                                                        ElementStyle="{StaticResource TodayTransactionTextCellStyle}"
                                                         Width="180" />
+                                    <DataGridTextColumn Header="สินค้า"
+                                                        Binding="{Binding ProductSummary}"
+                                                        ElementStyle="{StaticResource TodayTransactionTextCellStyle}"
+                                                        MinWidth="180"
+                                                        Width="*" />
 
                                     <DataGridTemplateColumn Header="รายการ"
                                                             Width="110">
@@ -2101,6 +2336,14 @@
                                                                 <DataTrigger Binding="{Binding TransactionTypeText}" Value="ไถ่ถอน">
                                                                     <Setter Property="Foreground" Value="#047857" />
                                                                 </DataTrigger>
+                                                                <DataTrigger Binding="{Binding TransactionTypeText}" Value="จำหน่าย">
+                                                                    <Setter Property="Foreground" Value="#B45309" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type DataGridRow}}}"
+                                                                             Value="True">
+                                                                    <Setter Property="Foreground"
+                                                                            Value="White" />
+                                                                </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
                                                     </TextBlock.Style>
@@ -2111,6 +2354,7 @@
 
                                     <DataGridTextColumn Header="รายละเอียด"
                                                         Binding="{Binding DetailText}"
+                                                        ElementStyle="{StaticResource TodayTransactionTextCellStyle}"
                                                         Width="135" />
 
                                     <DataGridTemplateColumn Header="เงินเข้า/ออก"
@@ -2130,6 +2374,11 @@
                                                                 <DataTrigger Binding="{Binding CashFlowText}" Value="รับเข้า">
                                                                     <Setter Property="Foreground" Value="#047857" />
                                                                 </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type DataGridRow}}}"
+                                                                             Value="True">
+                                                                    <Setter Property="Foreground"
+                                                                            Value="White" />
+                                                                </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
                                                     </TextBlock.Style>
@@ -2140,10 +2389,12 @@
 
                                     <DataGridTextColumn Header="จำนวนเงิน"
                                                         Binding="{Binding AmountText}"
+                                                        ElementStyle="{StaticResource TodayTransactionTextCellStyle}"
                                                         Width="120" />
                                     <DataGridTextColumn Header="ช่องทาง"
                                                         Binding="{Binding PaymentMethod}"
-                                                        Width="*" />
+                                                        ElementStyle="{StaticResource TodayTransactionTextCellStyle}"
+                                                        Width="150" />
                                 </DataGrid.Columns>
                             </DataGrid>
                         </Grid>

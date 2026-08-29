@@ -5,8 +5,10 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using Microsoft.Win32;
 using ManaChaiLeasing.Data;
 using ManaChaiLeasing.Models;
@@ -43,6 +45,7 @@ public partial class MainWindow : Window
     private readonly MachineIdentityService _machineIdentityService = new();
     private readonly LicenseValidationService _licenseValidationService = new();
     private int? _selectedCustomerId;
+    private int? _repawnSourcePawnTicketId;
     private HomeDashboardPeriodPreset _homeDashboardPeriod =
         HomeDashboardPeriodPreset.Today;
 
@@ -483,6 +486,12 @@ public partial class MainWindow : Window
             HomeRedemptionIncomeText.Text =
                 $"รับเข้า {summary.RedemptionIncome:N2} บาท";
 
+            HomeSaleCountText.Text =
+                $"{summary.SaleCount:N0} รายการ";
+
+            HomeSaleIncomeText.Text =
+                $"รับเข้า {summary.SaleIncome:N2} บาท";
+
             HomeTotalIncomeText.Text =
                 $"{summary.TotalIncome:N2} บาท";
 
@@ -494,6 +503,14 @@ public partial class MainWindow : Window
 
             HomeNetCashText.Foreground =
                 summary.NetCash < 0m
+                    ? Brushes.Firebrick
+                    : Brushes.ForestGreen;
+
+            HomeProfitText.Text =
+                $"{summary.Profit:N2} บาท";
+
+            HomeProfitText.Foreground =
+                summary.Profit < 0m
                     ? Brushes.Firebrick
                     : Brushes.ForestGreen;
         }
@@ -609,7 +626,7 @@ public partial class MainWindow : Window
             TodayContent,
             TodayButton,
             "รายการวันนี้",
-            "สรุปรายการรับจำนำ ต่อดอก ไถ่ถอน และเงินเข้าออกประจำวัน");
+            "สรุปรายการรับจำนำ ต่อดอก ไถ่ถอน จำหน่าย และเงินเข้าออกประจำวัน");
 
         LoadTodaySummary();
     }
@@ -645,6 +662,11 @@ public partial class MainWindow : Window
                 $"{summary.RedemptionIncome:N2} บาท";
             TodayRedemptionCountText.Text =
                 $"ไถ่ถอน {summary.RedemptionCount:N0} รายการ";
+
+            TodaySaleIncomeText.Text =
+                $"{summary.SaleIncome:N2} บาท";
+            TodaySaleCountText.Text =
+                $"จำหน่าย {summary.SaleCount:N0} รายการ";
 
             TodayNetCashText.Text =
                 $"{summary.NetCash:N2} บาท";
@@ -1531,8 +1553,19 @@ public partial class MainWindow : Window
 
         bool? result = lookupWindow.ShowDialog();
 
-        if (result == true &&
-            lookupWindow.SelectedCustomer is not null)
+        if (result != true)
+        {
+            return;
+        }
+
+        if (lookupWindow.RepawnDraftRequest is not null)
+        {
+            PrepareRepawnForm(
+                lookupWindow.RepawnDraftRequest);
+            return;
+        }
+
+        if (lookupWindow.SelectedCustomer is not null)
         {
             _pendingThaiIdCardData = null;
             FillCustomerForm(lookupWindow.SelectedCustomer);
@@ -1700,6 +1733,167 @@ public partial class MainWindow : Window
         UpdateAssetPreview();
     }
 
+    private void PawnDatePicker_PreviewMouseLeftButtonUp(
+        object sender,
+        MouseButtonEventArgs e)
+    {
+        if (sender is not DatePicker datePicker)
+        {
+            return;
+        }
+
+        DatePickerTextBox? textBox =
+            GetDatePickerTextBox(datePicker);
+
+        // Do not interfere with the calendar drop-down button.
+        if (textBox is null || !textBox.IsMouseOver)
+        {
+            return;
+        }
+
+        // Let WPF finish placing the caret at the clicked position first,
+        // then select the complete day, month, or year segment.
+        Dispatcher.BeginInvoke(
+            DispatcherPriority.Background,
+            new Action(() =>
+                SelectDatePartAtCaret(
+                    textBox,
+                    textBox.CaretIndex)));
+    }
+
+    private void PawnDatePicker_PreviewKeyDown(
+        object sender,
+        KeyEventArgs e)
+    {
+        if (sender is not DatePicker datePicker ||
+            (e.Key != Key.Left && e.Key != Key.Right) ||
+            Keyboard.Modifiers != ModifierKeys.None)
+        {
+            return;
+        }
+
+        DatePickerTextBox? textBox =
+            GetDatePickerTextBox(datePicker);
+
+        if (textBox is null)
+        {
+            return;
+        }
+
+        List<(int Start, int Length)> parts =
+            GetDatePartRanges(textBox.Text);
+
+        int currentPartIndex =
+            FindDatePartIndex(
+                parts,
+                textBox.SelectionStart);
+
+        if (currentPartIndex < 0)
+        {
+            return;
+        }
+
+        int nextPartIndex = e.Key == Key.Right
+            ? currentPartIndex + 1
+            : currentPartIndex - 1;
+
+        if (nextPartIndex < 0 ||
+            nextPartIndex >= parts.Count)
+        {
+            return;
+        }
+
+        (int start, int length) =
+            parts[nextPartIndex];
+
+        e.Handled = true;
+        textBox.Focus();
+        textBox.Select(start, length);
+    }
+
+    private static DatePickerTextBox? GetDatePickerTextBox(
+        DatePicker datePicker)
+    {
+        datePicker.ApplyTemplate();
+
+        return datePicker.Template.FindName(
+            "PART_TextBox",
+            datePicker) as DatePickerTextBox;
+    }
+
+    private static void SelectDatePartAtCaret(
+        DatePickerTextBox textBox,
+        int caretIndex)
+    {
+        List<(int Start, int Length)> parts =
+            GetDatePartRanges(textBox.Text);
+
+        int partIndex =
+            FindDatePartIndex(
+                parts,
+                caretIndex);
+
+        if (partIndex < 0)
+        {
+            return;
+        }
+
+        (int start, int length) =
+            parts[partIndex];
+
+        textBox.Focus();
+        textBox.Select(start, length);
+    }
+
+    private static int FindDatePartIndex(
+        IReadOnlyList<(int Start, int Length)> parts,
+        int textPosition)
+    {
+        for (int index = 0;
+             index < parts.Count;
+             index++)
+        {
+            (int start, int length) = parts[index];
+
+            if (textPosition >= start &&
+                textPosition <= start + length)
+            {
+                return index;
+            }
+        }
+
+        return -1;
+    }
+
+    private static List<(int Start, int Length)> GetDatePartRanges(
+        string? text)
+    {
+        List<(int Start, int Length)> parts = [];
+        string value = text ?? string.Empty;
+        int index = 0;
+
+        while (index < value.Length)
+        {
+            if (!char.IsDigit(value[index]))
+            {
+                index++;
+                continue;
+            }
+
+            int start = index;
+
+            while (index < value.Length &&
+                   char.IsDigit(value[index]))
+            {
+                index++;
+            }
+
+            parts.Add((start, index - start));
+        }
+
+        return parts;
+    }
+
     private void FormComboBox_PreviewMouseLeftButtonUp(
         object sender,
         MouseButtonEventArgs e)
@@ -1743,7 +1937,12 @@ public partial class MainWindow : Window
             return;
         }
 
-        UpdateAssetPreview();
+        // Editable ComboBox จะส่ง SelectionChanged ก่อนค่า Text ถูกอัปเดต
+        // ในบางกรณีที่เลือกด้วยเมาส์ จึงรอให้ WPF ปิดรอบ event นี้ก่อน
+        // แล้วค่อยอ่านค่า เพื่อให้สรุปสินค้าแสดงค่าที่เพิ่งเลือกจริง ๆ
+        Dispatcher.BeginInvoke(
+            DispatcherPriority.Background,
+            new Action(UpdateAssetPreview));
     }
 
     private void SmartField_KeyUp(
@@ -1867,33 +2066,37 @@ public partial class MainWindow : Window
         if (detection.Status ==
             ThaiIdReaderStatus.Ready)
         {
+            ThaiIdCardReadResult readResult;
+
             Mouse.OverrideCursor = Cursors.Wait;
 
             try
             {
-                ThaiIdCardReadResult readResult =
+                readResult =
                     _thaiIdCardReaderService.ReadCard();
-
-                if (!readResult.Success ||
-                    readResult.Data is null)
-                {
-                    MessageBox.Show(
-                        $"{readResult.UserMessage}\n\n" +
-                        "หาก Reader ใช้งานไม่ได้ สามารถกรอกข้อมูลลูกค้าด้วยตนเองได้ตามปกติ",
-                        "อ่านบัตรประชาชนไม่สำเร็จ",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
-                    return;
-                }
-
-                ShowThaiIdCardPreview(
-                    readResult.Data);
             }
             finally
             {
+                // แสดง Wait Cursor เฉพาะช่วงที่กำลังอ่าน Hardware เท่านั้น
+                // หน้าตรวจสอบและหน้าประวัติต้องใช้ Cursor ปกติ
                 Mouse.OverrideCursor = null;
                 RefreshThaiIdReaderStatus();
             }
+
+            if (!readResult.Success ||
+                readResult.Data is null)
+            {
+                MessageBox.Show(
+                    $"{readResult.UserMessage}\n\n" +
+                    "หาก Reader ใช้งานไม่ได้ สามารถกรอกข้อมูลลูกค้าด้วยตนเองได้ตามปกติ",
+                    "อ่านบัตรประชาชนไม่สำเร็จ",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            ShowThaiIdCardPreview(
+                readResult.Data);
 
             return;
         }
@@ -2114,7 +2317,49 @@ public partial class MainWindow : Window
                 Brushes.ForestGreen;
         }
 
+        if (ShowCustomerHistory(customer.Id))
+        {
+            return;
+        }
+
         FirstNameTextBox.Focus();
+    }
+
+    private bool ShowCustomerHistory(
+        int customerId)
+    {
+        try
+        {
+            ThaiIdCustomerHistoryWindow historyWindow =
+                new(customerId)
+                {
+                    Owner = this
+                };
+
+            historyWindow.ShowDialog();
+
+            if (historyWindow.RepawnDraftRequest is not null)
+            {
+                PrepareRepawnForm(
+                    historyWindow.RepawnDraftRequest);
+
+                return true;
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error(
+                "Could not open customer history.",
+                ex);
+
+            MessageBox.Show(
+                $"ไม่สามารถเปิดประวัติลูกค้าได้\n\n{ex.Message}",
+                AppInfo.StoreName,
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+        }
+
+        return false;
     }
 
     private void ApplyNewCustomerDataFromThaiId(
@@ -2306,6 +2551,7 @@ public partial class MainWindow : Window
                     new PawnTicketSaveRequest
                     {
                         SelectedCustomerId = _selectedCustomerId,
+                        SourcePawnTicketId = _repawnSourcePawnTicketId,
                         Customer = customer,
                         Ticket = ticket,
                         SmartLookupValues =
@@ -2864,6 +3110,17 @@ public partial class MainWindow : Window
     {
         _isInitializing = true;
 
+        _repawnSourcePawnTicketId = null;
+
+        if (RepawnSourceBanner is not null)
+        {
+            RepawnSourceBanner.Visibility =
+                Visibility.Collapsed;
+
+            RepawnSourceText.Text =
+                string.Empty;
+        }
+
         TicketNumberTextBox.Clear();
         PawnDatePicker.SelectedDate = DateTime.Today;
 
@@ -2931,6 +3188,153 @@ public partial class MainWindow : Window
         TicketNumberTextBox.Focus();
     }
 
+    private void CancelRepawnButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        ClearNewPawnForm();
+    }
+
+    private void PrepareRepawnForm(
+        RepawnDraft draft)
+    {
+        ClearNewPawnForm();
+
+        ShowPage(
+            NewPawnContent,
+            NewPawnButton,
+            "รับจำนำใหม่",
+            $"สร้างตั๋วใหม่จากตั๋วเดิม {draft.SourceTicketNumber}");
+
+        _isInitializing = true;
+        _thaiIdMockDataLoaded = false;
+        _pendingThaiIdCardData = null;
+        _repawnSourcePawnTicketId =
+            draft.SourcePawnTicketId;
+        _selectedCustomerId =
+            draft.CustomerId;
+
+        RepawnSourceBanner.Visibility =
+            Visibility.Visible;
+
+        RepawnSourceText.Text =
+            $"ต้นทาง: ตั๋ว {draft.SourceTicketNumber} • " +
+            "กรุณาออกเลขตั๋วใหม่ ระบุยอดเงินใหม่ และตรวจสภาพ อุปกรณ์ รวมถึง IMEI / Serial อีกครั้ง";
+
+        TicketNumberTextBox.Clear();
+        PawnDatePicker.SelectedDate =
+            DateTime.Today;
+        PawnAmountTextBox.Clear();
+
+        FirstNameTextBox.Text =
+            draft.FirstName;
+        LastNameTextBox.Text =
+            draft.LastName;
+        CitizenIdTextBox.Text =
+            draft.CitizenId;
+        AgeTextBox.Text =
+            draft.Age?.ToString() ?? string.Empty;
+        PhoneTextBox.Text =
+            draft.Phone;
+        AddressTextBox.Text =
+            draft.Address;
+
+        CustomerRecordStatusText.Text =
+            $"ลูกค้าเดิม • #{draft.CustomerId} • สินค้าจากตั๋ว {draft.SourceTicketNumber}";
+        CustomerRecordStatusText.Foreground =
+            Brushes.ForestGreen;
+
+        int categoryIndex =
+            GetRepawnCategoryIndex(
+                draft.AssetCategory);
+
+        AssetCategoryComboBox.SelectedIndex =
+            categoryIndex;
+
+        switch (categoryIndex)
+        {
+            case 0:
+                MobileBrandComboBox.Text = draft.Brand;
+                MobileModelComboBox.Text = draft.Model;
+                MobileCapacityComboBox.Text = draft.CapacityOrSize;
+                MobileColorComboBox.Text = draft.Color;
+                MobileImeiTextBox.Text = draft.ImeiOrSerial;
+                MobileAccessoriesTextBox.Text = draft.Accessories;
+                MobileConditionTextBox.Text = draft.Condition;
+                break;
+
+            case 1:
+                ItTypeComboBox.Text = draft.ProductType;
+                ItBrandComboBox.Text = draft.Brand;
+                ItModelComboBox.Text = draft.Model;
+                ItSpecificationTextBox.Text = draft.Specification;
+                ItSerialTextBox.Text = draft.ImeiOrSerial;
+                ItAccessoriesTextBox.Text = draft.Accessories;
+                ItConditionTextBox.Text = draft.Condition;
+                break;
+
+            case 2:
+                ElectricalTypeComboBox.Text = draft.ProductType;
+                ElectricalBrandComboBox.Text = draft.Brand;
+                ElectricalModelComboBox.Text = draft.Model;
+                ElectricalSizeTextBox.Text = draft.CapacityOrSize;
+                ElectricalSerialTextBox.Text = draft.ImeiOrSerial;
+                ElectricalAccessoriesTextBox.Text = draft.Accessories;
+                ElectricalConditionTextBox.Text = draft.Condition;
+                break;
+
+            default:
+                OtherTypeTextBox.Text = draft.ProductType;
+                OtherBrandTextBox.Text = draft.Brand;
+                OtherModelTextBox.Text = draft.Model;
+                OtherDetailsTextBox.Text = draft.OtherDetails;
+                OtherSerialTextBox.Text = draft.ImeiOrSerial;
+                OtherAccessoriesTextBox.Text = draft.Accessories;
+                OtherConditionTextBox.Text = draft.Condition;
+                break;
+        }
+
+        PawnNoteTextBox.Clear();
+
+        _isInitializing = false;
+
+        UpdateProductForm();
+        UpdateAssetPreview();
+        RefreshThaiIdReaderStatus();
+
+        TicketNumberTextBox.Focus();
+    }
+
+    private static int GetRepawnCategoryIndex(
+        string assetCategory)
+    {
+        if (assetCategory.Contains(
+                "โทรศัพท์",
+                StringComparison.OrdinalIgnoreCase) ||
+            assetCategory.Contains(
+                "Tablet",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return 0;
+        }
+
+        if (assetCategory.Contains(
+                "IT",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return 1;
+        }
+
+        if (assetCategory.Contains(
+                "เครื่องใช้ไฟฟ้า",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return 2;
+        }
+
+        return 3;
+    }
+
     private void PawnTicketSearchFilterComboBox_SelectionChanged(
         object sender,
         SelectionChangedEventArgs e)
@@ -2951,6 +3355,7 @@ public partial class MainWindow : Window
             2 => PawnTicketSearchFilter.DueToday,
             3 => PawnTicketSearchFilter.Overdue,
             4 => PawnTicketSearchFilter.Redeemed,
+            5 => PawnTicketSearchFilter.Sold,
             _ => PawnTicketSearchFilter.All
         };
     }
@@ -3015,6 +3420,56 @@ public partial class MainWindow : Window
         OpenSelectedPawnTicket();
     }
 
+    private void TodayTransactionsDataGrid_MouseDoubleClick(
+        object sender,
+        MouseButtonEventArgs e)
+    {
+        if (TodayTransactionsDataGrid.SelectedItem
+            is not TodayTransactionRow selected)
+        {
+            return;
+        }
+
+        try
+        {
+            PawnTicketDetail detail =
+                _pawnTicketSearchService.GetDetail(
+                    selected.PawnTicketId);
+
+            PawnTicketDetailWindow detailWindow =
+                new(detail)
+                {
+                    Owner = this
+                };
+
+            detailWindow.ShowDialog();
+
+            if (detailWindow.RepawnDraftRequest is not null)
+            {
+                PrepareRepawnForm(
+                    detailWindow.RepawnDraftRequest);
+
+                return;
+            }
+
+            // ผู้ใช้อาจต่อดอก ไถ่ถอน หรือจำหน่ายจากหน้ารายละเอียด
+            // เมื่อกลับมาให้รายการวันนี้แสดงข้อมูลล่าสุดทันที
+            LoadTodaySummary();
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error(
+                "Could not open ticket from today's transactions.",
+                ex);
+
+            MessageBox.Show(
+                $"ไม่สามารถเปิดรายละเอียดตั๋วได้\n\n{ex.Message}",
+                ManaChaiLeasing.AppInfo.StoreName,
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
     private void OpenSelectedPawnTicket()
     {
         if (PawnTicketSearchDataGrid.SelectedItem
@@ -3043,7 +3498,15 @@ public partial class MainWindow : Window
 
             detailWindow.ShowDialog();
 
-            // เมื่อมีการต่อดอก / ไถ่ถอนในหน้ารายละเอียด
+            if (detailWindow.RepawnDraftRequest is not null)
+            {
+                PrepareRepawnForm(
+                    detailWindow.RepawnDraftRequest);
+
+                return;
+            }
+
+            // เมื่อมีการต่อดอก / ไถ่ถอน / จำหน่ายในหน้ารายละเอียด
             // กลับมาหน้า Search ให้ดึงสถานะล่าสุดจาก SQLite ทันที
             LoadPawnTicketSearchResults();
         }

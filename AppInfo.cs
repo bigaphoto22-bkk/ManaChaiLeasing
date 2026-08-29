@@ -43,6 +43,9 @@ public static class AppInfo
     public const string PawnTicketDetailWindowTitle =
         "รายละเอียดตั๋วจำนำ - " + StoreName;
 
+    public const string PawnTicketEditWindowTitle =
+        "แก้ไขข้อมูลตั๋วจำนำ - " + StoreName;
+
     public const string LicenseActivationWindowTitle =
         "เปิดใช้งานโปรแกรม - " + StoreName;
 
@@ -54,4 +57,10 @@ public static class AppInfo
 
     public const string RedemptionSuccessWindowTitle =
         "ไถ่ถอนสำเร็จ - " + StoreName;
+
+    public const string SaleWindowTitle =
+        "จำหน่ายสินค้า - " + StoreName;
+
+    public const string CustomerHistoryWindowTitle =
+        "ประวัติลูกค้า - " + StoreName;
 }

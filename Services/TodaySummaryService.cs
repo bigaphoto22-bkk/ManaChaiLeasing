@@ -11,12 +11,15 @@ public sealed class TodaySummary
     public int PawnCount { get; init; }
     public int InterestCount { get; init; }
     public int RedemptionCount { get; init; }
+    public int SaleCount { get; init; }
 
     public decimal PawnExpense { get; init; }
     public decimal InterestIncome { get; init; }
     public decimal RedemptionIncome { get; init; }
+    public decimal SaleIncome { get; init; }
 
-    public decimal TotalIncome => InterestIncome + RedemptionIncome;
+    public decimal TotalIncome =>
+        InterestIncome + RedemptionIncome + SaleIncome;
     public decimal NetCash => TotalIncome - PawnExpense;
 
     public List<TodayTransactionRow> Transactions { get; init; } = new();
@@ -24,11 +27,14 @@ public sealed class TodaySummary
 
 public sealed class TodayTransactionRow
 {
+    public int PawnTicketId { get; init; }
+
     public DateTime TransactionDate { get; init; }
     public string TransactionTimeText => TransactionDate.ToString("HH:mm");
 
     public string TicketNumber { get; init; } = string.Empty;
     public string CustomerName { get; init; } = string.Empty;
+    public string ProductSummary { get; init; } = "-";
 
     public PawnTransactionType TransactionType { get; init; }
     public string TransactionTypeText => TransactionType switch
@@ -36,6 +42,7 @@ public sealed class TodayTransactionRow
         PawnTransactionType.Pawn => "จำนำ",
         PawnTransactionType.Interest => "ต่อดอก",
         PawnTransactionType.Redemption => "ไถ่ถอน",
+        PawnTransactionType.Sale => "จำหน่าย",
         _ => TransactionType.ToString()
     };
 
@@ -56,6 +63,7 @@ public sealed class TodayTransactionRow
         PawnTransactionType.Interest when InterestSequence.HasValue =>
             $"ต่อดอกครั้งที่ {InterestSequence.Value:N0}",
         PawnTransactionType.Redemption => "ปิดตั๋ว",
+        PawnTransactionType.Sale => "จำหน่ายสินค้า",
         PawnTransactionType.Pawn => "รับจำนำใหม่",
         _ => "-"
     };
@@ -102,6 +110,12 @@ public sealed class TodaySummaryService
                 transaction.CashFlowType == CashFlowType.Income)
             .Sum(transaction => transaction.Amount);
 
+        decimal saleIncome = transactions
+            .Where(transaction =>
+                transaction.TransactionType == PawnTransactionType.Sale &&
+                transaction.CashFlowType == CashFlowType.Income)
+            .Sum(transaction => transaction.Amount);
+
         return new TodaySummary
         {
             Date = start,
@@ -112,16 +126,23 @@ public sealed class TodaySummaryService
                 transaction.TransactionType == PawnTransactionType.Interest),
             RedemptionCount = transactions.Count(transaction =>
                 transaction.TransactionType == PawnTransactionType.Redemption),
+            SaleCount = transactions.Count(transaction =>
+                transaction.TransactionType == PawnTransactionType.Sale),
             PawnExpense = pawnExpense,
             InterestIncome = interestIncome,
             RedemptionIncome = redemptionIncome,
+            SaleIncome = saleIncome,
             Transactions = transactions.Select(transaction => new TodayTransactionRow
             {
+                PawnTicketId = transaction.PawnTicketId,
                 TransactionDate = transaction.TransactionDate,
                 TicketNumber = transaction.PawnTicket.TicketNumber,
                 CustomerName =
                     $"{transaction.PawnTicket.Customer.FirstName} " +
                     $"{transaction.PawnTicket.Customer.LastName}".Trim(),
+                ProductSummary =
+                    Display(
+                        transaction.PawnTicket.ProductSummary),
                 TransactionType = transaction.TransactionType,
                 CashFlowType = transaction.CashFlowType,
                 Amount = transaction.Amount,

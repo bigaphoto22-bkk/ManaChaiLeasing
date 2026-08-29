@@ -197,9 +197,9 @@ public sealed class InterestRenewalService
             activeInterestTransactions.Count;
 
         DateTime currentDueDate =
-            ticket.PawnDate.Date.AddDays(
-                ticket.InterestPeriodDays *
-                (completedRenewals + 1));
+            PawnTicketDueDateCalculator.Calculate(
+                ticket,
+                completedRenewals);
 
         DateTime newDueDate =
             currentDueDate.AddDays(
