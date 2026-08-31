@@ -1,0 +1,33 @@
+วิธี Git add ชื่อไฟล์ภาษาไทย
+
+ตัวอย่างนี้ได้ทำการเพิ่มไฟล์เข้าไปใน Docs 2 ไฟล์
+1.สิ่งที่ต้องทำก่อนเริ่มเขียนต่อทั้งที่บ้านที่ทำงาน.txt
+2.วิธีpush to Git หากเพิ่มไฟล์เข้าโฟลเดอร์เอง.txt
+
+วิธีการ
+
+1.เพื่อให้ PowerShell และ Git แสดงชื่อภาษาไทยอ่านง่าย ตั้งค่าครั้งเดียวก่อน:
+git config --global core.quotepath false
+
+2.จากนั้นรัน:
+cd C:\Dev\PawnShop-2\ManaChaiLeasing
+
+git status --short -- Docs
+
+3.เพิ่มเฉพาะสองไฟล์ในภาพ โดยใช้ * รองรับกรณีมีนามสกุล .txt ซ่อนอยู่:
+git add -- "Docs/สิ่งที่ต้องทำก่อนเริ่มเขียนต่อ*" "Docs/วิธีpush to Git*"
+
+git diff --cached --name-only
+
+4.ตรวจว่าแสดงเฉพาะสองไฟล์ที่ต้องการ แล้ว Commit และ Push:
+git commit -m "Add Thai Git workflow notes"
+
+git pull --rebase origin main
+git push origin main
+
+git status
+
+5.สถานะสุดท้ายควรเป็น:
+Your branch is up to date with 'origin/main'.
+
+nothing to commit, working tree clean
