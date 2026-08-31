@@ -1,0 +1,25 @@
+ก่อนเริ่มทำงานทั้งที่บ้าน และ ที่ทำงาน ให้รันคำสั่ง pull ข้อมูลให้เหมือนกันก่อน
+
+cd C:\Dev\PawnShop-2\ManaChaiLeasing
+
+git status
+git pull origin main
+git status
+
+
+ผลที่ควรได้หลัง Pull สำเร็จ:
+
+Your branch is up to date with 'origin/main'.
+nothing to commit, working tree clean
+
+
+จากนั้นตรวจเวอร์ชันและ Build:
+
+Get-Content .\Installer\ReleaseVersion.txt
+dotnet build
+dotnet run
+
+
+หลักสำคัญคือทุกครั้งที่สลับเครื่อง:
+ก่อนเริ่มงาน → Pull
+หลังทำงานเสร็จ → Commit และ Push
