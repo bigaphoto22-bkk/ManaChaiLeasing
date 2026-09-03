@@ -12,7 +12,18 @@ git add -- "Docs/Machine ID & AnyDesk*"
 git diff --cached --name-only
 
 
-2.รันคำสั่ง push
+2.รันคำสั่ง pull & push (กรณีทำงานคนละเครื่อง)
+-pull
+
+cd C:\Dev\PawnShop-2\ManaChaiLeasing
+
+git status
+git pull --ff-only origin main
+git status
+
+push
+
+cd C:\Dev\PawnShop-2\ManaChaiLeasing
 git commit -m "Add customer machine ID and AnyDesk details"
 
 git pull --rebase origin main
