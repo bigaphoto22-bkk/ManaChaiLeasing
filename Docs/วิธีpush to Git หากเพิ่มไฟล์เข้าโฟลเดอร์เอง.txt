@@ -1,18 +1,18 @@
-วิธี push to Git ถ้าเพิ่มไฟล์ใหม่เข้าไปในโฟลเดอร์เอง ต้อง git add ก่อนแล้วตามด้วย git pull, git push เช่น
+วิธี push to Git ถ้าเพิ่มไฟล์ใหม่เข้าไปในโฟลเดอร์เอง ต้อง git add ก่อนแล้วตามด้วย git push เช่น
 -ได้เพิ่มไฟล์ชื่อ Machine ID & AnyDesk.txt  เข้าไปในโฟลเดอร์ Docs
 
 1.รันคำสั่งเพื่อดูว่ามีเฉพาะไฟล์ที่ต้องการ
 
-cd C:\Dev\PawnShop-2\ManaChaiLeasing
+git add -- "Docs/วิธีpush to Git หากเพิ่มไฟล์เข้าโฟลเดอร์เอง.txt"
+
+git commit -m "Update Git push instructions"
+
+git push origin main
 
 git status
 
-git add -- "Docs/Machine ID & AnyDesk*"
 
-git diff --cached --name-only
-
-
-2.รันคำสั่ง pull & push (กรณีทำงานคนละเครื่อง)
+2.รันคำสั่ง pull (กรณีทำงานคนละเครื่องต้องทำก่อนทุกครั้ง)
 -pull
 
 cd C:\Dev\PawnShop-2\ManaChaiLeasing
@@ -21,15 +21,6 @@ git status
 git pull --ff-only origin main
 git status
 
-push
-
-cd C:\Dev\PawnShop-2\ManaChaiLeasing
-git commit -m "Add customer machine ID and AnyDesk details"
-
-git pull --rebase origin main
-git push origin main
-
-git status
 
 3.สถานะสุดท้ายควรเป็น:
 Your branch is up to date with 'origin/main'.
