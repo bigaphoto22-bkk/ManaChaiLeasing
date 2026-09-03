@@ -14,6 +14,14 @@ public sealed class DirectPurchaseListRow
     public string ProductSummary { get; init; } = string.Empty;
     public decimal PurchasePrice { get; init; }
     public string PurchasePriceText => $"{PurchasePrice:N2}";
+    public DateTime? SaleDate { get; init; }
+    public string SaleDateText => SaleDate?.ToString("dd/MM/yyyy") ?? "-";
+    public decimal? SalePrice { get; init; }
+    public string SalePriceText => SalePrice.HasValue ? $"{SalePrice.Value:N2}" : "-";
+    public decimal? Profit => SalePrice.HasValue ? SalePrice.Value - PurchasePrice : null;
+    public string ProfitText => Profit.HasValue ? $"{Profit.Value:N2}" : "-";
+    public bool HasProfit => Profit.HasValue;
+    public bool IsLoss => Profit < 0m;
     public string PaymentMethod { get; init; } = "-";
     public DirectPurchaseStatus Status { get; init; }
     public string StatusText => DirectPurchaseService.StatusText(Status);
@@ -48,6 +56,36 @@ public sealed class DirectPurchaseData
     public string PaymentMethod { get; init; } = string.Empty;
     public string Note { get; init; } = string.Empty;
     public string CancellationReason { get; init; } = string.Empty;
+    public DateTime? SaleDate { get; init; }
+    public decimal? SalePrice { get; init; }
+    public decimal? SaleProfit => SalePrice.HasValue ? SalePrice.Value - PurchasePrice : null;
+    public string SalePaymentMethod { get; init; } = string.Empty;
+    public string SaleNote { get; init; } = string.Empty;
+}
+
+public sealed class DirectPurchaseSalePreview
+{
+    public int DirectPurchaseId { get; init; }
+    public string DocumentNumber { get; init; } = "-";
+    public DateTime PurchaseDate { get; init; }
+    public decimal PurchasePrice { get; init; }
+    public string SellerName { get; init; } = string.Empty;
+    public string ProductSummary { get; init; } = string.Empty;
+    public bool IsEditing { get; init; }
+    public DateTime? SaleDate { get; init; }
+    public decimal? SalePrice { get; init; }
+    public string SalePaymentMethod { get; init; } = string.Empty;
+    public string SaleNote { get; init; } = string.Empty;
+}
+
+public sealed class DirectPurchaseSaleResult
+{
+    public int DirectPurchaseId { get; init; }
+    public string DocumentNumber { get; init; } = "-";
+    public DateTime SaleDate { get; init; }
+    public decimal PurchasePrice { get; init; }
+    public decimal SalePrice { get; init; }
+    public decimal Profit => SalePrice - PurchasePrice;
 }
 
 public sealed class DirectPurchaseSaveRequest
@@ -125,6 +163,18 @@ public sealed class DirectPurchaseService
                 SellerName = (item.SellerCustomer.FirstName + " " + item.SellerCustomer.LastName).Trim(),
                 ProductSummary = item.ProductSummary,
                 PurchasePrice = item.PurchasePrice,
+                SaleDate = item.Transactions
+                    .Where(transaction =>
+                        !transaction.IsVoided &&
+                        transaction.TransactionType == DirectPurchaseTransactionType.Sale)
+                    .Select(transaction => (DateTime?)transaction.TransactionDate)
+                    .FirstOrDefault(),
+                SalePrice = item.Transactions
+                    .Where(transaction =>
+                        !transaction.IsVoided &&
+                        transaction.TransactionType == DirectPurchaseTransactionType.Sale)
+                    .Select(transaction => (decimal?)transaction.Amount)
+                    .FirstOrDefault(),
                 PaymentMethod = item.PaymentMethod ?? "-",
                 Status = item.Status
             })
@@ -137,8 +187,17 @@ public sealed class DirectPurchaseService
         DirectPurchase item = db.DirectPurchases
             .AsNoTracking()
             .Include(value => value.SellerCustomer)
+            .Include(value => value.Transactions)
             .SingleOrDefault(value => value.Id == id)
             ?? throw new InvalidOperationException("ไม่พบรายการรับซื้อที่ต้องการ");
+
+        DirectPurchaseTransaction? saleTransaction = item.Transactions
+            .Where(value =>
+                !value.IsVoided &&
+                value.TransactionType == DirectPurchaseTransactionType.Sale)
+            .OrderByDescending(value => value.TransactionDate)
+            .ThenByDescending(value => value.Id)
+            .FirstOrDefault();
 
         return new DirectPurchaseData
         {
@@ -168,8 +227,247 @@ public sealed class DirectPurchaseService
             ProductSummary = item.ProductSummary,
             PaymentMethod = item.PaymentMethod ?? string.Empty,
             Note = item.Note ?? string.Empty,
-            CancellationReason = item.CancellationReason ?? string.Empty
+            CancellationReason = item.CancellationReason ?? string.Empty,
+            SaleDate = saleTransaction?.TransactionDate,
+            SalePrice = saleTransaction?.Amount,
+            SalePaymentMethod = saleTransaction?.PaymentMethod ?? string.Empty,
+            SaleNote = saleTransaction?.Note ?? string.Empty
         };
+    }
+
+    public DirectPurchaseSalePreview GetSalePreview(int id)
+    {
+        using AppDbContext db = new();
+        DirectPurchase item = db.DirectPurchases
+            .AsNoTracking()
+            .Include(value => value.SellerCustomer)
+            .SingleOrDefault(value => value.Id == id)
+            ?? throw new InvalidOperationException("ไม่พบรายการรับซื้อที่ต้องการขาย");
+
+        if (item.Status != DirectPurchaseStatus.InStock)
+        {
+            throw new InvalidOperationException("ขายได้เฉพาะรายการที่มีสถานะรอขายเท่านั้น");
+        }
+
+        return new DirectPurchaseSalePreview
+        {
+            DirectPurchaseId = item.Id,
+            DocumentNumber = Display(item.DocumentNumber),
+            PurchaseDate = item.PurchaseDate,
+            PurchasePrice = item.PurchasePrice,
+            SellerName = $"{item.SellerCustomer.FirstName} {item.SellerCustomer.LastName}".Trim(),
+            ProductSummary = item.ProductSummary,
+            IsEditing = false
+        };
+    }
+
+    public DirectPurchaseSalePreview GetSaleEditPreview(int id)
+    {
+        using AppDbContext db = new();
+        DirectPurchase item = db.DirectPurchases
+            .AsNoTracking()
+            .Include(value => value.SellerCustomer)
+            .Include(value => value.Transactions)
+            .SingleOrDefault(value => value.Id == id)
+            ?? throw new InvalidOperationException("ไม่พบรายการขายที่ต้องการแก้ไข");
+
+        if (item.Status != DirectPurchaseStatus.Sold)
+            throw new InvalidOperationException("แก้ไขข้อมูลการขายได้เฉพาะรายการสถานะขายแล้ว");
+
+        DirectPurchaseTransaction saleTransaction = item.Transactions
+            .Where(value =>
+                !value.IsVoided &&
+                value.TransactionType == DirectPurchaseTransactionType.Sale)
+            .OrderByDescending(value => value.TransactionDate)
+            .ThenByDescending(value => value.Id)
+            .FirstOrDefault()
+            ?? throw new InvalidOperationException("ไม่พบ Transaction การขายของรายการนี้");
+
+        return new DirectPurchaseSalePreview
+        {
+            DirectPurchaseId = item.Id,
+            DocumentNumber = Display(item.DocumentNumber),
+            PurchaseDate = item.PurchaseDate,
+            PurchasePrice = item.PurchasePrice,
+            SellerName = $"{item.SellerCustomer.FirstName} {item.SellerCustomer.LastName}".Trim(),
+            ProductSummary = item.ProductSummary,
+            IsEditing = true,
+            SaleDate = saleTransaction.TransactionDate,
+            SalePrice = saleTransaction.Amount,
+            SalePaymentMethod = saleTransaction.PaymentMethod ?? string.Empty,
+            SaleNote = saleTransaction.Note ?? string.Empty
+        };
+    }
+
+    public DirectPurchaseSaleResult SaveSale(
+        int id,
+        DateTime saleDate,
+        decimal salePrice,
+        string? paymentMethod,
+        string? note)
+    {
+        DateTime normalizedSaleDate = saleDate.Date;
+        string cleanedPaymentMethod = Required(paymentMethod, "ช่องทางการรับเงิน");
+        string? cleanedNote = Clean(note);
+
+        if (normalizedSaleDate > DateTime.Today)
+            throw new InvalidOperationException("วันที่ขายต้องไม่เกินวันนี้");
+        if (salePrice <= 0m)
+            throw new InvalidOperationException("ราคาขายต้องมากกว่า 0 บาท");
+
+        Max(cleanedPaymentMethod, 50, "ช่องทางการรับเงิน");
+        Max(cleanedNote, 1000, "หมายเหตุการขาย");
+
+        lock (BusinessTransactionGate.SyncRoot)
+        {
+            using AppDbContext db = new();
+            using var transaction = db.Database.BeginTransaction();
+            DirectPurchase item = db.DirectPurchases
+                .Include(value => value.Transactions)
+                .Include(value => value.EditAudits)
+                .SingleOrDefault(value => value.Id == id)
+                ?? throw new InvalidOperationException("ไม่พบรายการรับซื้อที่ต้องการขาย");
+
+            if (item.Status != DirectPurchaseStatus.InStock)
+                throw new InvalidOperationException("ขายได้เฉพาะรายการที่มีสถานะรอขายเท่านั้น");
+            if (normalizedSaleDate < item.PurchaseDate.Date)
+                throw new InvalidOperationException("วันที่ขายต้องไม่ก่อนวันที่รับซื้อ");
+            if (item.Transactions.Any(value =>
+                    !value.IsVoided &&
+                    value.TransactionType == DirectPurchaseTransactionType.Sale))
+                throw new InvalidOperationException("รายการนี้บันทึกขายแล้ว");
+
+            DateTime now = DateTime.Now;
+            item.Status = DirectPurchaseStatus.Sold;
+            item.UpdatedAt = now;
+
+            item.Transactions.Add(new DirectPurchaseTransaction
+            {
+                TransactionType = DirectPurchaseTransactionType.Sale,
+                CashFlowType = CashFlowType.Income,
+                TransactionDate = normalizedSaleDate.Add(now.TimeOfDay),
+                Amount = salePrice,
+                PaymentMethod = cleanedPaymentMethod,
+                Note = cleanedNote,
+                CreatedAt = now
+            });
+
+            decimal profit = salePrice - item.PurchasePrice;
+            item.EditAudits.Add(new DirectPurchaseEditAudit
+            {
+                EditedAt = now,
+                EditorUser = Environment.UserName,
+                EditorMachine = Environment.MachineName,
+                Reason = "บันทึกขายสินค้า",
+                ChangeSummary =
+                    "สถานะ: รอขาย → ขายแล้ว" + Environment.NewLine +
+                    $"วันที่ขาย: {normalizedSaleDate:dd/MM/yyyy}" + Environment.NewLine +
+                    $"ราคาขาย: {salePrice:N2} บาท" + Environment.NewLine +
+                    $"กำไร/ขาดทุน: {profit:N2} บาท"
+            });
+
+            db.SaveChanges();
+            transaction.Commit();
+
+            return new DirectPurchaseSaleResult
+            {
+                DirectPurchaseId = item.Id,
+                DocumentNumber = Display(item.DocumentNumber),
+                SaleDate = normalizedSaleDate,
+                PurchasePrice = item.PurchasePrice,
+                SalePrice = salePrice
+            };
+        }
+    }
+
+    public DirectPurchaseSaleResult UpdateSale(
+        int id,
+        DateTime saleDate,
+        decimal salePrice,
+        string? paymentMethod,
+        string? note,
+        string? editReason)
+    {
+        DateTime normalizedSaleDate = saleDate.Date;
+        string cleanedPaymentMethod = Required(paymentMethod, "ช่องทางการรับเงิน");
+        string? cleanedNote = Clean(note);
+        string? cleanedReason = Clean(editReason);
+
+        if (normalizedSaleDate > DateTime.Today)
+            throw new InvalidOperationException("วันที่ขายต้องไม่เกินวันนี้");
+        if (salePrice <= 0m)
+            throw new InvalidOperationException("ราคาขายต้องมากกว่า 0 บาท");
+
+        Max(cleanedPaymentMethod, 50, "ช่องทางการรับเงิน");
+        Max(cleanedNote, 1000, "หมายเหตุการขาย");
+        Max(cleanedReason, 1000, "เหตุผลการแก้ไข");
+
+        lock (BusinessTransactionGate.SyncRoot)
+        {
+            using AppDbContext db = new();
+            using var transaction = db.Database.BeginTransaction();
+            DirectPurchase item = db.DirectPurchases
+                .Include(value => value.Transactions)
+                .Include(value => value.EditAudits)
+                .SingleOrDefault(value => value.Id == id)
+                ?? throw new InvalidOperationException("ไม่พบรายการขายที่ต้องการแก้ไข");
+
+            if (item.Status != DirectPurchaseStatus.Sold)
+                throw new InvalidOperationException("แก้ไขข้อมูลการขายได้เฉพาะรายการสถานะขายแล้ว");
+            if (normalizedSaleDate < item.PurchaseDate.Date)
+                throw new InvalidOperationException("วันที่ขายต้องไม่ก่อนวันที่รับซื้อ");
+
+            DirectPurchaseTransaction saleTransaction = item.Transactions
+                .Where(value =>
+                    !value.IsVoided &&
+                    value.TransactionType == DirectPurchaseTransactionType.Sale)
+                .OrderByDescending(value => value.TransactionDate)
+                .ThenByDescending(value => value.Id)
+                .FirstOrDefault()
+                ?? throw new InvalidOperationException("ไม่พบ Transaction การขายของรายการนี้");
+
+            List<FieldChange> changes = [];
+            decimal oldProfit = saleTransaction.Amount - item.PurchasePrice;
+            decimal newProfit = salePrice - item.PurchasePrice;
+            Track(changes, "วันที่ขาย", saleTransaction.TransactionDate.ToString("dd/MM/yyyy"), normalizedSaleDate.ToString("dd/MM/yyyy"));
+            Track(changes, "ราคาขาย", saleTransaction.Amount.ToString("N2"), salePrice.ToString("N2"));
+            Track(changes, "ช่องทางการรับเงิน", saleTransaction.PaymentMethod, cleanedPaymentMethod);
+            Track(changes, "หมายเหตุการขาย", saleTransaction.Note, cleanedNote);
+            Track(changes, "กำไร/ขาดทุน", oldProfit.ToString("N2"), newProfit.ToString("N2"));
+
+            if (changes.Count == 0)
+                throw new InvalidOperationException("ไม่มีข้อมูลการขายที่เปลี่ยนแปลง");
+
+            TimeSpan originalTime = saleTransaction.TransactionDate.TimeOfDay;
+            saleTransaction.TransactionDate = normalizedSaleDate.Add(originalTime);
+            saleTransaction.Amount = salePrice;
+            saleTransaction.PaymentMethod = cleanedPaymentMethod;
+            saleTransaction.Note = cleanedNote;
+
+            DateTime now = DateTime.Now;
+            item.UpdatedAt = now;
+            item.EditAudits.Add(new DirectPurchaseEditAudit
+            {
+                EditedAt = now,
+                EditorUser = Environment.UserName,
+                EditorMachine = Environment.MachineName,
+                Reason = cleanedReason ?? "ไม่ได้ระบุ",
+                ChangeSummary = string.Join(Environment.NewLine, changes.Select(change =>
+                    $"{change.Label}: {Display(change.OldValue)} → {Display(change.NewValue)}"))
+            });
+
+            db.SaveChanges();
+            transaction.Commit();
+
+            return new DirectPurchaseSaleResult
+            {
+                DirectPurchaseId = item.Id,
+                DocumentNumber = Display(item.DocumentNumber),
+                SaleDate = normalizedSaleDate,
+                PurchasePrice = item.PurchasePrice,
+                SalePrice = salePrice
+            };
+        }
     }
 
     public int Save(DirectPurchaseSaveRequest request)

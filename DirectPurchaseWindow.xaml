@@ -38,7 +38,7 @@
         </Border>
 
         <Border Grid.Row="4" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="10">
-            <DataGrid x:Name="PurchaseGrid" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single" SelectionUnit="FullRow" RowHeight="48" FontSize="13" GridLinesVisibility="Horizontal" BorderThickness="0" MouseDoubleClick="PurchaseGrid_MouseDoubleClick">
+            <DataGrid x:Name="PurchaseGrid" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single" SelectionUnit="FullRow" RowHeight="48" FontSize="13" GridLinesVisibility="Horizontal" BorderThickness="0" SelectionChanged="PurchaseGrid_SelectionChanged" MouseDoubleClick="PurchaseGrid_MouseDoubleClick">
                 <DataGrid.Resources>
                     <Style x:Key="PurchaseGridTextCellStyle"
                            TargetType="TextBlock">
@@ -61,23 +61,51 @@
                 </DataGrid.CellStyle>
 
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="เลขที่รับซื้อ" Binding="{Binding DocumentNumber}" ElementStyle="{StaticResource PurchaseGridTextCellStyle}" Width="130"/>
-                    <DataGridTextColumn Header="วันที่" Binding="{Binding PurchaseDateText}" ElementStyle="{StaticResource PurchaseGridTextCellStyle}" Width="105"/>
-                    <DataGridTextColumn Header="ผู้ขาย" Binding="{Binding SellerName}" ElementStyle="{StaticResource PurchaseGridTextCellStyle}" Width="180"/>
+                    <DataGridTextColumn Header="เลขที่รับซื้อ" Binding="{Binding DocumentNumber}" ElementStyle="{StaticResource PurchaseGridTextCellStyle}" Width="120"/>
+                    <DataGridTextColumn Header="วันที่รับซื้อ" Binding="{Binding PurchaseDateText}" ElementStyle="{StaticResource PurchaseGridTextCellStyle}" Width="95"/>
+                    <DataGridTextColumn Header="ผู้ขาย" Binding="{Binding SellerName}" ElementStyle="{StaticResource PurchaseGridTextCellStyle}" Width="150"/>
                     <DataGridTextColumn Header="สินค้า" Binding="{Binding ProductSummary}" ElementStyle="{StaticResource PurchaseGridTextCellStyle}" Width="*"/>
-                    <DataGridTextColumn Header="ราคารับซื้อ" Binding="{Binding PurchasePriceText}" ElementStyle="{StaticResource PurchaseGridTextCellStyle}" Width="120"/>
-                    <DataGridTextColumn Header="ช่องทาง" Binding="{Binding PaymentMethod}" ElementStyle="{StaticResource PurchaseGridTextCellStyle}" Width="120"/>
-                    <DataGridTextColumn Header="สถานะ" Binding="{Binding StatusText}" ElementStyle="{StaticResource PurchaseGridTextCellStyle}" Width="105"/>
+                    <DataGridTextColumn Header="ราคารับซื้อ" Binding="{Binding PurchasePriceText}" ElementStyle="{StaticResource PurchaseGridTextCellStyle}" Width="105"/>
+                    <DataGridTextColumn Header="วันที่ขาย" Binding="{Binding SaleDateText}" ElementStyle="{StaticResource PurchaseGridTextCellStyle}" Width="95"/>
+                    <DataGridTextColumn Header="ราคาขาย" Binding="{Binding SalePriceText}" ElementStyle="{StaticResource PurchaseGridTextCellStyle}" Width="100"/>
+                    <DataGridTemplateColumn Header="กำไร" Width="100">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding ProfitText}"
+                                           FontWeight="SemiBold">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource PurchaseGridTextCellStyle}">
+                                            <Setter Property="Foreground" Value="#15803D"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasProfit}" Value="False">
+                                                    <Setter Property="Foreground" Value="#6B7280"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsLoss}" Value="True">
+                                                    <Setter Property="Foreground" Value="#B91C1C"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type DataGridRow}}}" Value="True">
+                                                    <Setter Property="Foreground" Value="White"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="สถานะ" Binding="{Binding StatusText}" ElementStyle="{StaticResource PurchaseGridTextCellStyle}" Width="90"/>
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
 
         <Grid Grid.Row="6">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="130"/><ColumnDefinition Width="12"/><ColumnDefinition Width="140"/><ColumnDefinition Width="12"/><ColumnDefinition Width="170"/></Grid.ColumnDefinitions>
             <TextBlock x:Name="ResultCountText" VerticalAlignment="Center" FontSize="13" Foreground="#6B7280"/>
-            <Button Grid.Column="1" Height="44" Content="ปิด" Click="CloseButton_Click"/>
-            <Button Grid.Column="3" Height="44" Content="ยกเลิกรายการ" Foreground="#B91C1C" Click="CancelPurchaseButton_Click"/>
-            <Button Grid.Column="5" Height="44" Content="เปิด / แก้ไขรายละเอียด" FontWeight="SemiBold" Click="OpenPurchaseButton_Click"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Width="110" Height="44" Margin="0,0,12,0" Content="ปิด" Click="CloseButton_Click"/>
+                <Button x:Name="CancelPurchaseButton" Width="135" Height="44" Margin="0,0,12,0" Content="ยกเลิกรายการ" Foreground="#B91C1C" Click="CancelPurchaseButton_Click"/>
+                <Button x:Name="SellPurchaseButton" Width="150" Height="44" Margin="0,0,12,0" Content="ขายสินค้า" FontWeight="SemiBold" Background="#B45309" Foreground="White" BorderBrush="#B45309" Click="SellPurchaseButton_Click"/>
+                <Button x:Name="EditPurchaseButton" Width="180" Height="44" Content="แก้ไขข้อมูลรับซื้อ" FontWeight="SemiBold" Click="EditPurchaseButton_Click"/>
+            </StackPanel>
         </Grid>
     </Grid>
 </Window>

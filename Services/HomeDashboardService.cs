@@ -30,6 +30,8 @@ public sealed class HomeDashboardSummary
 
     public int DirectPurchaseCount { get; init; }
 
+    public int DirectSaleCount { get; init; }
+
     public decimal PawnExpense { get; init; }
 
     public decimal InterestIncome { get; init; }
@@ -40,14 +42,18 @@ public sealed class HomeDashboardSummary
 
     public decimal DirectPurchaseExpense { get; init; }
 
+    public decimal DirectSaleIncome { get; init; }
+
     // กำไรจากรายการไถ่ถอน คือเฉพาะส่วนที่เกินเงินต้น
     // (ดอกเบี้ยและค่าธรรมเนียมที่รับจริง)
     public decimal RedemptionProfit { get; init; }
 
     public decimal SaleProfit { get; init; }
 
+    public decimal DirectSaleProfit { get; init; }
+
     public decimal TotalIncome =>
-        InterestIncome + RedemptionIncome + SaleIncome;
+        InterestIncome + RedemptionIncome + SaleIncome + DirectSaleIncome;
 
     public decimal TotalExpense => PawnExpense + DirectPurchaseExpense;
 
@@ -56,7 +62,7 @@ public sealed class HomeDashboardSummary
 
     // เงินต้นที่ปล่อยจำนำและเงินต้นที่รับคืนไม่ใช่กำไร/ขาดทุน
     public decimal Profit =>
-        InterestIncome + RedemptionProfit + SaleProfit;
+        InterestIncome + RedemptionProfit + SaleProfit + DirectSaleProfit;
 }
 
 public sealed class HomeDashboardService
@@ -217,20 +223,39 @@ public sealed class HomeDashboardService
                 transaction.Amount -
                 transaction.PawnTicket.PrincipalAmount);
 
-        List<DirectPurchaseTransaction> directPurchaseTransactions =
+        List<DirectPurchaseTransaction> directTransactions =
             db.DirectPurchaseTransactions
                 .AsNoTracking()
+                .Include(transaction => transaction.DirectPurchase)
                 .Where(transaction =>
                     !transaction.IsVoided &&
-                    transaction.TransactionType ==
-                        DirectPurchaseTransactionType.Purchase &&
-                    transaction.CashFlowType == CashFlowType.Expense &&
                     transaction.TransactionDate >= start &&
                     transaction.TransactionDate < endExclusive)
                 .ToList();
 
+        List<DirectPurchaseTransaction> directPurchaseTransactions =
+            directTransactions
+                .Where(transaction =>
+                    transaction.TransactionType == DirectPurchaseTransactionType.Purchase &&
+                    transaction.CashFlowType == CashFlowType.Expense)
+                .ToList();
+
+        List<DirectPurchaseTransaction> directSaleTransactions =
+            directTransactions
+                .Where(transaction =>
+                    transaction.TransactionType == DirectPurchaseTransactionType.Sale &&
+                    transaction.CashFlowType == CashFlowType.Income)
+                .ToList();
+
         decimal directPurchaseExpense =
             directPurchaseTransactions.Sum(transaction => transaction.Amount);
+
+        decimal directSaleIncome =
+            directSaleTransactions.Sum(transaction => transaction.Amount);
+
+        decimal directSaleProfit =
+            directSaleTransactions.Sum(transaction =>
+                transaction.Amount - transaction.DirectPurchase.PurchasePrice);
 
         return new HomeDashboardSummary
         {
@@ -245,13 +270,16 @@ public sealed class HomeDashboardService
             RedemptionCount = redemptionCount,
             SaleCount = saleCount,
             DirectPurchaseCount = directPurchaseTransactions.Count,
+            DirectSaleCount = directSaleTransactions.Count,
             PawnExpense = pawnExpense,
             InterestIncome = interestIncome,
             RedemptionIncome = redemptionIncome,
             SaleIncome = saleIncome,
             DirectPurchaseExpense = directPurchaseExpense,
+            DirectSaleIncome = directSaleIncome,
             RedemptionProfit = redemptionProfit,
-            SaleProfit = saleProfit
+            SaleProfit = saleProfit,
+            DirectSaleProfit = directSaleProfit
         };
     }
 }

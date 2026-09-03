@@ -72,4 +72,7 @@ public static class AppInfo
 
     public const string DirectPurchaseCancelWindowTitle =
         "ยกเลิกรายการรับซื้อ - " + StoreName;
+
+    public const string DirectPurchaseSaleWindowTitle =
+        "ขายสินค้าที่รับซื้อ - " + StoreName;
 }

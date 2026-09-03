@@ -185,12 +185,71 @@
                         <StackPanel><TextBlock Text="เหตุผลการยกเลิก" FontSize="14" FontWeight="SemiBold" Foreground="#991B1B"/><TextBlock x:Name="CancellationReasonText" Margin="0,6,0,0" FontSize="14" Foreground="#7F1D1D" TextWrapping="Wrap"/></StackPanel>
                     </Border>
                 </StackPanel>
+
+                <Border x:Name="SaleSummaryBorder"
+                        Margin="0,16,0,20"
+                        Padding="22"
+                        Background="#F0FDF4"
+                        BorderBrush="#BBF7D0"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Visibility="Collapsed">
+                    <StackPanel>
+                        <TextBlock Text="ข้อมูลการขาย"
+                                   FontSize="20"
+                                   FontWeight="SemiBold"
+                                   Foreground="#166534"/>
+                        <Grid Margin="0,16,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="16"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="16"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="16"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="วันที่ขาย" Style="{StaticResource Label}"/>
+                                <TextBlock x:Name="SaleDateText" FontSize="17" FontWeight="SemiBold"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="ราคารับซื้อ" Style="{StaticResource Label}"/>
+                                <TextBlock x:Name="SalePurchasePriceText" FontSize="17" FontWeight="SemiBold"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="4">
+                                <TextBlock Text="ราคาขาย" Style="{StaticResource Label}"/>
+                                <TextBlock x:Name="SalePriceText" FontSize="17" FontWeight="SemiBold"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="6">
+                                <TextBlock Text="กำไร / ขาดทุน" Style="{StaticResource Label}"/>
+                                <TextBlock x:Name="SaleProfitText" FontSize="17" FontWeight="Bold"/>
+                            </StackPanel>
+                        </Grid>
+                        <Grid Margin="0,16,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="220"/>
+                                <ColumnDefinition Width="16"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="ช่องทางการรับเงิน" Style="{StaticResource Label}"/>
+                                <TextBlock x:Name="SalePaymentMethodText" FontSize="15" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="หมายเหตุการขาย" Style="{StaticResource Label}"/>
+                                <TextBlock x:Name="SaleNoteText" FontSize="15" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
             </StackPanel>
         </ScrollViewer>
         <Border Grid.Row="1" Background="White" BorderBrush="#E5E7EB" BorderThickness="0,1,0,0">
-            <Grid Margin="28,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="130"/><ColumnDefinition Width="12"/><ColumnDefinition Width="190"/></Grid.ColumnDefinitions>
+            <Grid Margin="28,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="130"/><ColumnDefinition Width="12"/><ColumnDefinition Width="170"/><ColumnDefinition Width="12"/><ColumnDefinition Width="190"/></Grid.ColumnDefinitions>
                 <Button Grid.Column="1" Height="46" Content="ปิด / ยกเลิก" Click="CloseButton_Click"/>
-                <Button x:Name="SaveButton" Grid.Column="3" Height="46" Content="บันทึกรายการรับซื้อ" FontSize="15" FontWeight="SemiBold" Background="#2563EB" Foreground="White" BorderBrush="#2563EB" Click="SaveButton_Click"/>
+                <Button x:Name="SellButton" Grid.Column="3" Height="46" Content="บันทึกขายสินค้า" FontSize="15" FontWeight="SemiBold" Background="#B45309" Foreground="White" BorderBrush="#B45309" Visibility="Collapsed" Click="SellButton_Click"/>
+                <Button x:Name="SaveButton" Grid.Column="5" Height="46" Content="บันทึกรายการรับซื้อ" FontSize="15" FontWeight="SemiBold" Background="#2563EB" Foreground="White" BorderBrush="#2563EB" Click="SaveButton_Click"/>
             </Grid>
         </Border>
     </Grid>

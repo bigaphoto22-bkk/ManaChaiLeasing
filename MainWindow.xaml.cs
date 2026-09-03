@@ -487,10 +487,10 @@ public partial class MainWindow : Window
                 $"รับเข้า {summary.RedemptionIncome:N2} บาท";
 
             HomeSaleCountText.Text =
-                $"{summary.SaleCount:N0} รายการ";
+                $"จำนำหลุด {summary.SaleCount:N0} • ซื้อขาย {summary.DirectSaleCount:N0}";
 
             HomeSaleIncomeText.Text =
-                $"รับเข้า {summary.SaleIncome:N2} บาท";
+                $"รับเข้า {(summary.SaleIncome + summary.DirectSaleIncome):N2} บาท";
 
             HomeTotalIncomeText.Text =
                 $"{summary.TotalIncome:N2} บาท";
@@ -687,9 +687,9 @@ public partial class MainWindow : Window
                 $"ไถ่ถอน {summary.RedemptionCount:N0} รายการ";
 
             TodaySaleIncomeText.Text =
-                $"{summary.SaleIncome:N2} บาท";
+                $"{(summary.SaleIncome + summary.DirectSaleIncome):N2} บาท";
             TodaySaleCountText.Text =
-                $"จำหน่าย {summary.SaleCount:N0} รายการ";
+                $"จำนำหลุด {summary.SaleCount:N0} • ซื้อขาย {summary.DirectSaleCount:N0}";
 
             TodayNetCashText.Text =
                 $"{summary.NetCash:N2} บาท";

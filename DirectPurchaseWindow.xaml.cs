@@ -31,6 +31,7 @@ public partial class DirectPurchaseWindow : Window
             List<DirectPurchaseListRow> rows = _service.Search(SearchTextBox.Text, status);
             PurchaseGrid.ItemsSource = rows;
             ResultCountText.Text = rows.Count == 0 ? "ไม่พบรายการ" : $"พบ {rows.Count:N0} รายการ";
+            UpdateActionButtons();
         }
         catch (Exception ex)
         {
@@ -65,8 +66,84 @@ public partial class DirectPurchaseWindow : Window
         }
     }
 
-    private void OpenPurchaseButton_Click(object sender, RoutedEventArgs e) => OpenSelected();
+    private void EditPurchaseButton_Click(object sender, RoutedEventArgs e) => EditSelected();
     private void PurchaseGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e) => OpenSelected();
+    private void PurchaseGrid_SelectionChanged(object sender, SelectionChangedEventArgs e) => UpdateActionButtons();
+
+    private void EditSelected()
+    {
+        if (PurchaseGrid.SelectedItem is not DirectPurchaseListRow row)
+        {
+            MessageBox.Show("กรุณาเลือกรายการก่อน", AppInfo.StoreName, MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        if (row.Status != DirectPurchaseStatus.Sold)
+        {
+            OpenSelected();
+            return;
+        }
+
+        try
+        {
+            DirectPurchaseSalePreview preview = _service.GetSaleEditPreview(row.Id);
+            DirectPurchaseSaleWindow window = new(preview) { Owner = this };
+            if (window.ShowDialog() == true)
+            {
+                DataChanged = true;
+                LoadRows();
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error("Could not open direct purchase sale correction.", ex);
+            MessageBox.Show($"ไม่สามารถเปิดแก้ไขข้อมูลการขายได้\n\n{ex.Message}", AppInfo.StoreName, MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void UpdateActionButtons()
+    {
+        if (CancelPurchaseButton is null || SellPurchaseButton is null || EditPurchaseButton is null)
+        {
+            return;
+        }
+
+        if (PurchaseGrid.SelectedItem is not DirectPurchaseListRow row)
+        {
+            CancelPurchaseButton.Visibility = Visibility.Visible;
+            SellPurchaseButton.Visibility = Visibility.Visible;
+            CancelPurchaseButton.IsEnabled = false;
+            SellPurchaseButton.IsEnabled = false;
+            EditPurchaseButton.IsEnabled = false;
+            EditPurchaseButton.Content = "แก้ไขรายละเอียด";
+            return;
+        }
+
+        CancelPurchaseButton.IsEnabled = true;
+        SellPurchaseButton.IsEnabled = true;
+        EditPurchaseButton.IsEnabled = true;
+
+        switch (row.Status)
+        {
+            case DirectPurchaseStatus.InStock:
+                CancelPurchaseButton.Visibility = Visibility.Visible;
+                SellPurchaseButton.Visibility = Visibility.Visible;
+                EditPurchaseButton.Content = "แก้ไขข้อมูลรับซื้อ";
+                break;
+
+            case DirectPurchaseStatus.Sold:
+                CancelPurchaseButton.Visibility = Visibility.Collapsed;
+                SellPurchaseButton.Visibility = Visibility.Collapsed;
+                EditPurchaseButton.Content = "แก้ไขข้อมูลการขาย";
+                break;
+
+            default:
+                CancelPurchaseButton.Visibility = Visibility.Collapsed;
+                SellPurchaseButton.Visibility = Visibility.Collapsed;
+                EditPurchaseButton.Content = "ดูรายละเอียด";
+                break;
+        }
+    }
 
     private void OpenSelected()
     {
@@ -123,6 +200,36 @@ public partial class DirectPurchaseWindow : Window
         {
             AppLog.Error("Could not cancel direct purchase.", ex);
             MessageBox.Show($"ไม่สามารถยกเลิกรายการได้\n\n{ex.Message}", AppInfo.StoreName, MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void SellPurchaseButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (PurchaseGrid.SelectedItem is not DirectPurchaseListRow row)
+        {
+            MessageBox.Show("กรุณาเลือกรายการที่ต้องการขาย", AppInfo.StoreName, MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        if (row.Status != DirectPurchaseStatus.InStock)
+        {
+            MessageBox.Show("ขายได้เฉพาะรายการที่มีสถานะรอขายเท่านั้น", AppInfo.StoreName, MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        try
+        {
+            DirectPurchaseSalePreview preview = _service.GetSalePreview(row.Id);
+            DirectPurchaseSaleWindow window = new(preview) { Owner = this };
+            if (window.ShowDialog() == true)
+            {
+                DataChanged = true;
+                LoadRows();
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error("Could not open direct purchase sale or correction.", ex);
+            MessageBox.Show($"ไม่สามารถเปิดข้อมูลการขายได้\n\n{ex.Message}", AppInfo.StoreName, MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 

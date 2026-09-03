@@ -18,6 +18,7 @@ public partial class DirectPurchaseEditWindow : Window
     private readonly AutomaticBackupService _backupService = new();
     private readonly int? _purchaseId;
     private int? _selectedSellerCustomerId;
+    private DirectPurchaseStatus? _currentStatus;
     private bool _isInitializing = true;
     private bool _isSaving;
 
@@ -45,6 +46,7 @@ public partial class DirectPurchaseEditWindow : Window
         try
         {
             DirectPurchaseData data = _service.Get(id);
+            _currentStatus = data.Status;
             HeadingText.Text = "รายละเอียดรายการรับซื้อ";
             StatusText.Text = DirectPurchaseService.StatusText(data.Status);
             _selectedSellerCustomerId = data.SellerCustomerId;
@@ -64,6 +66,7 @@ public partial class DirectPurchaseEditWindow : Window
             {
                 SaveButton.Content = "บันทึกการแก้ไข";
                 EditReasonBorder.Visibility = Visibility.Visible;
+                SellButton.Visibility = Visibility.Visible;
             }
             else
             {
@@ -77,6 +80,28 @@ public partial class DirectPurchaseEditWindow : Window
                 {
                     CancellationBorder.Visibility = Visibility.Visible;
                     CancellationReasonText.Text = data.CancellationReason;
+                }
+                else if (data.Status == DirectPurchaseStatus.Sold && data.SalePrice.HasValue)
+                {
+                    SellButton.Visibility = Visibility.Visible;
+                    SellButton.Content = "แก้ไขข้อมูลการขาย";
+                    SaleSummaryBorder.Visibility = Visibility.Visible;
+                    SaleDateText.Text = data.SaleDate?.ToString("dd/MM/yyyy") ?? "-";
+                    SalePurchasePriceText.Text = $"{data.PurchasePrice:N2} บาท";
+                    SalePriceText.Text = $"{data.SalePrice.Value:N2} บาท";
+                    decimal profit = data.SaleProfit ?? 0m;
+                    SaleProfitText.Text = profit >= 0m
+                        ? $"กำไร {profit:N2} บาท"
+                        : $"ขาดทุน {Math.Abs(profit):N2} บาท";
+                    SaleProfitText.Foreground = profit >= 0m
+                        ? System.Windows.Media.Brushes.ForestGreen
+                        : System.Windows.Media.Brushes.Firebrick;
+                    SalePaymentMethodText.Text = string.IsNullOrWhiteSpace(data.SalePaymentMethod)
+                        ? "-"
+                        : data.SalePaymentMethod;
+                    SaleNoteText.Text = string.IsNullOrWhiteSpace(data.SaleNote)
+                        ? "-"
+                        : data.SaleNote;
                 }
             }
         }
@@ -212,6 +237,35 @@ public partial class DirectPurchaseEditWindow : Window
                 _isSaving = false;
                 SaveButton.IsEnabled = true;
             }
+        }
+    }
+
+    private void SellButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_purchaseId.HasValue)
+        {
+            return;
+        }
+
+        try
+        {
+            DirectPurchaseSalePreview preview = _currentStatus == DirectPurchaseStatus.Sold
+                ? _service.GetSaleEditPreview(_purchaseId.Value)
+                : _service.GetSalePreview(_purchaseId.Value);
+            DirectPurchaseSaleWindow window = new(preview) { Owner = this };
+            if (window.ShowDialog() == true)
+            {
+                DialogResult = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error("Could not open direct purchase sale or correction from detail.", ex);
+            MessageBox.Show(
+                $"ไม่สามารถเปิดข้อมูลการขายได้\n\n{ex.Message}",
+                AppInfo.StoreName,
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
         }
     }
 
