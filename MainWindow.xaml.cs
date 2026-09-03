@@ -469,10 +469,10 @@ public partial class MainWindow : Window
                 $"{summary.OverdueCount:N0} ตั๋ว";
 
             HomePawnCountText.Text =
-                $"{summary.PawnCount:N0} รายการ";
+                $"จำนำ {summary.PawnCount:N0} • รับซื้อ {summary.DirectPurchaseCount:N0}";
 
             HomePawnExpenseText.Text =
-                $"จ่ายออก {summary.PawnExpense:N2} บาท";
+                $"จ่ายออก {(summary.PawnExpense + summary.DirectPurchaseExpense):N2} บาท";
 
             HomeInterestCountText.Text =
                 $"{summary.InterestCount:N0} ครั้ง";
@@ -638,6 +638,29 @@ public partial class MainWindow : Window
         LoadTodaySummary();
     }
 
+    private void DirectPurchaseButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        DirectPurchaseWindow window =
+            new()
+            {
+                Owner = this
+            };
+
+        window.ShowDialog();
+
+        if (window.DataChanged)
+        {
+            LoadHomeDashboard();
+
+            if (TodayContent.Visibility == Visibility.Visible)
+            {
+                LoadTodaySummary();
+            }
+        }
+    }
+
     private void LoadTodaySummary()
     {
         try
@@ -649,9 +672,9 @@ public partial class MainWindow : Window
                 $"วันที่ {summary.Date:dd/MM/yyyy}";
 
             TodayPawnExpenseText.Text =
-                $"{summary.PawnExpense:N2} บาท";
+                $"{(summary.PawnExpense + summary.DirectPurchaseExpense):N2} บาท";
             TodayPawnCountText.Text =
-                $"จำนำ {summary.PawnCount:N0} รายการ";
+                $"จำนำ {summary.PawnCount:N0} • รับซื้อ {summary.DirectPurchaseCount:N0}";
 
             TodayInterestIncomeText.Text =
                 $"{summary.InterestIncome:N2} บาท";
@@ -3432,9 +3455,28 @@ public partial class MainWindow : Window
 
         try
         {
+            if (selected.DirectPurchaseId.HasValue)
+            {
+                DirectPurchaseEditWindow directPurchaseWindow =
+                    new(selected.DirectPurchaseId.Value)
+                    {
+                        Owner = this
+                    };
+
+                directPurchaseWindow.ShowDialog();
+                LoadTodaySummary();
+                LoadHomeDashboard();
+                return;
+            }
+
+            if (!selected.PawnTicketId.HasValue)
+            {
+                return;
+            }
+
             PawnTicketDetail detail =
                 _pawnTicketSearchService.GetDetail(
-                    selected.PawnTicketId);
+                    selected.PawnTicketId.Value);
 
             PawnTicketDetailWindow detailWindow =
                 new(detail)

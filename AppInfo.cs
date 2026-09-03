@@ -63,4 +63,13 @@ public static class AppInfo
 
     public const string CustomerHistoryWindowTitle =
         "ประวัติลูกค้า - " + StoreName;
+
+    public const string DirectPurchaseWindowTitle =
+        "รายการซื้อขาย - " + StoreName;
+
+    public const string DirectPurchaseEditWindowTitle =
+        "รายละเอียดรายการรับซื้อ - " + StoreName;
+
+    public const string DirectPurchaseCancelWindowTitle =
+        "ยกเลิกรายการรับซื้อ - " + StoreName;
 }

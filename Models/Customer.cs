@@ -28,4 +28,6 @@ public class Customer
     public DateTime UpdatedAt { get; set; } = DateTime.Now;
 
     public ICollection<PawnTicket> PawnTickets { get; set; } = new List<PawnTicket>();
+
+    public ICollection<DirectPurchase> DirectPurchases { get; set; } = new List<DirectPurchase>();
 }

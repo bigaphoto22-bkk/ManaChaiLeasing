@@ -1,0 +1,83 @@
+<Window x:Class="ManaChaiLeasing.DirectPurchaseWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:ManaChaiLeasing"
+        Title="{x:Static local:AppInfo.DirectPurchaseWindowTitle}"
+        Icon="Resources/ManaChaiLeasing.ico"
+        Width="1280" Height="760" MinWidth="980" MinHeight="620"
+        WindowStartupLocation="CenterOwner" Background="#F5F6F8" FontFamily="Segoe UI">
+    <Grid Margin="28">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/><RowDefinition Height="18"/>
+            <RowDefinition Height="Auto"/><RowDefinition Height="16"/>
+            <RowDefinition Height="*"/><RowDefinition Height="16"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="รายการซื้อขาย" FontSize="28" FontWeight="Bold" Foreground="#111827"/>
+                <TextBlock Margin="0,5,0,0" Text="รับซื้อสินค้าโดยตรงจากผู้ขายและจัดการสินค้าที่รอขาย (ไม่ใช่ตั๋วจำนำ)" FontSize="14" Foreground="#6B7280"/>
+            </StackPanel>
+            <Button Grid.Column="1" Width="170" Height="46" Content="+ รับซื้อสินค้าใหม่" FontSize="15" FontWeight="SemiBold" Background="#2563EB" Foreground="White" BorderBrush="#2563EB" Click="NewPurchaseButton_Click"/>
+        </Grid>
+
+        <Border Grid.Row="2" Padding="18" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="10">
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="18"/><ColumnDefinition Width="210"/><ColumnDefinition Width="14"/><ColumnDefinition Width="110"/></Grid.ColumnDefinitions>
+                <TextBox x:Name="SearchTextBox" Height="42" Padding="12,7" FontSize="15" VerticalContentAlignment="Center" TextChanged="SearchTextBox_TextChanged" ToolTip="ค้นหาเลขที่เอกสาร ชื่อผู้ขาย เลขบัตร โทรศัพท์ สินค้า หรือ IMEI / Serial"/>
+                <ComboBox x:Name="StatusComboBox" Grid.Column="2" Height="42" Padding="9,5" FontSize="14" SelectedIndex="0" SelectionChanged="StatusComboBox_SelectionChanged">
+                    <ComboBoxItem Content="ทุกสถานะ" Tag="All"/>
+                    <ComboBoxItem Content="รอขาย" Tag="InStock"/>
+                    <ComboBoxItem Content="ขายแล้ว" Tag="Sold"/>
+                    <ComboBoxItem Content="ยกเลิก" Tag="Cancelled"/>
+                </ComboBox>
+                <Button Grid.Column="4" Height="42" Content="รีเฟรช" Click="RefreshButton_Click"/>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="4" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="10">
+            <DataGrid x:Name="PurchaseGrid" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single" SelectionUnit="FullRow" RowHeight="48" FontSize="13" GridLinesVisibility="Horizontal" BorderThickness="0" MouseDoubleClick="PurchaseGrid_MouseDoubleClick">
+                <DataGrid.Resources>
+                    <Style x:Key="PurchaseGridTextCellStyle"
+                           TargetType="TextBlock">
+                        <Setter Property="VerticalAlignment"
+                                Value="Center"/>
+                        <Setter Property="Padding"
+                                Value="6,0,6,0"/>
+                        <Setter Property="TextTrimming"
+                                Value="CharacterEllipsis"/>
+                    </Style>
+                </DataGrid.Resources>
+
+                <DataGrid.CellStyle>
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="VerticalContentAlignment"
+                                Value="Center"/>
+                        <Setter Property="Padding"
+                                Value="0"/>
+                    </Style>
+                </DataGrid.CellStyle>
+
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="เลขที่รับซื้อ" Binding="{Binding DocumentNumber}" ElementStyle="{StaticResource PurchaseGridTextCellStyle}" Width="130"/>
+                    <DataGridTextColumn Header="วันที่" Binding="{Binding PurchaseDateText}" ElementStyle="{StaticResource PurchaseGridTextCellStyle}" Width="105"/>
+                    <DataGridTextColumn Header="ผู้ขาย" Binding="{Binding SellerName}" ElementStyle="{StaticResource PurchaseGridTextCellStyle}" Width="180"/>
+                    <DataGridTextColumn Header="สินค้า" Binding="{Binding ProductSummary}" ElementStyle="{StaticResource PurchaseGridTextCellStyle}" Width="*"/>
+                    <DataGridTextColumn Header="ราคารับซื้อ" Binding="{Binding PurchasePriceText}" ElementStyle="{StaticResource PurchaseGridTextCellStyle}" Width="120"/>
+                    <DataGridTextColumn Header="ช่องทาง" Binding="{Binding PaymentMethod}" ElementStyle="{StaticResource PurchaseGridTextCellStyle}" Width="120"/>
+                    <DataGridTextColumn Header="สถานะ" Binding="{Binding StatusText}" ElementStyle="{StaticResource PurchaseGridTextCellStyle}" Width="105"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <Grid Grid.Row="6">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="130"/><ColumnDefinition Width="12"/><ColumnDefinition Width="140"/><ColumnDefinition Width="12"/><ColumnDefinition Width="170"/></Grid.ColumnDefinitions>
+            <TextBlock x:Name="ResultCountText" VerticalAlignment="Center" FontSize="13" Foreground="#6B7280"/>
+            <Button Grid.Column="1" Height="44" Content="ปิด" Click="CloseButton_Click"/>
+            <Button Grid.Column="3" Height="44" Content="ยกเลิกรายการ" Foreground="#B91C1C" Click="CancelPurchaseButton_Click"/>
+            <Button Grid.Column="5" Height="44" Content="เปิด / แก้ไขรายละเอียด" FontWeight="SemiBold" Click="OpenPurchaseButton_Click"/>
+        </Grid>
+    </Grid>
+</Window>

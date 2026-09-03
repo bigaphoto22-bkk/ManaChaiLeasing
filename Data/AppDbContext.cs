@@ -10,6 +10,9 @@ public class AppDbContext : DbContext
     public DbSet<PawnTicket> PawnTickets => Set<PawnTicket>();
     public DbSet<PawnTransaction> PawnTransactions => Set<PawnTransaction>();
     public DbSet<PawnTicketEditAudit> PawnTicketEditAudits => Set<PawnTicketEditAudit>();
+    public DbSet<DirectPurchase> DirectPurchases => Set<DirectPurchase>();
+    public DbSet<DirectPurchaseTransaction> DirectPurchaseTransactions => Set<DirectPurchaseTransaction>();
+    public DbSet<DirectPurchaseEditAudit> DirectPurchaseEditAudits => Set<DirectPurchaseEditAudit>();
     public DbSet<SmartLookupValue> SmartLookupValues => Set<SmartLookupValue>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -100,6 +103,53 @@ public class AppDbContext : DbContext
             entity.HasOne(x => x.PawnTicket)
                 .WithMany(x => x.EditAudits)
                 .HasForeignKey(x => x.PawnTicketId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<DirectPurchase>(entity =>
+        {
+            entity.HasIndex(x => x.DocumentNumber)
+                .IsUnique();
+
+            entity.Property(x => x.PurchasePrice)
+                .HasPrecision(18, 2);
+
+            entity.Property(x => x.Status)
+                .HasConversion<string>();
+
+            entity.HasOne(x => x.SellerCustomer)
+                .WithMany(x => x.DirectPurchases)
+                .HasForeignKey(x => x.SellerCustomerId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<DirectPurchaseTransaction>(entity =>
+        {
+            entity.Property(x => x.Amount)
+                .HasPrecision(18, 2);
+
+            entity.Property(x => x.TransactionType)
+                .HasConversion<string>();
+
+            entity.Property(x => x.CashFlowType)
+                .HasConversion<string>();
+
+            entity.HasOne(x => x.DirectPurchase)
+                .WithMany(x => x.Transactions)
+                .HasForeignKey(x => x.DirectPurchaseId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<DirectPurchaseEditAudit>(entity =>
+        {
+            entity.Property(x => x.EditorUser).IsRequired();
+            entity.Property(x => x.EditorMachine).IsRequired();
+            entity.Property(x => x.Reason).IsRequired();
+            entity.Property(x => x.ChangeSummary).IsRequired();
+
+            entity.HasOne(x => x.DirectPurchase)
+                .WithMany(x => x.EditAudits)
+                .HasForeignKey(x => x.DirectPurchaseId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

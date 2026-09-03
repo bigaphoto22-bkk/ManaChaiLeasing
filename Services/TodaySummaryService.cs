@@ -12,22 +12,26 @@ public sealed class TodaySummary
     public int InterestCount { get; init; }
     public int RedemptionCount { get; init; }
     public int SaleCount { get; init; }
+    public int DirectPurchaseCount { get; init; }
 
     public decimal PawnExpense { get; init; }
     public decimal InterestIncome { get; init; }
     public decimal RedemptionIncome { get; init; }
     public decimal SaleIncome { get; init; }
+    public decimal DirectPurchaseExpense { get; init; }
 
     public decimal TotalIncome =>
         InterestIncome + RedemptionIncome + SaleIncome;
-    public decimal NetCash => TotalIncome - PawnExpense;
+    public decimal NetCash => TotalIncome - PawnExpense - DirectPurchaseExpense;
 
     public List<TodayTransactionRow> Transactions { get; init; } = new();
 }
 
 public sealed class TodayTransactionRow
 {
-    public int PawnTicketId { get; init; }
+    public int? PawnTicketId { get; init; }
+    public int? DirectPurchaseId { get; init; }
+    public bool IsDirectPurchase => DirectPurchaseId.HasValue;
 
     public DateTime TransactionDate { get; init; }
     public string TransactionTimeText => TransactionDate.ToString("HH:mm");
@@ -37,7 +41,7 @@ public sealed class TodayTransactionRow
     public string ProductSummary { get; init; } = "-";
 
     public PawnTransactionType TransactionType { get; init; }
-    public string TransactionTypeText => TransactionType switch
+    public string TransactionTypeText => IsDirectPurchase ? "รับซื้อ" : TransactionType switch
     {
         PawnTransactionType.Pawn => "จำนำ",
         PawnTransactionType.Interest => "ต่อดอก",
@@ -58,7 +62,7 @@ public sealed class TodayTransactionRow
     public string AmountText => $"{Amount:N2}";
 
     public int? InterestSequence { get; init; }
-    public string DetailText => TransactionType switch
+    public string DetailText => IsDirectPurchase ? "รับซื้อเข้าคลังรอขาย" : TransactionType switch
     {
         PawnTransactionType.Interest when InterestSequence.HasValue =>
             $"ต่อดอกครั้งที่ {InterestSequence.Value:N0}",
@@ -116,10 +120,55 @@ public sealed class TodaySummaryService
                 transaction.CashFlowType == CashFlowType.Income)
             .Sum(transaction => transaction.Amount);
 
+        List<DirectPurchaseTransaction> directTransactions =
+            db.DirectPurchaseTransactions
+                .AsNoTracking()
+                .Include(transaction => transaction.DirectPurchase)
+                    .ThenInclude(item => item.SellerCustomer)
+                .Where(transaction =>
+                    !transaction.IsVoided &&
+                    transaction.TransactionType == DirectPurchaseTransactionType.Purchase &&
+                    transaction.TransactionDate >= start &&
+                    transaction.TransactionDate < end)
+                .OrderByDescending(transaction => transaction.TransactionDate)
+                .ThenByDescending(transaction => transaction.Id)
+                .ToList();
+
+        decimal directPurchaseExpense = directTransactions
+            .Where(transaction => transaction.CashFlowType == CashFlowType.Expense)
+            .Sum(transaction => transaction.Amount);
+
+        List<TodayTransactionRow> rows = transactions.Select(transaction => new TodayTransactionRow
+        {
+            PawnTicketId = transaction.PawnTicketId,
+            TransactionDate = transaction.TransactionDate,
+            TicketNumber = transaction.PawnTicket.TicketNumber,
+            CustomerName = $"{transaction.PawnTicket.Customer.FirstName} {transaction.PawnTicket.Customer.LastName}".Trim(),
+            ProductSummary = Display(transaction.PawnTicket.ProductSummary),
+            TransactionType = transaction.TransactionType,
+            CashFlowType = transaction.CashFlowType,
+            Amount = transaction.Amount,
+            InterestSequence = transaction.InterestSequence,
+            PaymentMethod = Display(transaction.PaymentMethod)
+        }).Concat(directTransactions.Select(transaction => new TodayTransactionRow
+        {
+            DirectPurchaseId = transaction.DirectPurchaseId,
+            TransactionDate = transaction.TransactionDate,
+            TicketNumber = Display(transaction.DirectPurchase.DocumentNumber),
+            CustomerName = $"{transaction.DirectPurchase.SellerCustomer.FirstName} {transaction.DirectPurchase.SellerCustomer.LastName}".Trim(),
+            ProductSummary = Display(transaction.DirectPurchase.ProductSummary),
+            TransactionType = PawnTransactionType.Pawn,
+            CashFlowType = transaction.CashFlowType,
+            Amount = transaction.Amount,
+            PaymentMethod = Display(transaction.PaymentMethod)
+        }))
+        .OrderByDescending(row => row.TransactionDate)
+        .ToList();
+
         return new TodaySummary
         {
             Date = start,
-            TransactionCount = transactions.Count,
+            TransactionCount = rows.Count,
             PawnCount = transactions.Count(transaction =>
                 transaction.TransactionType == PawnTransactionType.Pawn),
             InterestCount = transactions.Count(transaction =>
@@ -128,27 +177,13 @@ public sealed class TodaySummaryService
                 transaction.TransactionType == PawnTransactionType.Redemption),
             SaleCount = transactions.Count(transaction =>
                 transaction.TransactionType == PawnTransactionType.Sale),
+            DirectPurchaseCount = directTransactions.Count,
             PawnExpense = pawnExpense,
             InterestIncome = interestIncome,
             RedemptionIncome = redemptionIncome,
             SaleIncome = saleIncome,
-            Transactions = transactions.Select(transaction => new TodayTransactionRow
-            {
-                PawnTicketId = transaction.PawnTicketId,
-                TransactionDate = transaction.TransactionDate,
-                TicketNumber = transaction.PawnTicket.TicketNumber,
-                CustomerName =
-                    $"{transaction.PawnTicket.Customer.FirstName} " +
-                    $"{transaction.PawnTicket.Customer.LastName}".Trim(),
-                ProductSummary =
-                    Display(
-                        transaction.PawnTicket.ProductSummary),
-                TransactionType = transaction.TransactionType,
-                CashFlowType = transaction.CashFlowType,
-                Amount = transaction.Amount,
-                InterestSequence = transaction.InterestSequence,
-                PaymentMethod = Display(transaction.PaymentMethod)
-            }).ToList()
+            DirectPurchaseExpense = directPurchaseExpense,
+            Transactions = rows
         };
     }
 

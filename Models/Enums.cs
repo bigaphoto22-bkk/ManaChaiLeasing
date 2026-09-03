@@ -21,3 +21,17 @@ public enum CashFlowType
     Expense,
     Income
 }
+
+public enum DirectPurchaseStatus
+{
+    InStock,
+    Sold,
+    Cancelled
+}
+
+public enum DirectPurchaseTransactionType
+{
+    Purchase,
+    AdditionalExpense,
+    Sale
+}

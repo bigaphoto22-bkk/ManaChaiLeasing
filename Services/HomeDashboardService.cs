@@ -28,6 +28,8 @@ public sealed class HomeDashboardSummary
 
     public int SaleCount { get; init; }
 
+    public int DirectPurchaseCount { get; init; }
+
     public decimal PawnExpense { get; init; }
 
     public decimal InterestIncome { get; init; }
@@ -35,6 +37,8 @@ public sealed class HomeDashboardSummary
     public decimal RedemptionIncome { get; init; }
 
     public decimal SaleIncome { get; init; }
+
+    public decimal DirectPurchaseExpense { get; init; }
 
     // กำไรจากรายการไถ่ถอน คือเฉพาะส่วนที่เกินเงินต้น
     // (ดอกเบี้ยและค่าธรรมเนียมที่รับจริง)
@@ -45,7 +49,7 @@ public sealed class HomeDashboardSummary
     public decimal TotalIncome =>
         InterestIncome + RedemptionIncome + SaleIncome;
 
-    public decimal TotalExpense => PawnExpense;
+    public decimal TotalExpense => PawnExpense + DirectPurchaseExpense;
 
     public decimal NetCash =>
         TotalIncome - TotalExpense;
@@ -213,6 +217,21 @@ public sealed class HomeDashboardService
                 transaction.Amount -
                 transaction.PawnTicket.PrincipalAmount);
 
+        List<DirectPurchaseTransaction> directPurchaseTransactions =
+            db.DirectPurchaseTransactions
+                .AsNoTracking()
+                .Where(transaction =>
+                    !transaction.IsVoided &&
+                    transaction.TransactionType ==
+                        DirectPurchaseTransactionType.Purchase &&
+                    transaction.CashFlowType == CashFlowType.Expense &&
+                    transaction.TransactionDate >= start &&
+                    transaction.TransactionDate < endExclusive)
+                .ToList();
+
+        decimal directPurchaseExpense =
+            directPurchaseTransactions.Sum(transaction => transaction.Amount);
+
         return new HomeDashboardSummary
         {
             StartDate = start,
@@ -225,10 +244,12 @@ public sealed class HomeDashboardService
             InterestCount = interestCount,
             RedemptionCount = redemptionCount,
             SaleCount = saleCount,
+            DirectPurchaseCount = directPurchaseTransactions.Count,
             PawnExpense = pawnExpense,
             InterestIncome = interestIncome,
             RedemptionIncome = redemptionIncome,
             SaleIncome = saleIncome,
+            DirectPurchaseExpense = directPurchaseExpense,
             RedemptionProfit = redemptionProfit,
             SaleProfit = saleProfit
         };

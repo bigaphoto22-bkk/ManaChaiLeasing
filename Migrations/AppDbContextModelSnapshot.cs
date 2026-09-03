@@ -46,6 +46,73 @@ partial class AppDbContextModelSnapshot : ModelSnapshot
             b.ToTable("Customers");
         });
 
+        modelBuilder.Entity("ManaChaiLeasing.Models.DirectPurchase", b =>
+        {
+            b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("INTEGER");
+            b.Property<string>("Accessories").HasMaxLength(500).HasColumnType("TEXT");
+            b.Property<string>("AssetCategory").IsRequired().HasMaxLength(100).HasColumnType("TEXT");
+            b.Property<string>("Brand").HasMaxLength(100).HasColumnType("TEXT");
+            b.Property<DateTime?>("CancelledAt").HasColumnType("TEXT");
+            b.Property<string>("CancellationReason").HasMaxLength(1000).HasColumnType("TEXT");
+            b.Property<string>("CapacityOrSize").HasMaxLength(100).HasColumnType("TEXT");
+            b.Property<string>("Color").HasMaxLength(100).HasColumnType("TEXT");
+            b.Property<string>("Condition").HasMaxLength(1000).HasColumnType("TEXT");
+            b.Property<DateTime>("CreatedAt").HasColumnType("TEXT");
+            b.Property<string>("DocumentNumber").HasMaxLength(50).HasColumnType("TEXT");
+            b.Property<string>("ImeiOrSerial").HasMaxLength(150).HasColumnType("TEXT");
+            b.Property<string>("Model").HasMaxLength(200).HasColumnType("TEXT");
+            b.Property<string>("Note").HasMaxLength(1500).HasColumnType("TEXT");
+            b.Property<string>("OtherDetails").HasMaxLength(1500).HasColumnType("TEXT");
+            b.Property<string>("PaymentMethod").HasMaxLength(50).HasColumnType("TEXT");
+            b.Property<string>("ProductSummary").IsRequired().HasMaxLength(2500).HasColumnType("TEXT");
+            b.Property<string>("ProductType").HasMaxLength(100).HasColumnType("TEXT");
+            b.Property<DateTime>("PurchaseDate").HasColumnType("TEXT");
+            b.Property<decimal>("PurchasePrice").HasPrecision(18, 2).HasColumnType("TEXT");
+            b.Property<int>("SellerCustomerId").HasColumnType("INTEGER");
+            b.Property<string>("Specification").HasMaxLength(1500).HasColumnType("TEXT");
+            b.Property<string>("Status").IsRequired().HasColumnType("TEXT");
+            b.Property<DateTime>("UpdatedAt").HasColumnType("TEXT");
+
+            b.HasKey("Id");
+            b.HasIndex("DocumentNumber").IsUnique();
+            b.HasIndex("SellerCustomerId");
+            b.ToTable("DirectPurchases");
+        });
+
+        modelBuilder.Entity("ManaChaiLeasing.Models.DirectPurchaseEditAudit", b =>
+        {
+            b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("INTEGER");
+            b.Property<string>("ChangeSummary").IsRequired().HasMaxLength(12000).HasColumnType("TEXT");
+            b.Property<int>("DirectPurchaseId").HasColumnType("INTEGER");
+            b.Property<DateTime>("EditedAt").HasColumnType("TEXT");
+            b.Property<string>("EditorMachine").IsRequired().HasMaxLength(100).HasColumnType("TEXT");
+            b.Property<string>("EditorUser").IsRequired().HasMaxLength(200).HasColumnType("TEXT");
+            b.Property<string>("Reason").IsRequired().HasMaxLength(1000).HasColumnType("TEXT");
+
+            b.HasKey("Id");
+            b.HasIndex("DirectPurchaseId");
+            b.ToTable("DirectPurchaseEditAudits");
+        });
+
+        modelBuilder.Entity("ManaChaiLeasing.Models.DirectPurchaseTransaction", b =>
+        {
+            b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("INTEGER");
+            b.Property<decimal>("Amount").HasPrecision(18, 2).HasColumnType("TEXT");
+            b.Property<string>("CashFlowType").IsRequired().HasColumnType("TEXT");
+            b.Property<DateTime>("CreatedAt").HasColumnType("TEXT");
+            b.Property<int>("DirectPurchaseId").HasColumnType("INTEGER");
+            b.Property<bool>("IsVoided").HasColumnType("INTEGER");
+            b.Property<string>("Note").HasMaxLength(1000).HasColumnType("TEXT");
+            b.Property<string>("PaymentMethod").HasMaxLength(50).HasColumnType("TEXT");
+            b.Property<DateTime>("TransactionDate").HasColumnType("TEXT");
+            b.Property<string>("TransactionType").IsRequired().HasColumnType("TEXT");
+            b.Property<string>("VoidReason").HasMaxLength(500).HasColumnType("TEXT");
+
+            b.HasKey("Id");
+            b.HasIndex("DirectPurchaseId");
+            b.ToTable("DirectPurchaseTransactions");
+        });
+
         modelBuilder.Entity("ManaChaiLeasing.Models.PawnTicket", b =>
         {
             b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("INTEGER");
@@ -80,6 +147,39 @@ partial class AppDbContextModelSnapshot : ModelSnapshot
             b.HasIndex("SourcePawnTicketId").IsUnique();
             b.HasIndex("TicketNumber").IsUnique();
             b.ToTable("PawnTickets");
+        });
+
+        modelBuilder.Entity("ManaChaiLeasing.Models.DirectPurchase", b =>
+        {
+            b.HasOne("ManaChaiLeasing.Models.Customer", "SellerCustomer")
+                .WithMany("DirectPurchases")
+                .HasForeignKey("SellerCustomerId")
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired();
+
+            b.Navigation("SellerCustomer");
+        });
+
+        modelBuilder.Entity("ManaChaiLeasing.Models.DirectPurchaseEditAudit", b =>
+        {
+            b.HasOne("ManaChaiLeasing.Models.DirectPurchase", "DirectPurchase")
+                .WithMany("EditAudits")
+                .HasForeignKey("DirectPurchaseId")
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+
+            b.Navigation("DirectPurchase");
+        });
+
+        modelBuilder.Entity("ManaChaiLeasing.Models.DirectPurchaseTransaction", b =>
+        {
+            b.HasOne("ManaChaiLeasing.Models.DirectPurchase", "DirectPurchase")
+                .WithMany("Transactions")
+                .HasForeignKey("DirectPurchaseId")
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+
+            b.Navigation("DirectPurchase");
         });
 
         modelBuilder.Entity("ManaChaiLeasing.Models.PawnTicketEditAudit", b =>
@@ -167,7 +267,16 @@ partial class AppDbContextModelSnapshot : ModelSnapshot
 
         modelBuilder.Entity("ManaChaiLeasing.Models.Customer", b =>
         {
+            b.Navigation("DirectPurchases");
+
             b.Navigation("PawnTickets");
+        });
+
+        modelBuilder.Entity("ManaChaiLeasing.Models.DirectPurchase", b =>
+        {
+            b.Navigation("EditAudits");
+
+            b.Navigation("Transactions");
         });
 
         modelBuilder.Entity("ManaChaiLeasing.Models.PawnTicket", b =>

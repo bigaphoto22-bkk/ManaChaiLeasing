@@ -1,0 +1,197 @@
+<Window x:Class="ManaChaiLeasing.DirectPurchaseEditWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:ManaChaiLeasing"
+        Title="{x:Static local:AppInfo.DirectPurchaseEditWindowTitle}"
+        Icon="Resources/ManaChaiLeasing.ico" Width="1050" Height="880" MinWidth="900" MinHeight="700"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False" Background="#F5F6F8" FontFamily="Segoe UI">
+    <Window.Resources>
+        <Style x:Key="Label" TargetType="TextBlock"><Setter Property="FontSize" Value="13"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Foreground" Value="#374151"/><Setter Property="Margin" Value="0,0,0,5"/></Style>
+        <Style x:Key="Input" TargetType="TextBox"><Setter Property="Height" Value="40"/><Setter Property="Padding" Value="10,6"/><Setter Property="FontSize" Value="14"/><Setter Property="VerticalContentAlignment" Value="Center"/></Style>
+        <Style x:Key="Combo" TargetType="ComboBox">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="StaysOpenOnEdit" Value="True"/>
+            <Setter Property="MaxDropDownHeight" Value="320"/>
+            <EventSetter Event="PreviewMouseLeftButtonUp"
+                         Handler="FormComboBox_PreviewMouseLeftButtonUp"/>
+        </Style>
+        <Style x:Key="LargePurchaseCalendarStyle"
+               TargetType="{x:Type Calendar}">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="UseLayoutRounding" Value="True"/>
+            <Setter Property="LayoutTransform">
+                <Setter.Value>
+                    <ScaleTransform ScaleX="1.55" ScaleY="1.55"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="78"/></Grid.RowDefinitions>
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="28">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock x:Name="HeadingText" Text="รับซื้อสินค้าใหม่" FontSize="28" FontWeight="Bold" Foreground="#111827"/>
+                        <TextBlock Text="รายการนี้เป็นการรับซื้อโดยตรง ไม่ใช่การรับจำนำ" Margin="0,5,0,0" FontSize="14" Foreground="#6B7280"/>
+                    </StackPanel>
+                    <Border Grid.Column="1" x:Name="StatusBorder" Padding="16,8" CornerRadius="8" Background="#ECFDF5" VerticalAlignment="Center">
+                        <TextBlock x:Name="StatusText" Text="รอขาย" FontSize="15" FontWeight="Bold" Foreground="#047857"/>
+                    </Border>
+                </Grid>
+
+                <StackPanel x:Name="EditableFormPanel">
+                    <Border Margin="0,20,0,0" Padding="22" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="12">
+                        <StackPanel>
+                            <TextBlock Text="ข้อมูลการรับซื้อ" FontSize="20" FontWeight="SemiBold" Foreground="#111827"/>
+                            <Grid Margin="0,16,0,0">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0"><TextBlock Text="เลขที่เอกสารรับซื้อ (ไม่บังคับ)" Style="{StaticResource Label}"/><TextBox x:Name="DocumentNumberTextBox" MaxLength="50" Style="{StaticResource Input}"/></StackPanel>
+                                <StackPanel Grid.Column="2"><TextBlock Text="วันที่รับซื้อ *" Style="{StaticResource Label}"/><DatePicker x:Name="PurchaseDatePicker" Height="40" FontSize="14" Padding="8,4" CalendarStyle="{StaticResource LargePurchaseCalendarStyle}" PreviewMouseLeftButtonUp="PurchaseDatePicker_PreviewMouseLeftButtonUp" PreviewKeyDown="PurchaseDatePicker_PreviewKeyDown"/></StackPanel>
+                                <StackPanel Grid.Column="4"><TextBlock Text="ราคารับซื้อ *" Style="{StaticResource Label}"/><TextBox x:Name="PurchasePriceTextBox" Style="{StaticResource Input}" TextAlignment="Right"/></StackPanel>
+                            </Grid>
+                            <Grid Margin="0,16,0,0">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0"><TextBlock Text="ช่องทางชำระเงิน" Style="{StaticResource Label}"/><ComboBox x:Name="PaymentMethodComboBox" Style="{StaticResource Combo}" SelectedIndex="0"><ComboBoxItem Content="เงินสด"/><ComboBoxItem Content="โอนเงิน / LINE"/></ComboBox></StackPanel>
+                                <StackPanel Grid.Column="2"><TextBlock Text="หมายเหตุ (ไม่บังคับ)" Style="{StaticResource Label}"/><TextBox x:Name="NoteTextBox" Style="{StaticResource Input}" MaxLength="1500"/></StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Margin="0,16,0,0" Padding="22" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="12">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="10"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <TextBlock Text="ข้อมูลผู้ขาย" FontSize="20" FontWeight="SemiBold" Foreground="#111827"/>
+                                <Button Grid.Column="1" Width="165" Height="38" Content="อ่านบัตรประชาชน" Click="ReadThaiIdButton_Click"/>
+                                <Button Grid.Column="3" Width="165" Height="38" Content="ค้นหาลูกค้าเก่า" Click="LookupCustomerButton_Click"/>
+                            </Grid>
+                            <TextBlock x:Name="SelectedSellerText" Margin="0,8,0,0" Text="กรอกผู้ขายรายใหม่ หรือค้นหาข้อมูลลูกค้าเก่า" FontSize="12" Foreground="#6B7280"/>
+                            <Grid Margin="0,15,0,0">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="14"/><RowDefinition Height="Auto"/><RowDefinition Height="14"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                <StackPanel Grid.Row="0" Grid.Column="0"><TextBlock Text="ชื่อ *" Style="{StaticResource Label}"/><TextBox x:Name="FirstNameTextBox" Style="{StaticResource Input}" MaxLength="100"/></StackPanel>
+                                <StackPanel Grid.Row="0" Grid.Column="2"><TextBlock Text="นามสกุล *" Style="{StaticResource Label}"/><TextBox x:Name="LastNameTextBox" Style="{StaticResource Input}" MaxLength="100"/></StackPanel>
+                                <StackPanel Grid.Row="2" Grid.Column="0"><TextBlock Text="เลขบัตรประชาชน" Style="{StaticResource Label}"/><TextBox x:Name="CitizenIdTextBox" Style="{StaticResource Input}" MaxLength="13"/></StackPanel>
+                                <Grid Grid.Row="2" Grid.Column="2"><Grid.ColumnDefinitions><ColumnDefinition Width="100"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="อายุ" Style="{StaticResource Label}"/><TextBox x:Name="AgeTextBox" Style="{StaticResource Input}"/></StackPanel><StackPanel Grid.Column="2"><TextBlock Text="เบอร์โทรศัพท์" Style="{StaticResource Label}"/><TextBox x:Name="PhoneTextBox" Style="{StaticResource Input}" MaxLength="30"/></StackPanel></Grid>
+                                <StackPanel Grid.Row="4" Grid.ColumnSpan="3"><TextBlock Text="ที่อยู่" Style="{StaticResource Label}"/><TextBox x:Name="AddressTextBox" Height="70" Padding="10,7" FontSize="14" AcceptsReturn="True" TextWrapping="Wrap" MaxLength="1000"/></StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Margin="0,16,0,0" Padding="22" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="12">
+                        <StackPanel>
+                            <TextBlock Text="ข้อมูลสินค้า" FontSize="20" FontWeight="SemiBold" Foreground="#111827"/>
+
+                            <StackPanel Width="300" Margin="0,16,0,0" HorizontalAlignment="Left">
+                                <TextBlock Text="ประเภทสินค้า *" Style="{StaticResource Label}"/>
+                                <ComboBox x:Name="AssetCategoryComboBox"
+                                          SelectedIndex="0"
+                                          SelectionChanged="AssetCategoryComboBox_SelectionChanged"
+                                          Style="{StaticResource Combo}">
+                                    <ComboBoxItem Content="โทรศัพท์มือถือ / Tablet"/>
+                                    <ComboBoxItem Content="อุปกรณ์ IT"/>
+                                    <ComboBoxItem Content="เครื่องใช้ไฟฟ้า"/>
+                                    <ComboBoxItem Content="อื่น ๆ"/>
+                                </ComboBox>
+                            </StackPanel>
+
+                            <StackPanel x:Name="MobileProductPanel" Margin="0,20,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0"><TextBlock Text="ยี่ห้อ" Style="{StaticResource Label}"/><ComboBox x:Name="MobileBrandComboBox" IsEditable="True" IsTextSearchEnabled="True" Style="{StaticResource Combo}" SelectionChanged="SmartField_SelectionChanged" KeyUp="SmartField_KeyUp"><ComboBoxItem Content="Apple"/><ComboBoxItem Content="Samsung"/><ComboBoxItem Content="OPPO"/><ComboBoxItem Content="vivo"/><ComboBoxItem Content="Xiaomi"/><ComboBoxItem Content="Redmi"/><ComboBoxItem Content="Huawei"/><ComboBoxItem Content="HONOR"/><ComboBoxItem Content="realme"/></ComboBox></StackPanel>
+                                    <StackPanel Grid.Column="2"><TextBlock Text="รุ่น" Style="{StaticResource Label}"/><ComboBox x:Name="MobileModelComboBox" IsEditable="True" IsTextSearchEnabled="True" Style="{StaticResource Combo}" SelectionChanged="SmartField_SelectionChanged" KeyUp="SmartField_KeyUp"><ComboBoxItem Content="iPhone 15"/><ComboBoxItem Content="iPhone 15 Plus"/><ComboBoxItem Content="iPhone 15 Pro"/><ComboBoxItem Content="iPhone 15 Pro Max"/><ComboBoxItem Content="iPad"/><ComboBoxItem Content="iPad Air"/><ComboBoxItem Content="iPad Pro"/></ComboBox></StackPanel>
+                                    <StackPanel Grid.Column="4"><TextBlock Text="ความจุ" Style="{StaticResource Label}"/><ComboBox x:Name="MobileCapacityComboBox" IsEditable="True" IsTextSearchEnabled="True" Style="{StaticResource Combo}" SelectionChanged="SmartField_SelectionChanged" KeyUp="SmartField_KeyUp"><ComboBoxItem Content="32 GB"/><ComboBoxItem Content="64 GB"/><ComboBoxItem Content="128 GB"/><ComboBoxItem Content="256 GB"/><ComboBoxItem Content="512 GB"/><ComboBoxItem Content="1 TB"/></ComboBox></StackPanel>
+                                    <StackPanel Grid.Column="6"><TextBlock Text="สี" Style="{StaticResource Label}"/><ComboBox x:Name="MobileColorComboBox" IsEditable="True" IsTextSearchEnabled="True" Style="{StaticResource Combo}" SelectionChanged="SmartField_SelectionChanged" KeyUp="SmartField_KeyUp"><ComboBoxItem Content="Black"/><ComboBoxItem Content="White"/><ComboBoxItem Content="Blue"/><ComboBoxItem Content="Pink"/><ComboBoxItem Content="Gold"/><ComboBoxItem Content="Silver"/><ComboBoxItem Content="Gray"/><ComboBoxItem Content="Green"/><ComboBoxItem Content="Purple"/><ComboBoxItem Content="Red"/></ComboBox></StackPanel>
+                                </Grid>
+                                <Grid Margin="0,14,0,0">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0"><TextBlock Text="IMEI (ไม่บังคับ)" Style="{StaticResource Label}"/><TextBox x:Name="MobileImeiTextBox" Style="{StaticResource Input}" MaxLength="150" TextChanged="SmartField_TextChanged"/></StackPanel>
+                                    <StackPanel Grid.Column="2"><TextBlock Text="อุปกรณ์ (ไม่บังคับ)" Style="{StaticResource Label}"/><TextBox x:Name="MobileAccessoriesTextBox" Style="{StaticResource Input}" MaxLength="500" TextChanged="SmartField_TextChanged"/></StackPanel>
+                                    <StackPanel Grid.Column="4"><TextBlock Text="สภาพ/ตำหนิ (ไม่บังคับ)" Style="{StaticResource Label}"/><TextBox x:Name="MobileConditionTextBox" Style="{StaticResource Input}" MaxLength="1000" TextChanged="SmartField_TextChanged"/></StackPanel>
+                                </Grid>
+                            </StackPanel>
+
+                            <StackPanel x:Name="ItProductPanel" Margin="0,20,0,0" Visibility="Collapsed">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0"><TextBlock Text="ชนิดสินค้า" Style="{StaticResource Label}"/><ComboBox x:Name="ItTypeComboBox" IsEditable="True" Style="{StaticResource Combo}" SelectionChanged="SmartField_SelectionChanged" KeyUp="SmartField_KeyUp"><ComboBoxItem Content="Notebook"/><ComboBoxItem Content="MacBook"/><ComboBoxItem Content="iMac"/><ComboBoxItem Content="กล้อง"/><ComboBoxItem Content="ลำโพง"/><ComboBoxItem Content="PlayStation"/><ComboBoxItem Content="Nintendo Switch"/><ComboBoxItem Content="Computer"/><ComboBoxItem Content="Monitor"/></ComboBox></StackPanel>
+                                    <StackPanel Grid.Column="2"><TextBlock Text="ยี่ห้อ" Style="{StaticResource Label}"/><ComboBox x:Name="ItBrandComboBox" IsEditable="True" Style="{StaticResource Combo}" SelectionChanged="SmartField_SelectionChanged" KeyUp="SmartField_KeyUp"><ComboBoxItem Content="Apple"/><ComboBoxItem Content="ASUS"/><ComboBoxItem Content="Acer"/><ComboBoxItem Content="Dell"/><ComboBoxItem Content="HP"/><ComboBoxItem Content="Lenovo"/><ComboBoxItem Content="MSI"/><ComboBoxItem Content="Sony"/><ComboBoxItem Content="Canon"/><ComboBoxItem Content="Nikon"/></ComboBox></StackPanel>
+                                    <StackPanel Grid.Column="4"><TextBlock Text="รุ่น" Style="{StaticResource Label}"/><ComboBox x:Name="ItModelComboBox" IsEditable="True" Style="{StaticResource Combo}" SelectionChanged="SmartField_SelectionChanged" KeyUp="SmartField_KeyUp"/></StackPanel>
+                                </Grid>
+                                <StackPanel Margin="0,14,0,0"><TextBlock Text="สเปก / รายละเอียด" Style="{StaticResource Label}"/><TextBox x:Name="ItSpecificationTextBox" Height="62" Padding="10,7" FontSize="14" AcceptsReturn="True" TextWrapping="Wrap" MaxLength="1500" TextChanged="SmartField_TextChanged"/></StackPanel>
+                                <Grid Margin="0,14,0,0">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0"><TextBlock Text="Serial No. (ไม่บังคับ)" Style="{StaticResource Label}"/><TextBox x:Name="ItSerialTextBox" Style="{StaticResource Input}" MaxLength="150" TextChanged="SmartField_TextChanged"/></StackPanel>
+                                    <StackPanel Grid.Column="2"><TextBlock Text="อุปกรณ์ (ไม่บังคับ)" Style="{StaticResource Label}"/><TextBox x:Name="ItAccessoriesTextBox" Style="{StaticResource Input}" MaxLength="500" TextChanged="SmartField_TextChanged"/></StackPanel>
+                                    <StackPanel Grid.Column="4"><TextBlock Text="สภาพ/ตำหนิ (ไม่บังคับ)" Style="{StaticResource Label}"/><TextBox x:Name="ItConditionTextBox" Style="{StaticResource Input}" MaxLength="1000" TextChanged="SmartField_TextChanged"/></StackPanel>
+                                </Grid>
+                            </StackPanel>
+
+                            <StackPanel x:Name="ElectricalProductPanel" Margin="0,20,0,0" Visibility="Collapsed">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0"><TextBlock Text="ชนิดสินค้า" Style="{StaticResource Label}"/><ComboBox x:Name="ElectricalTypeComboBox" IsEditable="True" Style="{StaticResource Combo}" SelectionChanged="SmartField_SelectionChanged" KeyUp="SmartField_KeyUp"><ComboBoxItem Content="TV"/><ComboBoxItem Content="ตู้เย็น"/><ComboBoxItem Content="เครื่องซักผ้า"/><ComboBoxItem Content="ไมโครเวฟ"/><ComboBoxItem Content="พัดลม"/><ComboBoxItem Content="เครื่องปรับอากาศ"/><ComboBoxItem Content="อื่น ๆ"/></ComboBox></StackPanel>
+                                    <StackPanel Grid.Column="2"><TextBlock Text="ยี่ห้อ" Style="{StaticResource Label}"/><ComboBox x:Name="ElectricalBrandComboBox" IsEditable="True" Style="{StaticResource Combo}" SelectionChanged="SmartField_SelectionChanged" KeyUp="SmartField_KeyUp"><ComboBoxItem Content="Samsung"/><ComboBoxItem Content="LG"/><ComboBoxItem Content="Panasonic"/><ComboBoxItem Content="Sharp"/><ComboBoxItem Content="Toshiba"/><ComboBoxItem Content="Hitachi"/><ComboBoxItem Content="Mitsubishi"/></ComboBox></StackPanel>
+                                    <StackPanel Grid.Column="4"><TextBlock Text="รุ่น" Style="{StaticResource Label}"/><ComboBox x:Name="ElectricalModelComboBox" IsEditable="True" Style="{StaticResource Combo}" SelectionChanged="SmartField_SelectionChanged" KeyUp="SmartField_KeyUp"/></StackPanel>
+                                </Grid>
+                                <Grid Margin="0,14,0,0">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0"><TextBlock Text="ขนาด / ความจุ" Style="{StaticResource Label}"/><TextBox x:Name="ElectricalSizeTextBox" Style="{StaticResource Input}" MaxLength="100" TextChanged="SmartField_TextChanged"/></StackPanel>
+                                    <StackPanel Grid.Column="2"><TextBlock Text="Serial No. (ไม่บังคับ)" Style="{StaticResource Label}"/><TextBox x:Name="ElectricalSerialTextBox" Style="{StaticResource Input}" MaxLength="150" TextChanged="SmartField_TextChanged"/></StackPanel>
+                                </Grid>
+                                <Grid Margin="0,14,0,0">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0"><TextBlock Text="อุปกรณ์ (ไม่บังคับ)" Style="{StaticResource Label}"/><TextBox x:Name="ElectricalAccessoriesTextBox" Style="{StaticResource Input}" MaxLength="500" TextChanged="SmartField_TextChanged"/></StackPanel>
+                                    <StackPanel Grid.Column="2"><TextBlock Text="สภาพ/ตำหนิ (ไม่บังคับ)" Style="{StaticResource Label}"/><TextBox x:Name="ElectricalConditionTextBox" Style="{StaticResource Input}" MaxLength="1000" TextChanged="SmartField_TextChanged"/></StackPanel>
+                                </Grid>
+                            </StackPanel>
+
+                            <StackPanel x:Name="OtherProductPanel" Margin="0,20,0,0" Visibility="Collapsed">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0"><TextBlock Text="ชนิดสินค้า" Style="{StaticResource Label}"/><TextBox x:Name="OtherTypeTextBox" Style="{StaticResource Input}" MaxLength="100" TextChanged="SmartField_TextChanged"/></StackPanel>
+                                    <StackPanel Grid.Column="2"><TextBlock Text="ยี่ห้อ" Style="{StaticResource Label}"/><TextBox x:Name="OtherBrandTextBox" Style="{StaticResource Input}" MaxLength="100" TextChanged="SmartField_TextChanged"/></StackPanel>
+                                    <StackPanel Grid.Column="4"><TextBlock Text="รุ่น" Style="{StaticResource Label}"/><TextBox x:Name="OtherModelTextBox" Style="{StaticResource Input}" MaxLength="200" TextChanged="SmartField_TextChanged"/></StackPanel>
+                                </Grid>
+                                <StackPanel Margin="0,14,0,0"><TextBlock Text="รายละเอียดเพิ่มเติม" Style="{StaticResource Label}"/><TextBox x:Name="OtherDetailsTextBox" Height="62" Padding="10,7" FontSize="14" AcceptsReturn="True" TextWrapping="Wrap" MaxLength="1500" TextChanged="SmartField_TextChanged"/></StackPanel>
+                                <Grid Margin="0,14,0,0">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0"><TextBlock Text="Serial / หมายเลขเครื่อง" Style="{StaticResource Label}"/><TextBox x:Name="OtherSerialTextBox" Style="{StaticResource Input}" MaxLength="150" TextChanged="SmartField_TextChanged"/></StackPanel>
+                                    <StackPanel Grid.Column="2"><TextBlock Text="อุปกรณ์ (ไม่บังคับ)" Style="{StaticResource Label}"/><TextBox x:Name="OtherAccessoriesTextBox" Style="{StaticResource Input}" MaxLength="500" TextChanged="SmartField_TextChanged"/></StackPanel>
+                                    <StackPanel Grid.Column="4"><TextBlock Text="สภาพ/ตำหนิ (ไม่บังคับ)" Style="{StaticResource Label}"/><TextBox x:Name="OtherConditionTextBox" Style="{StaticResource Input}" MaxLength="1000" TextChanged="SmartField_TextChanged"/></StackPanel>
+                                </Grid>
+                            </StackPanel>
+
+                            <Border Margin="0,20,0,0" Padding="17" Background="#F8FAFC" BorderBrush="#DCE3EA" BorderThickness="1" CornerRadius="9">
+                                <StackPanel>
+                                    <TextBlock Text="รายละเอียดสรุปอัตโนมัติ" FontSize="13" FontWeight="SemiBold" Foreground="#475569"/>
+                                    <TextBlock x:Name="AssetPreviewText" Margin="0,7,0,0" Text="กรอกข้อมูลสินค้า แล้วระบบจะสร้างรายละเอียดสรุปให้อัตโนมัติ" FontSize="15" FontWeight="SemiBold" Foreground="#111827" TextWrapping="Wrap"/>
+                                    <TextBlock Margin="0,6,0,0" Text="ช่องแบบ Dropdown สามารถพิมพ์ค่าใหม่เองได้ หากไม่มีรายการที่ต้องการ" FontSize="12" Foreground="#94A3B8"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <Border x:Name="EditReasonBorder" Margin="0,16,0,16" Padding="18" Background="#FFFBEB" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="10" Visibility="Collapsed">
+                        <StackPanel><TextBlock Text="เหตุผลการแก้ไข (ไม่บังคับ)" Style="{StaticResource Label}"/><TextBox x:Name="EditReasonTextBox" Height="55" Padding="10,7" FontSize="14" AcceptsReturn="True" TextWrapping="Wrap" MaxLength="1000"/><TextBlock Margin="0,5,0,0" Text="ระบบจะบันทึกผู้แก้ไข เครื่องที่ใช้ วันเวลา และรายละเอียดที่เปลี่ยนไว้ใน Audit Log" FontSize="11" Foreground="#92400E"/></StackPanel>
+                    </Border>
+
+                    <Border x:Name="CancellationBorder" Margin="0,16,0,16" Padding="18" Background="#FEF2F2" BorderBrush="#FECACA" BorderThickness="1" CornerRadius="10" Visibility="Collapsed">
+                        <StackPanel><TextBlock Text="เหตุผลการยกเลิก" FontSize="14" FontWeight="SemiBold" Foreground="#991B1B"/><TextBlock x:Name="CancellationReasonText" Margin="0,6,0,0" FontSize="14" Foreground="#7F1D1D" TextWrapping="Wrap"/></StackPanel>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+        <Border Grid.Row="1" Background="White" BorderBrush="#E5E7EB" BorderThickness="0,1,0,0">
+            <Grid Margin="28,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="130"/><ColumnDefinition Width="12"/><ColumnDefinition Width="190"/></Grid.ColumnDefinitions>
+                <Button Grid.Column="1" Height="46" Content="ปิด / ยกเลิก" Click="CloseButton_Click"/>
+                <Button x:Name="SaveButton" Grid.Column="3" Height="46" Content="บันทึกรายการรับซื้อ" FontSize="15" FontWeight="SemiBold" Background="#2563EB" Foreground="White" BorderBrush="#2563EB" Click="SaveButton_Click"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
